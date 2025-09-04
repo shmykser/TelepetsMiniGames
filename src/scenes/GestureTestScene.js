@@ -60,21 +60,20 @@ export class GestureTestScene extends Phaser.Scene {
         this.createEmojiTexture('🕳️', 'pit'); // Яма
     }
     createEmojiTexture(emoji, textureKey) {
-        // Создаем простую текстуру с эмодзи
-        const graphics = this.add.graphics();
-        // Создаем фон (круг)
-        graphics.fillStyle(0xffffff, 0.1); // Полупрозрачный белый фон
-        graphics.fillCircle(32, 32, 30); // Круг радиусом 30
-        // Добавляем эмодзи как текст
+        // Создаем RenderTexture для рендеринга эмодзи
+        const renderTexture = this.add.renderTexture(0, 0, 64, 64);
+        // Создаем текстовый объект с эмодзи
         const text = this.add.text(32, 32, emoji, {
             fontSize: '48px',
             fontFamily: 'Arial'
         }).setOrigin(0.5);
-        // Генерируем текстуру
-        graphics.generateTexture(textureKey, 64, 64);
+        // Рендерим текст в текстуру
+        renderTexture.draw(text);
+        // Сохраняем как текстуру
+        renderTexture.saveTexture(textureKey);
         // Очищаем
         text.destroy();
-        graphics.destroy();
+        renderTexture.destroy();
     }
     createEnemies() {
         const { width, height } = this.scale;
