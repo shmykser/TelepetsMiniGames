@@ -13,6 +13,7 @@ export class Enemy extends GameObject {
   private _lastPlayerPosition: Phaser.Math.Vector2 | null = null;
   private _isChasing: boolean = false;
   private _chaseTimer?: Phaser.Time.TimerEvent;
+  private _id: string;
 
   constructor(scene: Phaser.Scene, config: EnemyConfig) {
     const enemyType = config.enemyType || 'ant';
@@ -32,6 +33,7 @@ export class Enemy extends GameObject {
 
     super(scene, enemyConfig);
 
+    this._id = `${enemyType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     this._enemyType = enemyType;
     this._detectionRange = config.detectionRange || 150;
     this._enemyData = enemyData;
@@ -45,34 +47,180 @@ export class Enemy extends GameObject {
   }
 
   private setupEnemyBehavior(): void {
-    // Настраиваем визуал в зависимости от типа врага
-    switch (this._enemyType) {
-      case 'ant':
-        this.setTint(0x8b4513); // Коричневый
-        break;
-      case 'beetle':
-        this.setTint(0x2f4f4f); // Темно-серый
-        break;
-      case 'rhinoceros':
-        this.setTint(0x4a4a4a); // Серый
-        break;
-      case 'mosquito':
-        this.setTint(0x696969); // Серый
-        break;
-      case 'spider':
-        this.setTint(0x000000); // Черный
-        break;
-      case 'fly':
-        this.setTint(0x808080); // Серый
-        break;
-      default:
-        this.setTint(0xef4444); // Красный
-        break;
-    }
+    // Создаем анимации для врага
+    this.createAnimations();
 
     // Настраиваем физику
     this.physicsBody.setBounce(0.1);
     this.physicsBody.setDrag(50, 50);
+  }
+
+  private createAnimations(): void {
+    // Создаем анимации в зависимости от типа врага
+    switch (this._enemyType) {
+      case 'ant':
+        this.createAntAnimations();
+        break;
+      case 'beetle':
+        this.createBeetleAnimations();
+        break;
+      case 'spider':
+        this.createSpiderAnimations();
+        break;
+      case 'fly':
+        this.createFlyAnimations();
+        break;
+      case 'mosquito':
+        this.createMosquitoAnimations();
+        break;
+      case 'rhinoceros':
+        this.createRhinocerosAnimations();
+        break;
+    }
+  }
+
+  private createAntAnimations(): void {
+    // Анимация ходьбы муравья
+    this.scene.anims.create({
+      key: `ant_walk_${this.id}`,
+      frames: [
+        { key: 'ant_walk_0' },
+        { key: 'ant_walk_1' },
+        { key: 'ant_walk_2' },
+        { key: 'ant_walk_3' }
+      ],
+      frameRate: 8,
+      repeat: -1
+    });
+
+    // Анимация атаки муравья
+    this.scene.anims.create({
+      key: `ant_attack_${this.id}`,
+      frames: [
+        { key: 'ant' },
+        { key: 'ant_walk_1' },
+        { key: 'ant' }
+      ],
+      frameRate: 12,
+      repeat: 0
+    });
+  }
+
+  private createBeetleAnimations(): void {
+    this.scene.anims.create({
+      key: `beetle_walk_${this.id}`,
+      frames: [
+        { key: 'beetle_walk_0' },
+        { key: 'beetle_walk_1' },
+        { key: 'beetle_walk_2' },
+        { key: 'beetle_walk_3' }
+      ],
+      frameRate: 6,
+      repeat: -1
+    });
+
+    this.scene.anims.create({
+      key: `beetle_attack_${this.id}`,
+      frames: [
+        { key: 'beetle' },
+        { key: 'beetle_walk_1' },
+        { key: 'beetle' }
+      ],
+      frameRate: 10,
+      repeat: 0
+    });
+  }
+
+  private createSpiderAnimations(): void {
+    this.scene.anims.create({
+      key: `spider_walk_${this.id}`,
+      frames: [
+        { key: 'spider_walk_0' },
+        { key: 'spider_walk_1' },
+        { key: 'spider_walk_2' },
+        { key: 'spider_walk_3' }
+      ],
+      frameRate: 4,
+      repeat: -1
+    });
+
+    this.scene.anims.create({
+      key: `spider_attack_${this.id}`,
+      frames: [
+        { key: 'spider' },
+        { key: 'spider_walk_1' },
+        { key: 'spider' }
+      ],
+      frameRate: 8,
+      repeat: 0
+    });
+  }
+
+  private createFlyAnimations(): void {
+    this.scene.anims.create({
+      key: `fly_hover_${this.id}`,
+      frames: [
+        { key: 'fly_hover_0' },
+        { key: 'fly_hover_1' },
+        { key: 'fly_hover_2' },
+        { key: 'fly_hover_3' }
+      ],
+      frameRate: 12,
+      repeat: -1
+    });
+
+    this.scene.anims.create({
+      key: `fly_attack_${this.id}`,
+      frames: [
+        { key: 'fly' },
+        { key: 'fly_hover_1' },
+        { key: 'fly' }
+      ],
+      frameRate: 15,
+      repeat: 0
+    });
+  }
+
+  private createMosquitoAnimations(): void {
+    // Комар использует простую анимацию покачивания
+    this.scene.anims.create({
+      key: `mosquito_hover_${this.id}`,
+      frames: [
+        { key: 'mosquito' }
+      ],
+      frameRate: 1,
+      repeat: -1
+    });
+
+    this.scene.anims.create({
+      key: `mosquito_attack_${this.id}`,
+      frames: [
+        { key: 'mosquito' }
+      ],
+      frameRate: 1,
+      repeat: 0
+    });
+  }
+
+  private createRhinocerosAnimations(): void {
+    // Носорог использует статичную анимацию
+    this.scene.anims.create({
+      key: `rhinoceros_idle_${this.id}`,
+      frames: [
+        { key: 'rhinoceros' }
+      ],
+      frameRate: 1,
+      repeat: -1
+    });
+
+    this.scene.anims.create({
+      key: `rhinoceros_attack_${this.id}`,
+      frames: [
+        { key: 'rhinoceros' }
+      ],
+      frameRate: 1,
+      repeat: 0
+    });
   }
 
   // Переопределяем update для ИИ поведения
@@ -133,14 +281,71 @@ export class Enemy extends GameObject {
           this._isChasing = false;
           this._lastPlayerPosition = null;
           this.stopMovement();
+          this.playIdleAnimation();
         });
       }
+    } else {
+      // Если не преследуем, воспроизводим анимацию покоя
+      this.playIdleAnimation();
     }
   }
 
   private chasePlayer(player: GameObject): void {
     // Базовое преследование - движемся к игроку
     this.startMovementToPoint(player.x, player.y);
+    
+    // Воспроизводим анимацию движения
+    this.playMovementAnimation();
+  }
+
+  private playMovementAnimation(): void {
+    const animationKey = this.getMovementAnimationKey();
+    if (animationKey && !this.anims.isPlaying) {
+      this.play(animationKey);
+    }
+  }
+
+  private playIdleAnimation(): void {
+    const animationKey = this.getIdleAnimationKey();
+    if (animationKey && !this.anims.isPlaying) {
+      this.play(animationKey);
+    }
+  }
+
+  private getMovementAnimationKey(): string | null {
+    switch (this._enemyType) {
+      case 'ant': return `ant_walk_${this.id}`;
+      case 'beetle': return `beetle_walk_${this.id}`;
+      case 'spider': return `spider_walk_${this.id}`;
+      case 'fly': return `fly_hover_${this.id}`;
+      case 'mosquito': return `mosquito_hover_${this.id}`;
+      case 'rhinoceros': return `rhinoceros_idle_${this.id}`;
+      default: return null;
+    }
+  }
+
+  private getIdleAnimationKey(): string | null {
+    switch (this._enemyType) {
+      case 'ant': return 'ant';
+      case 'beetle': return 'beetle';
+      case 'spider': return 'spider';
+      case 'fly': return 'fly';
+      case 'mosquito': return 'mosquito';
+      case 'rhinoceros': return 'rhinoceros';
+      default: return null;
+    }
+  }
+
+  private getAttackAnimationKey(): string | null {
+    switch (this._enemyType) {
+      case 'ant': return `ant_attack_${this.id}`;
+      case 'beetle': return `beetle_attack_${this.id}`;
+      case 'spider': return `spider_attack_${this.id}`;
+      case 'fly': return `fly_attack_${this.id}`;
+      case 'mosquito': return `mosquito_attack_${this.id}`;
+      case 'rhinoceros': return `rhinoceros_attack_${this.id}`;
+      default: return null;
+    }
   }
 
 
@@ -165,6 +370,12 @@ export class Enemy extends GameObject {
   }
 
   private performBasicAttack(target: GameObject): void {
+    // Воспроизводим анимацию атаки
+    const attackAnimationKey = this.getAttackAnimationKey();
+    if (attackAnimationKey) {
+      this.play(attackAnimationKey);
+    }
+    
     // Базовая атака
     target.takeDamage(this.damage);
     this.emit('attack', target, this.damage);
@@ -191,6 +402,7 @@ export class Enemy extends GameObject {
   }
 
   // Геттеры
+  get id(): string { return this._id; }
   get enemyType(): keyof typeof enemyTypes { return this._enemyType; }
   get detectionRange(): number { return this._detectionRange; }
   get isChasing(): boolean { return this._isChasing; }
