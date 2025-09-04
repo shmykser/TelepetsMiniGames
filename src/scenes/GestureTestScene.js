@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { Enemy } from '../core/objects/Enemy';
+import { ActionManager } from '../systems/actions/ActionManager';
+import { GestureManager } from '../systems/gesture/GestureManager';
 /**
  * Сцена для тестирования жестов с врагами
  */
@@ -11,6 +13,12 @@ export class GestureTestScene extends Phaser.Scene {
             configurable: true,
             writable: true,
             value: []
+        });
+        Object.defineProperty(this, "actionManager", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
         });
     }
     create() {
@@ -37,6 +45,27 @@ export class GestureTestScene extends Phaser.Scene {
             backgroundColor: '#000000',
             padding: { x: 10, y: 5 }
         }).setOrigin(0.5);
+        // Инициализируем менеджеры
+        this.initializeManagers();
+    }
+    initializeManagers() {
+        // Создаем ActionManager
+        this.actionManager = new ActionManager(this, this.enemies, []);
+        // Создаем GestureManager с обработчиками событий
+        new GestureManager(this, {
+            onTap: (e) => {
+                console.log(`Тап в позиции: (${e.phaserX}, ${e.phaserY})`);
+                this.actionManager.handleAction('tap', 'enemy', e.phaserX, e.phaserY);
+            },
+            onDoubleTap: (e) => {
+                console.log(`Двойной тап в позиции: (${e.phaserX}, ${e.phaserY})`);
+                this.actionManager.handleAction('doubleTap', 'field', e.phaserX, e.phaserY);
+            },
+            onPress: (e) => {
+                console.log(`Долгое нажатие в позиции: (${e.phaserX}, ${e.phaserY})`);
+                this.actionManager.handleAction('press', 'field', e.phaserX, e.phaserY);
+            }
+        });
     }
     createTextures() {
         // Создаем простые текстуры со смайликами
@@ -113,5 +142,9 @@ export class GestureTestScene extends Phaser.Scene {
                 }
             }
         });
+        // Обновляем списки объектов в ActionManager
+        if (this.actionManager) {
+            this.actionManager.updateObjects(this.enemies, []);
+        }
     }
 }

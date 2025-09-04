@@ -2,32 +2,28 @@
  * Типы для системы действий по жестам
  */
 
-export type GestureType = 'tap' | 'doubleTap' | 'press' | 'swipe' | 'pan' | 'pinch' | 'rotate';
-
-export type TargetObjectType = 'enemy' | 'defence' | 'field' | 'egg';
+export type GestureType = 'tap' | 'doubleTap' | 'press' | 'swipe' | 'pan';
+export type TargetType = 'enemy' | 'defence' | 'field' | 'egg';
 
 export interface GestureAction {
   gesture: GestureType;
-  target: TargetObjectType;
+  target: TargetType;
   action: string;
   description: string;
 }
 
-export interface ActionContext {
-  gesture: GestureType;
-  targetObject: TargetObjectType;
-  targetInstance?: any; // Конкретный экземпляр объекта
-  coordinates: {
-    x: number;
-    y: number;
+export interface ActionSettings {
+  enemy: {
+    defaultDamage: number;
   };
-  metadata?: Record<string, any>;
-}
-
-export interface ActionResult {
-  success: boolean;
-  message?: string;
-  data?: any;
+  pit: {
+    maxSize: number;
+    expansionAmount: number;
+  };
+  field: {
+    defaultDefenceType: string;
+    sugarDefenceType: string;
+  };
 }
 
 /**
@@ -41,7 +37,6 @@ export const GESTURE_ACTIONS: Record<string, GestureAction> = {
     action: 'damage',
     description: 'Нанести урон врагу'
   },
-
   // Жесты по защите
   'press_pit': {
     gesture: 'press',
@@ -49,7 +44,6 @@ export const GESTURE_ACTIONS: Record<string, GestureAction> = {
     action: 'expand',
     description: 'Увеличить яму'
   },
-
   // Жесты по полю
   'press_field': {
     gesture: 'press',
@@ -68,7 +62,7 @@ export const GESTURE_ACTIONS: Record<string, GestureAction> = {
 /**
  * Настройки действий
  */
-export const ACTION_SETTINGS = {
+export const ACTION_SETTINGS: ActionSettings = {
   enemy: {
     defaultDamage: 10
   },
@@ -77,7 +71,7 @@ export const ACTION_SETTINGS = {
     expansionAmount: 1
   },
   field: {
-    defaultDefenceType: 'pit' as const,
-    sugarDefenceType: 'sugar' as const
+    defaultDefenceType: 'pit',
+    sugarDefenceType: 'sugar'
   }
 };
