@@ -18,5 +18,11 @@ export const settings = {
     telegramSecrets: {
         botToken: import.meta.env.VITE_BOT_TOKEN,
         webAppUrl: import.meta.env.VITE_WEBAPP_URL
+    },
+    responsive: {
+        minWidth: 320,
+        minHeight: 480,
+        maxWidth: 800,
+        maxHeight: 1200
     }
 };

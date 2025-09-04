@@ -7,16 +7,27 @@ export class MainMenuScene extends Phaser.Scene {
 
   create(): void {
     const { width, height } = this.scale;
-    this.add.text(width / 2, height * 0.25, 'Telepets', {
+    
+    // Адаптивные размеры шрифтов
+    const titleFontSize = Math.min(width * 0.1, 36);
+    const buttonFontSize = Math.min(width * 0.05, 18);
+    const instructionFontSize = Math.min(width * 0.03, 12);
+    
+    // Заголовок
+    this.add.text(width / 2, height * 0.15, 'Telepets', {
       fontFamily: 'Arial',
-      fontSize: '36px',
+      fontSize: `${titleFontSize}px`,
       color: '#ffffff'
     }).setOrigin(0.5);
 
+    // Кнопки меню с правильными отступами
+    const buttonSpacing = height * 0.08;
+    let currentY = height * 0.3;
+
     // Простая игра
-    const simpleGame = this.add.text(width / 2, height * 0.45, 'Простая игра', {
+    const simpleGame = this.add.text(width / 2, currentY, 'Простая игра', {
       fontFamily: 'Arial',
-      fontSize: '20px',
+      fontSize: `${buttonFontSize}px`,
       color: '#22c55e'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
@@ -24,10 +35,12 @@ export class MainMenuScene extends Phaser.Scene {
       this.scene.start('Game');
     });
 
+    currentY += buttonSpacing;
+
     // Игра с GameObject
-    const advancedGame = this.add.text(width / 2, height * 0.45, 'Игра с боем', {
+    const advancedGame = this.add.text(width / 2, currentY, 'Игра с боем', {
       fontFamily: 'Arial',
-      fontSize: '20px',
+      fontSize: `${buttonFontSize}px`,
       color: '#3b82f6'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
@@ -35,10 +48,12 @@ export class MainMenuScene extends Phaser.Scene {
       this.scene.start('GameWithGameObject');
     });
 
+    currentY += buttonSpacing;
+
     // Игра с жестами
-    const gestureGame = this.add.text(width / 2, height * 0.4, 'Игра с жестами', {
+    const gestureGame = this.add.text(width / 2, currentY, 'Игра с жестами', {
       fontFamily: 'Arial',
-      fontSize: '18px',
+      fontSize: `${buttonFontSize}px`,
       color: '#f59e0b'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
@@ -46,10 +61,12 @@ export class MainMenuScene extends Phaser.Scene {
       this.scene.start('GestureGame');
     });
 
+    currentY += buttonSpacing;
+
     // Тест жестов
-    const gestureTest = this.add.text(width / 2, height * 0.5, 'Тест жестов', {
+    const gestureTest = this.add.text(width / 2, currentY, 'Тест жестов', {
       fontFamily: 'Arial',
-      fontSize: '18px',
+      fontSize: `${buttonFontSize}px`,
       color: '#8b5cf6'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
@@ -57,24 +74,26 @@ export class MainMenuScene extends Phaser.Scene {
       this.scene.start('GestureTest');
     });
 
-    // Инструкции
-    this.add.text(width / 2, height * 0.75, 'Управление: Стрелки - движение, Пробел - атака', {
-      fontFamily: 'Arial',
-      fontSize: '11px',
-      color: '#9ca3af'
-    }).setOrigin(0.5);
+    // Инструкции с переносами строк
+    const instructionY = height * 0.75;
+    const instructionSpacing = height * 0.04;
+    
+    // Разбиваем длинные строки на части
+    const instructions = [
+      'Управление: Стрелки - движение, Пробел - атака',
+      'Жесты: Тап - движение, Двойной тап - атака',
+      'Свайп - толчок, Тест жестов - проверка объектов'
+    ];
 
-    this.add.text(width / 2, height * 0.8, 'Жесты: Тап - движение, Двойной тап - атака, Свайп - толчок', {
-      fontFamily: 'Arial',
-      fontSize: '11px',
-      color: '#9ca3af'
-    }).setOrigin(0.5);
-
-    this.add.text(width / 2, height * 0.85, 'Тест жестов: проверка взаимодействия с объектами', {
-      fontFamily: 'Arial',
-      fontSize: '11px',
-      color: '#9ca3af'
-    }).setOrigin(0.5);
+    instructions.forEach((instruction, index) => {
+      this.add.text(width / 2, instructionY + (index * instructionSpacing), instruction, {
+        fontFamily: 'Arial',
+        fontSize: `${instructionFontSize}px`,
+        color: '#9ca3af',
+        align: 'center',
+        wordWrap: { width: width * 0.9 }
+      }).setOrigin(0.5);
+    });
   }
 }
 

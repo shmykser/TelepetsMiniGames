@@ -18,6 +18,13 @@ export type GameSettings = {
     botToken?: string;
     webAppUrl?: string;
   };
+  // Адаптивные настройки
+  responsive: {
+    minWidth: number;
+    minHeight: number;
+    maxWidth: number;
+    maxHeight: number;
+  };
 };
 
 // Все глобальные переменные храним здесь
@@ -40,5 +47,11 @@ export const settings: GameSettings = {
   telegramSecrets: {
     botToken: import.meta.env.VITE_BOT_TOKEN,
     webAppUrl: import.meta.env.VITE_WEBAPP_URL
+  },
+  responsive: {
+    minWidth: 320,
+    minHeight: 480,
+    maxWidth: 800,
+    maxHeight: 1200
   }
 };

@@ -12,11 +12,19 @@ const config = {
     type: Phaser.AUTO,
     backgroundColor: settings.backgroundColor,
     scale: {
-        mode: Phaser.Scale.ENVELOP,
+        mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
         width: settings.width,
         height: settings.height,
-        parent: 'game'
+        parent: 'game',
+        min: {
+            width: settings.responsive.minWidth,
+            height: settings.responsive.minHeight
+        },
+        max: {
+            width: settings.responsive.maxWidth,
+            height: settings.responsive.maxHeight
+        }
     },
     physics: settings.physics,
     scene: [BootScene, PreloadScene, MainMenuScene, GameScene, GameSceneWithGameObject, GestureGameScene, GestureTestScene, UIScene],
