@@ -17,6 +17,12 @@ export class GestureManager {
             writable: true,
             value: void 0
         });
+        Object.defineProperty(this, "instantTapHandler", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         this.gameCanvas = scene.game.canvas;
         // Создаем Hammer Manager для canvas
         this.hammer = new Hammer.Manager(this.gameCanvas, {
@@ -30,27 +36,31 @@ export class GestureManager {
         this.bindEvents(events);
         // Отладочное логирование
         this.setupDebugLogging();
+        // Добавляем мгновенный отклик на pointerdown для быстрых тапов
+        this.setupInstantTapResponse(events);
+        // Отключаем Hammer.js обработчик тапов, чтобы избежать дублирования
+        this.setRecognizerEnabled('tap', false);
     }
     /**
      * Настройка распознавателей жестов согласно документации Hammer.js
      */
     setupRecognizers() {
-        // 1. Tap - одинарный тап (согласно документации)
+        // 1. Tap - одинарный тап (быстрый отклик)
         const tap = new Hammer.Tap({
             event: 'tap',
             taps: 1,
-            interval: 300,
-            time: 250,
-            threshold: 2, // Согласно документации: "a minimal movement is ok, but keep it low"
+            interval: 200, // Уменьшено с 300 до 200
+            time: 100, // Уменьшено с 250 до 100 для быстрого отклика
+            threshold: 2,
             posThreshold: 10
         });
-        // 2. DoubleTap - двойной тап (согласно документации)
+        // 2. DoubleTap - двойной тап
         const doubleTap = new Hammer.Tap({
             event: 'doubletap',
             taps: 2,
-            interval: 300,
-            time: 250,
-            threshold: 2, // Согласно документации: "a minimal movement is ok, but keep it low"
+            interval: 200, // Уменьшено с 300 до 200
+            time: 100, // Уменьшено с 250 до 100
+            threshold: 2,
             posThreshold: 10
         });
         // 3. Pan - удержание и перетаскивание (согласно документации)
@@ -247,9 +257,45 @@ export class GestureManager {
         this.hammer.stop(force);
     }
     /**
+     * Настройка мгновенного отклика на pointerdown для быстрых тапов
+     */
+    setupInstantTapResponse(events) {
+        if (!events.onTap)
+            return;
+        // Создаем обработчик pointerdown для мгновенного отклика
+        this.instantTapHandler = (event) => {
+            // Преобразуем координаты в Phaser координаты
+            const rect = this.gameCanvas.getBoundingClientRect();
+            const phaserX = event.clientX - rect.left;
+            const phaserY = event.clientY - rect.top;
+            // Создаем расширенное событие Hammer
+            const hammerEvent = {
+                type: 'tap',
+                center: { x: phaserX, y: phaserY },
+                deltaX: 0,
+                deltaY: 0,
+                velocity: 0,
+                phaserX: phaserX,
+                phaserY: phaserY
+            };
+            // Вызываем обработчик тапа мгновенно
+            console.log(`Мгновенный тап в позиции: (${phaserX}, ${phaserY})`);
+            if (events.onTap) {
+                events.onTap(hammerEvent);
+            }
+        };
+        // Добавляем обработчик
+        this.gameCanvas.addEventListener('pointerdown', this.instantTapHandler, { passive: false });
+    }
+    /**
      * Уничтожение менеджера жестов
      */
     destroy() {
+        // Удаляем обработчик мгновенного тапа
+        if (this.instantTapHandler) {
+            this.gameCanvas.removeEventListener('pointerdown', this.instantTapHandler);
+            this.instantTapHandler = undefined;
+        }
         if (this.hammer) {
             this.hammer.destroy();
             this.hammer = null;

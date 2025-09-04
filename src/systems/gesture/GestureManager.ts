@@ -29,6 +29,7 @@ export interface GestureEvents {
 export class GestureManager {
   private hammer: HammerManager;
   private gameCanvas: HTMLCanvasElement;
+  private instantTapHandler?: (event: PointerEvent) => void;
 
   constructor(scene: Phaser.Scene, events: GestureEvents = {}) {
     this.gameCanvas = scene.game.canvas;
@@ -48,29 +49,35 @@ export class GestureManager {
 
     // Отладочное логирование
     this.setupDebugLogging();
+
+    // Добавляем мгновенный отклик на pointerdown для быстрых тапов
+    this.setupInstantTapResponse(events);
+
+    // Отключаем Hammer.js обработчик тапов, чтобы избежать дублирования
+    this.setRecognizerEnabled('tap', false);
   }
 
   /**
    * Настройка распознавателей жестов согласно документации Hammer.js
    */
   private setupRecognizers(): void {
-    // 1. Tap - одинарный тап (согласно документации)
+    // 1. Tap - одинарный тап (быстрый отклик)
     const tap = new Hammer.Tap({
       event: 'tap',
       taps: 1,
-      interval: 300,
-      time: 250,
-      threshold: 2, // Согласно документации: "a minimal movement is ok, but keep it low"
+      interval: 200, // Уменьшено с 300 до 200
+      time: 100,     // Уменьшено с 250 до 100 для быстрого отклика
+      threshold: 2,
       posThreshold: 10
     });
 
-    // 2. DoubleTap - двойной тап (согласно документации)
+    // 2. DoubleTap - двойной тап
     const doubleTap = new Hammer.Tap({
       event: 'doubletap',
       taps: 2,
-      interval: 300,
-      time: 250,
-      threshold: 2, // Согласно документации: "a minimal movement is ok, but keep it low"
+      interval: 200, // Уменьшено с 300 до 200
+      time: 100,     // Уменьшено с 250 до 100
+      threshold: 2,
       posThreshold: 10
     });
 
@@ -309,11 +316,52 @@ export class GestureManager {
     this.hammer.stop(force);
   }
 
+  /**
+   * Настройка мгновенного отклика на pointerdown для быстрых тапов
+   */
+  private setupInstantTapResponse(events: GestureEvents): void {
+    if (!events.onTap) return;
+
+    // Создаем обработчик pointerdown для мгновенного отклика
+    this.instantTapHandler = (event: PointerEvent) => {
+      // Преобразуем координаты в Phaser координаты
+      const rect = this.gameCanvas.getBoundingClientRect();
+      const phaserX = event.clientX - rect.left;
+      const phaserY = event.clientY - rect.top;
+
+      // Создаем расширенное событие Hammer
+      const hammerEvent = {
+        type: 'tap',
+        center: { x: phaserX, y: phaserY },
+        deltaX: 0,
+        deltaY: 0,
+        velocity: 0,
+        phaserX: phaserX,
+        phaserY: phaserY
+      } as ExtendedHammerInput;
+
+      // Вызываем обработчик тапа мгновенно
+      console.log(`Мгновенный тап в позиции: (${phaserX}, ${phaserY})`);
+      if (events.onTap) {
+        events.onTap(hammerEvent);
+      }
+    };
+
+    // Добавляем обработчик
+    this.gameCanvas.addEventListener('pointerdown', this.instantTapHandler, { passive: false });
+  }
+
 
   /**
    * Уничтожение менеджера жестов
    */
   destroy(): void {
+    // Удаляем обработчик мгновенного тапа
+    if (this.instantTapHandler) {
+      this.gameCanvas.removeEventListener('pointerdown', this.instantTapHandler);
+      this.instantTapHandler = undefined;
+    }
+
     if (this.hammer) {
       this.hammer.destroy();
       this.hammer = null as any;
