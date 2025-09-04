@@ -17,6 +17,12 @@ export class GestureManager {
             writable: true,
             value: void 0
         });
+        Object.defineProperty(this, "actionManager", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         this.gameCanvas = scene.game.canvas;
         // Создаем Hammer Manager для canvas
         this.hammer = new Hammer.Manager(this.gameCanvas, {
@@ -245,6 +251,22 @@ export class GestureManager {
      */
     stopRecognition(force = false) {
         this.hammer.stop(force);
+    }
+    /**
+     * Установить менеджер действий
+     */
+    setActionManager(actionManager) {
+        this.actionManager = actionManager;
+    }
+    /**
+     * Обработать жест через систему действий
+     */
+    handleGestureAction(gesture, x, y) {
+        if (!this.actionManager) {
+            console.warn('ActionManager не установлен');
+            return null;
+        }
+        return this.actionManager.handleGesture(gesture, x, y);
     }
     /**
      * Уничтожение менеджера жестов

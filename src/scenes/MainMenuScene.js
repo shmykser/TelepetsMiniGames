@@ -57,6 +57,16 @@ export class MainMenuScene extends Phaser.Scene {
         gestureTest.on('pointerup', () => {
             this.scene.start('GestureTest');
         });
+        currentY += buttonSpacing;
+        // Действия по жестам
+        const gestureActions = this.add.text(width / 2, currentY, 'Действия по жестам', {
+            fontFamily: 'Arial',
+            fontSize: `${buttonFontSize}px`,
+            color: '#10b981'
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        gestureActions.on('pointerup', () => {
+            this.scene.start('GestureActionScene');
+        });
         // Инструкции с переносами строк
         const instructionY = height * 0.75;
         const instructionSpacing = height * 0.04;

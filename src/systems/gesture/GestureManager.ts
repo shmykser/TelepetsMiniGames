@@ -1,5 +1,6 @@
 import Hammer from 'hammerjs';
 import Phaser from 'phaser';
+import { GestureActionManager } from './GestureActionManager';
 
 /**
  * Расширенный интерфейс для событий жестов с Phaser координатами
@@ -29,6 +30,7 @@ export interface GestureEvents {
 export class GestureManager {
   private hammer: HammerManager;
   private gameCanvas: HTMLCanvasElement;
+  private actionManager?: GestureActionManager;
 
   constructor(scene: Phaser.Scene, events: GestureEvents = {}) {
     this.gameCanvas = scene.game.canvas;
@@ -307,6 +309,25 @@ export class GestureManager {
    */
   stopRecognition(force: boolean = false): void {
     this.hammer.stop(force);
+  }
+
+  /**
+   * Установить менеджер действий
+   */
+  setActionManager(actionManager: GestureActionManager): void {
+    this.actionManager = actionManager;
+  }
+
+  /**
+   * Обработать жест через систему действий
+   */
+  handleGestureAction(gesture: string, x: number, y: number): any {
+    if (!this.actionManager) {
+      console.warn('ActionManager не установлен');
+      return null;
+    }
+
+    return this.actionManager.handleGesture(gesture as any, x, y);
   }
 
   /**
