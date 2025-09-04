@@ -99,7 +99,7 @@ export class GestureTestScene extends Phaser.Scene {
       graphics.lineBetween(30, 20, 20, 10); // 6*5, 4*5, 4*5, 2*5
       graphics.lineBetween(50, 20, 60, 10); // 10*5, 4*5, 12*5, 2*5
       
-      graphics.generateTexture(`ant_walk_${frame}`, 160, 80); // Увеличиваем в 5 раз
+      graphics.generateTexture(`ant_walk_${frame}`, 80, 40); // Уменьшаем в 2 раза
       graphics.destroy();
     }
   }
@@ -126,7 +126,7 @@ export class GestureTestScene extends Phaser.Scene {
       graphics.lineBetween(20, 10, 22 + legOffset, 16);
       graphics.lineBetween(24, 10, 26 - legOffset, 14);
       
-      graphics.generateTexture(`beetle_walk_${frame}`, 160, 100); // Увеличиваем в 5 раз
+      graphics.generateTexture(`beetle_walk_${frame}`, 80, 50); // Уменьшаем в 2 раза
       graphics.destroy();
     }
   }
@@ -159,7 +159,7 @@ export class GestureTestScene extends Phaser.Scene {
       graphics.lineBetween(12, 16, 8 - legOffset, 20);
       graphics.lineBetween(20, 16, 24 + legOffset, 20);
       
-      graphics.generateTexture(`spider_walk_${frame}`, 160, 120); // Увеличиваем в 5 раз
+      graphics.generateTexture(`spider_walk_${frame}`, 80, 60); // Уменьшаем в 2 раза
       graphics.destroy();
     }
   }
@@ -190,7 +190,7 @@ export class GestureTestScene extends Phaser.Scene {
       graphics.lineBetween(14, 12, 12, 16);
       graphics.lineBetween(18, 12, 20, 16);
       
-      graphics.generateTexture(`fly_hover_${frame}`, 160, 90); // Увеличиваем в 5 раз
+      graphics.generateTexture(`fly_hover_${frame}`, 80, 45); // Уменьшаем в 2 раза
       graphics.destroy();
     }
   }
@@ -227,7 +227,7 @@ export class GestureTestScene extends Phaser.Scene {
     graphics.lineBetween(30, 20, 20, 10); // 6*5, 4*5, 4*5, 2*5
     graphics.lineBetween(50, 20, 60, 10); // 10*5, 4*5, 12*5, 2*5
     
-    graphics.generateTexture('ant', 160, 80); // Увеличиваем в 5 раз
+    graphics.generateTexture('ant', 80, 40); // Уменьшаем в 2 раза
     graphics.destroy();
   }
 
@@ -250,7 +250,7 @@ export class GestureTestScene extends Phaser.Scene {
     graphics.lineBetween(100, 50, 110, 80); // 20*5, 10*5, 22*5, 16*5
     graphics.lineBetween(120, 50, 130, 70); // 24*5, 10*5, 26*5, 14*5
     
-    graphics.generateTexture('beetle', 160, 100); // Увеличиваем в 5 раз
+    graphics.generateTexture('beetle', 80, 50); // Уменьшаем в 2 раза
     graphics.destroy();
   }
 
@@ -272,7 +272,7 @@ export class GestureTestScene extends Phaser.Scene {
     graphics.fillRect(60, 100, 15, 30); // 12*5, 20*5, 3*5, 6*5
     graphics.fillRect(100, 100, 15, 30); // 20*5, 20*5, 3*5, 6*5
     
-    graphics.generateTexture('rhinoceros', 160, 140); // Увеличиваем в 5 раз
+    graphics.generateTexture('rhinoceros', 80, 70); // Уменьшаем в 2 раза
     graphics.destroy();
   }
 
@@ -299,7 +299,7 @@ export class GestureTestScene extends Phaser.Scene {
     graphics.lineStyle(10, 0x8B4513); // 2*5
     graphics.lineBetween(80, 10, 80, 0); // 16*5, 2*5, 16*5, 0
     
-    graphics.generateTexture('mosquito', 160, 90); // Увеличиваем в 5 раз
+    graphics.generateTexture('mosquito', 80, 45); // Уменьшаем в 2 раза
     graphics.destroy();
   }
 
@@ -328,7 +328,7 @@ export class GestureTestScene extends Phaser.Scene {
     graphics.lineBetween(60, 80, 40, 100); // 12*5, 16*5, 8*5, 20*5
     graphics.lineBetween(100, 80, 120, 100); // 20*5, 16*5, 24*5, 20*5
     
-    graphics.generateTexture('spider', 160, 120); // Увеличиваем в 5 раз
+    graphics.generateTexture('spider', 80, 60); // Уменьшаем в 2 раза
     graphics.destroy();
   }
 
@@ -356,7 +356,7 @@ export class GestureTestScene extends Phaser.Scene {
     graphics.lineBetween(70, 60, 60, 80); // 14*5, 12*5, 12*5, 16*5
     graphics.lineBetween(90, 60, 100, 80); // 18*5, 12*5, 20*5, 16*5
     
-    graphics.generateTexture('fly', 160, 90); // Увеличиваем в 5 раз
+    graphics.generateTexture('fly', 80, 45); // Уменьшаем в 2 раза
     graphics.destroy();
   }
 
