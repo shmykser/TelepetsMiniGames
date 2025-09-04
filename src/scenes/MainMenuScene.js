@@ -29,23 +29,37 @@ export class MainMenuScene extends Phaser.Scene {
             this.scene.start('GameWithGameObject');
         });
         // Игра с жестами
-        const gestureGame = this.add.text(width / 2, height * 0.45, 'Игра с жестами', {
+        const gestureGame = this.add.text(width / 2, height * 0.4, 'Игра с жестами', {
             fontFamily: 'Arial',
-            fontSize: '20px',
+            fontSize: '18px',
             color: '#f59e0b'
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
         gestureGame.on('pointerup', () => {
             this.scene.start('GestureGame');
         });
+        // Тест жестов
+        const gestureTest = this.add.text(width / 2, height * 0.5, 'Тест жестов', {
+            fontFamily: 'Arial',
+            fontSize: '18px',
+            color: '#8b5cf6'
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        gestureTest.on('pointerup', () => {
+            this.scene.start('GestureTest');
+        });
         // Инструкции
         this.add.text(width / 2, height * 0.75, 'Управление: Стрелки - движение, Пробел - атака', {
             fontFamily: 'Arial',
-            fontSize: '12px',
+            fontSize: '11px',
             color: '#9ca3af'
         }).setOrigin(0.5);
         this.add.text(width / 2, height * 0.8, 'Жесты: Тап - движение, Двойной тап - атака, Свайп - толчок', {
             fontFamily: 'Arial',
-            fontSize: '12px',
+            fontSize: '11px',
+            color: '#9ca3af'
+        }).setOrigin(0.5);
+        this.add.text(width / 2, height * 0.85, 'Тест жестов: проверка взаимодействия с объектами', {
+            fontFamily: 'Arial',
+            fontSize: '11px',
             color: '#9ca3af'
         }).setOrigin(0.5);
     }
