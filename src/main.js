@@ -1,9 +1,5 @@
 import Phaser from 'phaser';
 import { settings } from '@config/settings';
-import { BootScene } from '@/scenes/BootScene';
-import { PreloadScene } from '@/scenes/PreloadScene';
-import { MainMenuScene } from '@/scenes/MainMenuScene';
-import { GameScene } from '@/scenes/GameScene';
 import { GestureTestScene } from '@/scenes/GestureTestScene';
 const config = {
     type: Phaser.AUTO,
@@ -24,7 +20,7 @@ const config = {
         }
     },
     physics: settings.physics,
-    scene: [BootScene, PreloadScene, MainMenuScene, GameScene, GestureTestScene],
+    scene: [GestureTestScene],
     render: {
         pixelArt: false,
         antialias: true

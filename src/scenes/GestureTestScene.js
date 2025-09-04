@@ -15,6 +15,8 @@ export class GestureTestScene extends Phaser.Scene {
     }
     create() {
         const { width, height } = this.scale;
+        // Создаем простые геометрические текстуры для врагов
+        this.createTextures();
         // Создаем фон
         this.add.rectangle(width / 2, height / 2, width, height, 0x2c3e50);
         // Создаем врагов
@@ -35,6 +37,14 @@ export class GestureTestScene extends Phaser.Scene {
             backgroundColor: '#000000',
             padding: { x: 10, y: 5 }
         }).setOrigin(0.5);
+    }
+    createTextures() {
+        // Создаем простую текстуру для врагов
+        const graphics = this.add.graphics();
+        graphics.fillStyle(0xff0000); // Красный цвет
+        graphics.fillCircle(16, 16, 16); // Круг радиусом 16
+        graphics.generateTexture('enemy', 32, 32);
+        graphics.destroy();
     }
     createEnemies() {
         const { width, height } = this.scale;
