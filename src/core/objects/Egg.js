@@ -79,62 +79,10 @@ export class Egg extends GameObject {
             return;
         this._isHatching = true;
         console.log(`Яйцо вылупляется! Тип: ${this._hatchType}`);
-        // Анимация вылупления
-        this.playHatchAnimation();
         // Эмитим событие вылупления
         this.emit('hatch', this._hatchType, this.x, this.y);
-    }
-    playHatchAnimation() {
-        if (!this.scene)
-            return;
-        // Анимация трещин на яйце
-        this.scene.tweens.add({
-            targets: this,
-            scaleX: 1.1,
-            scaleY: 1.1,
-            duration: 500,
-            yoyo: true,
-            repeat: 2,
-            ease: 'Power2',
-            onComplete: () => {
-                this.playHatchEffect();
-            }
-        });
-    }
-    playHatchEffect() {
-        if (!this.scene)
-            return;
-        // Эффект вылупления - частицы
-        for (let i = 0; i < 8; i++) {
-            const particle = this.scene.add.circle(this.x, this.y, 2, 0xffffff);
-            const angle = (i / 8) * Math.PI * 2;
-            const distance = 30;
-            this.scene.tweens.add({
-                targets: particle,
-                x: this.x + Math.cos(angle) * distance,
-                y: this.y + Math.sin(angle) * distance,
-                alpha: 0,
-                scaleX: 0.1,
-                scaleY: 0.1,
-                duration: 800,
-                ease: 'Power2',
-                onComplete: () => {
-                    particle.destroy();
-                }
-            });
-        }
-        // Финальная анимация исчезновения яйца
-        this.scene.tweens.add({
-            targets: this,
-            alpha: 0,
-            scaleX: 0.5,
-            scaleY: 0.5,
-            duration: 300,
-            ease: 'Power2',
-            onComplete: () => {
-                this.destroy();
-            }
-        });
+        // Уничтожаем яйцо
+        this.destroy();
     }
     // Геттеры
     get hatchTime() { return this._hatchTime; }

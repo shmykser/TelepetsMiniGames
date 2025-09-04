@@ -163,21 +163,7 @@ export class Defence extends GameObject {
     playRepairEffect() {
         if (!this.scene)
             return;
-        // Эффект восстановления - зеленые частицы
-        for (let i = 0; i < 5; i++) {
-            const particle = this.scene.add.circle(this.x + Phaser.Math.Between(-20, 20), this.y + Phaser.Math.Between(-20, 20), 2, 0x00ff00);
-            this.scene.tweens.add({
-                targets: particle,
-                y: particle.y - 30,
-                alpha: 0,
-                duration: 1000,
-                ease: 'Power2',
-                onComplete: () => {
-                    particle.destroy();
-                }
-            });
-        }
-        // Временное свечение
+        // Простой эффект восстановления
         this.setTint(0x00ff00);
         this.scene.time.delayedCall(500, () => {
             this.clearTint();
@@ -210,49 +196,9 @@ export class Defence extends GameObject {
         }
         return protectedObjects;
     }
-    applyProtection(obj) {
-        // Различные типы защиты
-        switch (this._defenceType) {
-            case 'wall':
-                this.applyWallProtection(obj);
-                break;
-            case 'tower':
-                this.applyTowerProtection(obj);
-                break;
-            case 'shield':
-                this.applyShieldProtection(obj);
-                break;
-            case 'barrier':
-                this.applyBarrierProtection(obj);
-                break;
-        }
-    }
-    applyWallProtection(obj) {
-        // Стена блокирует движение врагов
-        if (obj instanceof GameObject && obj.isEnemy) {
-            const direction = new Phaser.Math.Vector2(obj.x - this.x, obj.y - this.y).normalize();
-            // Отталкиваем врага от стены
-            obj.physicsBody.setVelocity(direction.x * 50, direction.y * 50);
-        }
-    }
-    applyTowerProtection(obj) {
-        // Башня восстанавливает здоровье союзников
-        if (obj instanceof GameObject && !obj.isEnemy && obj.health < obj.maxHealth) {
-            obj.health = Math.min(obj.health + 1, obj.maxHealth);
-        }
-    }
-    applyShieldProtection(obj) {
-        // Щит уменьшает получаемый урон
-        if (obj instanceof GameObject) {
-            // Добавляем временную защиту (можно реализовать через модификаторы)
-            obj.setAlpha(0.8); // Визуальный эффект защиты
-        }
-    }
-    applyBarrierProtection(obj) {
-        // Барьер замедляет врагов
-        if (obj instanceof GameObject && obj.isEnemy) {
-            obj.speed = obj.speed * 0.5; // Замедляем на 50%
-        }
+    applyProtection(_obj) {
+        // Базовая защита - можно переопределить в дочерних классах
+        // По умолчанию ничего не делаем
     }
     // Переопределяем методы движения - защитные сооружения неподвижны
     startMovement(_direction) {
@@ -299,17 +245,8 @@ export class Defence extends GameObject {
     showDamageWarning() {
         if (!this.scene)
             return;
-        // Эффект предупреждения о критическом состоянии
-        this.scene.tweens.add({
-            targets: this,
-            alpha: 0.5,
-            duration: 200,
-            yoyo: true,
-            repeat: 3,
-            onComplete: () => {
-                this.setAlpha(1);
-            }
-        });
+        // Простое предупреждение
+        console.log(`Защитное сооружение ${this._defenceType} в критическом состоянии!`);
     }
     // Геттеры
     get defenceType() { return this._defenceType; }

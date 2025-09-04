@@ -108,17 +108,8 @@ export class Enemy extends GameObject {
         super.update(_time, _delta);
     }
     findPlayer() {
-        // Ищем игрока в сцене (предполагаем, что игрок имеет тег 'player')
-        const gameObjects = this.scene.children.list;
-        for (const obj of gameObjects) {
-            if (obj instanceof GameObject && obj !== this && obj.isAlive) {
-                // Проверяем, является ли объект игроком (можно добавить тег или свойство)
-                if (obj.isPlayer) {
-                    return obj;
-                }
-            }
-        }
-        return null;
+        // Базовый поиск игрока - можно переопределить в дочерних классах
+        return this._target;
     }
     handlePlayerDetected(player, distance) {
         this._isChasing = true;
@@ -220,52 +211,14 @@ export class Enemy extends GameObject {
         this.shake(100, 2);
     }
     performRangedAttack(target) {
-        // Дальнобойная атака - создаем снаряд
-        if (!this.scene)
-            return;
-        const projectile = this.scene.add.circle(this.x, this.y, 3, 0xffe66d);
-        this.scene.physics.add.existing(projectile);
-        const projectileBody = projectile.body;
-        const direction = new Phaser.Math.Vector2(target.x - this.x, target.y - this.y).normalize();
-        projectileBody.setVelocity(direction.x * 200, direction.y * 200);
-        // Уничтожаем снаряд через время
-        this.scene.time.delayedCall(2000, () => {
-            if (projectile && projectile.active) {
-                projectile.destroy();
-            }
-        });
-        // Проверяем попадание
-        this.scene.physics.add.overlap(projectile, target, () => {
-            target.takeDamage(this.damage);
-            projectile.destroy();
-        });
+        // Базовая дальнобойная атака
+        target.takeDamage(this.damage);
         this.emit('attack', target, this.damage);
     }
     performTankAttack(target) {
-        // Танковая атака - урон по области
-        const nearbyTargets = this.findTargetsInRange([target], this.attackRange * 1.5);
-        nearbyTargets.forEach(nearbyTarget => {
-            nearbyTarget.takeDamage(this.damage);
-        });
-        // Эффект ударной волны
-        this.createShockwave();
+        // Базовая танковая атака
+        target.takeDamage(this.damage);
         this.emit('attack', target, this.damage);
-    }
-    createShockwave() {
-        if (!this.scene)
-            return;
-        const shockwave = this.scene.add.circle(this.x, this.y, 5, 0x4ecdc4, 0.5);
-        this.scene.tweens.add({
-            targets: shockwave,
-            scaleX: 3,
-            scaleY: 3,
-            alpha: 0,
-            duration: 300,
-            ease: 'Power2',
-            onComplete: () => {
-                shockwave.destroy();
-            }
-        });
     }
     // Геттеры
     get enemyType() { return this._enemyType; }

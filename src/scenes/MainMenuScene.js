@@ -31,35 +31,21 @@ export class MainMenuScene extends Phaser.Scene {
         // Игра с жестами
         const gestureGame = this.add.text(width / 2, height * 0.45, 'Игра с жестами', {
             fontFamily: 'Arial',
-            fontSize: '18px',
+            fontSize: '20px',
             color: '#f59e0b'
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
         gestureGame.on('pointerup', () => {
             this.scene.start('GestureGame');
         });
-        // Демо объектов
-        const objectsDemo = this.add.text(width / 2, height * 0.55, 'Демо объектов', {
-            fontFamily: 'Arial',
-            fontSize: '18px',
-            color: '#8b5cf6'
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        objectsDemo.on('pointerup', () => {
-            this.scene.start('ObjectsDemo');
-        });
         // Инструкции
         this.add.text(width / 2, height * 0.75, 'Управление: Стрелки - движение, Пробел - атака', {
             fontFamily: 'Arial',
-            fontSize: '11px',
+            fontSize: '12px',
             color: '#9ca3af'
         }).setOrigin(0.5);
         this.add.text(width / 2, height * 0.8, 'Жесты: Тап - движение, Двойной тап - атака, Свайп - толчок', {
             fontFamily: 'Arial',
-            fontSize: '11px',
-            color: '#9ca3af'
-        }).setOrigin(0.5);
-        this.add.text(width / 2, height * 0.85, 'Объекты: Яйца вылупляются, Враги преследуют, Защита восстанавливается', {
-            fontFamily: 'Arial',
-            fontSize: '11px',
+            fontSize: '12px',
             color: '#9ca3af'
         }).setOrigin(0.5);
     }

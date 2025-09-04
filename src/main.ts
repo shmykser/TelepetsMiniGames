@@ -6,7 +6,6 @@ import { MainMenuScene } from '@/scenes/MainMenuScene';
 import { GameScene } from '@/scenes/GameScene';
 import { GameSceneWithGameObject } from '@/scenes/GameSceneWithGameObject';
 import { GestureGameScene } from '@/scenes/GestureGameScene';
-import { ObjectsDemoScene } from '@/scenes/ObjectsDemoScene';
 import { UIScene } from '@/scenes/UIScene';
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -20,7 +19,7 @@ const config: Phaser.Types.Core.GameConfig = {
     parent: 'game'
   },
   physics: settings.physics,
-  scene: [BootScene, PreloadScene, MainMenuScene, GameScene, GameSceneWithGameObject, GestureGameScene, ObjectsDemoScene, UIScene],
+  scene: [BootScene, PreloadScene, MainMenuScene, GameScene, GameSceneWithGameObject, GestureGameScene, UIScene],
   render: {
     pixelArt: false,
     antialias: true
