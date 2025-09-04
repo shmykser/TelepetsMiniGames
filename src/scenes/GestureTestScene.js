@@ -262,23 +262,23 @@ export class GestureTestScene extends Phaser.Scene {
     handlePan(e) {
         const object = this.getObjectAtPosition(e.phaserX, e.phaserY);
         this.updateLabels('Удержание', object);
-        // console.log('Pan at:', e.phaserX, e.phaserY, 'on:', object);
+        console.log('Pan at:', e.phaserX, e.phaserY, 'on:', object, 'deltaX:', e.deltaX, 'deltaY:', e.deltaY);
     }
     handleSwipe(e) {
         const object = this.getObjectAtPosition(e.phaserX, e.phaserY);
         const direction = this.getSwipeDirection(e.direction);
         this.updateLabels(`Свайп ${direction}`, object);
-        console.log('Swipe', direction, 'at:', e.phaserX, e.phaserY, 'on:', object);
+        console.log('Swipe', direction, 'at:', e.phaserX, e.phaserY, 'on:', object, 'velocity:', e.velocity);
     }
     handlePinch(e) {
         const object = this.getObjectAtPosition(e.phaserX, e.phaserY);
         this.updateLabels('Щипок', object);
-        console.log('Pinch at:', e.phaserX, e.phaserY, 'on:', object);
+        console.log('Pinch at:', e.phaserX, e.phaserY, 'on:', object, 'scale:', e.scale);
     }
     handleRotate(e) {
         const object = this.getObjectAtPosition(e.phaserX, e.phaserY);
         this.updateLabels('Вращение', object);
-        console.log('Rotate at:', e.phaserX, e.phaserY, 'on:', object);
+        console.log('Rotate at:', e.phaserX, e.phaserY, 'on:', object, 'rotation:', e.rotation);
     }
     getObjectAtPosition(x, y) {
         // Проверяем яйцо

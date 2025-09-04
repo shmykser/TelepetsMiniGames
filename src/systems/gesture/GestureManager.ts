@@ -37,14 +37,14 @@ export class GestureManager {
     });
     
     const pan = new Hammer.Pan({ 
-      threshold: 3,
+      threshold: 5,
       pointers: 1,
       direction: Hammer.DIRECTION_ALL
     });
     
     const swipe = new Hammer.Swipe({ 
-      velocity: 0.3, 
-      threshold: 10,
+      velocity: 0.5, 
+      threshold: 15,
       direction: Hammer.DIRECTION_ALL
     });
     
@@ -59,17 +59,23 @@ export class GestureManager {
     // Настройка приоритетов жестов
     doubleTap.recognizeWith(tap);
     pinch.recognizeWith(rotate);
-    pan.requireFailure(swipe);
+    // Убираем конфликт между pan и swipe - пусть работают независимо
+    // pan.requireFailure(swipe);
 
     this.hammer.add([tap, doubleTap, pan, swipe, pinch, rotate]);
 
     // Привязка событий
     if (events.onTap) this.hammer.on('tap', this.wrapGestureEvent(events.onTap));
     if (events.onDoubleTap) this.hammer.on('doubletap', this.wrapGestureEvent(events.onDoubleTap));
-    if (events.onPan) this.hammer.on('pan', this.wrapGestureEvent(events.onPan));
+    if (events.onPan) this.hammer.on('pan panstart panend', this.wrapGestureEvent(events.onPan));
     if (events.onSwipe) this.hammer.on('swipe', this.wrapGestureEvent(events.onSwipe));
     if (events.onPinch) this.hammer.on('pinch pinchstart pinchend', this.wrapGestureEvent(events.onPinch));
     if (events.onRotate) this.hammer.on('rotate rotatestart rotateend', this.wrapGestureEvent(events.onRotate));
+
+    // Отладочное логирование всех событий Hammer
+    this.hammer.on('hammer.input', (e: any) => {
+      console.log('Hammer input:', e.type, e.eventType, e.pointers.length);
+    });
   }
 
   // Обертка для преобразования Hammer координат в Phaser координаты
