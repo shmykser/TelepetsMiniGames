@@ -192,4 +192,46 @@ export class Enemy extends GameObject {
     }
     super.destroy();
   }
+
+  /**
+   * Статический метод для создания врага с полной настройкой
+   * Создает врага, настраивает графику и создает HealthBar
+   */
+  static CreateEnemy(
+    scene: Phaser.Scene, 
+    enemyType: keyof typeof enemyTypes, 
+    x: number, 
+    y: number
+  ): Enemy {
+    const enemyData = enemyTypes[enemyType];
+    
+    // Создаем врага
+    const enemy = new Enemy(scene, {
+      x: x,
+      y: y,
+      texture: enemyType,
+      enemyType: enemyType,
+      health: enemyData.health,
+      damage: enemyData.damage,
+      speed: enemyData.speed * 10, // Умножаем на 10 для Phaser координат
+      cooldown: enemyData.cooldown * 1000 // Умножаем на 1000 для миллисекунд
+    });
+    
+    // Настраиваем размер
+    enemy.setScale(0.75);
+    
+    // Создаем полосу здоровья
+    enemy.createHealthBar({
+      showWhenFull: false, // Не показываем при полном здоровье
+      showWhenEmpty: true, // Показываем при смерти
+      offsetY: -35, // Смещение вверх от объекта
+      colors: {
+        background: 0x000000,
+        health: 0x00ff00,
+        border: 0xffffff
+      }
+    });
+    
+    return enemy;
+  }
 }

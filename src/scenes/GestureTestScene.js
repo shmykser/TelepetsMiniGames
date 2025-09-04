@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
-import { Enemy } from '../core/objects/Enemy';
 import { ActionManager } from '../systems/actions/ActionManager';
 import { GestureManager } from '../systems/gesture/GestureManager';
-import { enemyTypes } from '../core/types/enemyTypes';
+import { TextureManager } from '../core/TextureManager';
+import { EnemySpawner } from '../core/EnemySpawner';
 /**
  * Сцена для тестирования жестов с врагами
  */
@@ -24,12 +24,19 @@ export class GestureTestScene extends Phaser.Scene {
     }
     create() {
         const { width, height } = this.scale;
-        // Создаем простые геометрические текстуры для врагов
-        this.createTextures();
+        // Создаем все текстуры
+        TextureManager.createAllTextures(this);
         // Создаем фон
         this.add.rectangle(width / 2, height / 2, width, height, 0x2c3e50);
-        // Создаем врагов
-        this.createEnemies();
+        // Создаем всех врагов
+        this.enemies = EnemySpawner.createAllEnemies(this);
+        // Добавляем UI
+        this.createUI();
+        // Инициализируем менеджеры
+        this.initializeManagers();
+    }
+    createUI() {
+        const { width, height } = this.scale;
         // Добавляем заголовок
         this.add.text(width / 2, 50, 'Тестирование жестов с врагами', {
             fontFamily: 'Arial',
@@ -46,8 +53,6 @@ export class GestureTestScene extends Phaser.Scene {
             backgroundColor: '#000000',
             padding: { x: 10, y: 5 }
         }).setOrigin(0.5);
-        // Инициализируем менеджеры
-        this.initializeManagers();
     }
     initializeManagers() {
         // Создаем ActionManager
@@ -66,82 +71,6 @@ export class GestureTestScene extends Phaser.Scene {
                 console.log(`Долгое нажатие в позиции: (${e.phaserX}, ${e.phaserY})`);
                 this.actionManager.handleAction('press', 'field', e.phaserX, e.phaserY);
             }
-        });
-    }
-    createTextures() {
-        // Создаем простые текстуры со смайликами
-        this.createEmojiTextures();
-    }
-    createEmojiTextures() {
-        // Создаем простые текстуры со смайликами для всех объектов
-        this.createEmojiTexture('🥚', 'egg');
-        this.createEmojiTexture('🕷️', 'spider');
-        this.createEmojiTexture('🐞', 'beetle');
-        this.createEmojiTexture('🐜', 'ant');
-        this.createEmojiTexture('🦏', 'rhinoceros');
-        this.createEmojiTexture('🦋', 'fly');
-        this.createEmojiTexture('🦟', 'mosquito');
-        // Создаем текстуры для защитных объектов
-        this.createEmojiTexture('🍯', 'sugar'); // Сахар
-        this.createEmojiTexture('🪨', 'stone'); // Камень
-        this.createEmojiTexture('⚡', 'crack'); // Трещина/молния
-        this.createEmojiTexture('🔺', 'spikes'); // Шипы
-        this.createEmojiTexture('🥒', 'madCucumber'); // Бешеный огурец
-        this.createEmojiTexture('🕳️', 'pit'); // Яма
-    }
-    createEmojiTexture(emoji, textureKey) {
-        // Создаем RenderTexture для рендеринга эмодзи
-        const renderTexture = this.add.renderTexture(0, 0, 64, 64);
-        // Создаем текстовый объект с эмодзи
-        const text = this.add.text(32, 32, emoji, {
-            fontSize: '48px',
-            fontFamily: 'Arial'
-        }).setOrigin(0.5);
-        // Рендерим текст в текстуру
-        renderTexture.draw(text);
-        // Сохраняем как текстуру
-        renderTexture.saveTexture(textureKey);
-        // Очищаем
-        text.destroy();
-        renderTexture.destroy();
-    }
-    createEnemies() {
-        const { width, height } = this.scale;
-        // Создаем несколько врагов разных типов, разнесенных по экрану
-        const enemyConfigs = [
-            { x: 150, y: 200, type: 'ant' },
-            { x: width - 150, y: 200, type: 'beetle' },
-            { x: 150, y: height - 200, type: 'rhinoceros' },
-            { x: width - 150, y: height - 200, type: 'mosquito' },
-            { x: width / 2 - 100, y: 150, type: 'spider' },
-            { x: width / 2 + 100, y: height - 150, type: 'fly' }
-        ];
-        enemyConfigs.forEach(config => {
-            const enemyData = enemyTypes[config.type];
-            const enemy = new Enemy(this, {
-                x: config.x,
-                y: config.y,
-                texture: config.type, // Используем текстуру соответствующую типу врага
-                enemyType: config.type,
-                health: enemyData.health,
-                damage: enemyData.damage,
-                speed: enemyData.speed * 10, // Умножаем на 10 для Phaser координат
-                cooldown: enemyData.cooldown * 1000 // Умножаем на 1000 для миллисекунд
-            });
-            // Устанавливаем размер для смайликов (уменьшаем в 2 раза)
-            enemy.setScale(0.75);
-            // Создаем полосу здоровья для врага
-            enemy.createHealthBar({
-                showWhenFull: false, // Не показываем при полном здоровье
-                showWhenEmpty: true, // Показываем при смерти
-                offsetY: -35, // Смещение вверх от объекта
-                colors: {
-                    background: 0x000000,
-                    health: 0x00ff00,
-                    border: 0xffffff
-                }
-            });
-            this.enemies.push(enemy);
         });
     }
     update() {
