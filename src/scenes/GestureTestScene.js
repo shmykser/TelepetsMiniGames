@@ -77,14 +77,14 @@ export class GestureTestScene extends Phaser.Scene {
     }
     createEnemies() {
         const { width, height } = this.scale;
-        // Создаем несколько врагов разных типов
+        // Создаем несколько врагов разных типов, разнесенных по экрану
         const enemyConfigs = [
-            { x: 200, y: 200, type: 'ant' },
-            { x: width - 200, y: 200, type: 'beetle' },
-            { x: 200, y: height - 200, type: 'rhinoceros' },
-            { x: width - 200, y: height - 200, type: 'mosquito' },
-            { x: width / 2, y: 150, type: 'spider' },
-            { x: width / 2, y: height - 150, type: 'fly' }
+            { x: 150, y: 200, type: 'ant' },
+            { x: width - 150, y: 200, type: 'beetle' },
+            { x: 150, y: height - 200, type: 'rhinoceros' },
+            { x: width - 150, y: height - 200, type: 'mosquito' },
+            { x: width / 2 - 100, y: 150, type: 'spider' },
+            { x: width / 2 + 100, y: height - 150, type: 'fly' }
         ];
         enemyConfigs.forEach(config => {
             const enemy = new Enemy(this, {
@@ -97,8 +97,8 @@ export class GestureTestScene extends Phaser.Scene {
                 speed: 100,
                 cooldown: 1000
             });
-            // Устанавливаем размер для смайликов
-            enemy.setScale(1.5);
+            // Устанавливаем размер для смайликов (уменьшаем в 2 раза)
+            enemy.setScale(0.75);
             this.enemies.push(enemy);
         });
     }
