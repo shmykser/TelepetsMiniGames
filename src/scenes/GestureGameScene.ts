@@ -147,8 +147,27 @@ export class GestureGameScene extends Phaser.Scene {
   private onSwipe(e: any): void {
     console.log('Swipe direction:', e.direction);
     
-    const direction = this.gestureManager.getSwipeDirection(e);
+    const directionStr = this.gestureManager.getSwipeDirection(e.direction);
     const force = this.gestureManager.getGestureForce(e);
+    
+    // Преобразуем направление в вектор
+    let direction: Phaser.Math.Vector2;
+    switch (directionStr) {
+      case '←':
+        direction = new Phaser.Math.Vector2(-1, 0);
+        break;
+      case '→':
+        direction = new Phaser.Math.Vector2(1, 0);
+        break;
+      case '↑':
+        direction = new Phaser.Math.Vector2(0, -1);
+        break;
+      case '↓':
+        direction = new Phaser.Math.Vector2(0, 1);
+        break;
+      default:
+        direction = new Phaser.Math.Vector2(0, 0);
+    }
     
     // Применяем силу к игроку
     this.player.physicsBody.setVelocity(

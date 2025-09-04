@@ -1,14 +1,11 @@
 import Hammer from 'hammerjs';
-import Phaser from 'phaser';
+/**
+ * Менеджер жестов для Phaser игры
+ * Основан на официальной документации Hammer.js
+ */
 export class GestureManager {
     constructor(scene, events = {}) {
         Object.defineProperty(this, "hammer", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "scene", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -20,19 +17,34 @@ export class GestureManager {
             writable: true,
             value: void 0
         });
-        this.scene = scene;
         this.gameCanvas = scene.game.canvas;
         // Создаем Hammer Manager для canvas
-        this.hammer = new Hammer.Manager(this.gameCanvas);
-        // Настройка жестов согласно документации Hammer.js
-        const singleTap = new Hammer.Tap({
-            event: 'singletap',
+        this.hammer = new Hammer.Manager(this.gameCanvas, {
+            touchAction: 'auto',
+            domEvents: false,
+            enable: true
+        });
+        // Создаем распознаватели жестов согласно документации
+        this.setupRecognizers();
+        // Привязываем события
+        this.bindEvents(events);
+        // Отладочное логирование
+        this.setupDebugLogging();
+    }
+    /**
+     * Настройка распознавателей жестов согласно документации Hammer.js
+     */
+    setupRecognizers() {
+        // 1. Tap - одинарный тап
+        const tap = new Hammer.Tap({
+            event: 'tap',
             taps: 1,
             interval: 300,
             time: 250,
             threshold: 2,
             posThreshold: 10
         });
+        // 2. DoubleTap - двойной тап
         const doubleTap = new Hammer.Tap({
             event: 'doubletap',
             taps: 2,
@@ -41,105 +53,202 @@ export class GestureManager {
             threshold: 2,
             posThreshold: 10
         });
+        // 3. Pan - удержание и перетаскивание
         const pan = new Hammer.Pan({
             threshold: 10,
             pointers: 1,
             direction: Hammer.DIRECTION_ALL
         });
+        // 4. Swipe - быстрый свайп
         const swipe = new Hammer.Swipe({
             velocity: 0.3,
             threshold: 10,
             direction: Hammer.DIRECTION_ALL
         });
+        // 5. Pinch - щипок (масштабирование)
         const pinch = new Hammer.Pinch({
             threshold: 0.1
         });
+        // 6. Rotate - вращение
         const rotate = new Hammer.Rotate({
             threshold: 0.1
         });
-        // Правильные приоритеты согласно документации Hammer.js
-        // Для multi-tap: двойной тап работает с одинарным
-        doubleTap.recognizeWith(singleTap);
-        // Одинарный тап ждет неудачи двойного тапа
-        singleTap.requireFailure(doubleTap);
-        // Swipe и pan работают независимо
-        // pinch и rotate работают вместе
-        pinch.recognizeWith(rotate);
-        this.hammer.add([singleTap, doubleTap, pan, swipe, pinch, rotate]);
-        // Привязка событий
-        if (events.onTap)
-            this.hammer.on('singletap', this.wrapGestureEvent(events.onTap));
-        if (events.onDoubleTap)
-            this.hammer.on('doubletap', this.wrapGestureEvent(events.onDoubleTap));
-        if (events.onPan)
-            this.hammer.on('pan panstart panend', this.wrapGestureEvent(events.onPan));
-        if (events.onSwipe)
-            this.hammer.on('swipe', this.wrapGestureEvent(events.onSwipe));
-        if (events.onPinch)
-            this.hammer.on('pinch pinchstart pinchend', this.wrapGestureEvent(events.onPinch));
-        if (events.onRotate)
-            this.hammer.on('rotate rotatestart rotateend', this.wrapGestureEvent(events.onRotate));
-        // Отладочное логирование всех событий Hammer
-        this.hammer.on('hammer.input', (e) => {
-            console.log('Hammer input:', e.type, e.eventType, e.pointers.length, 'recognizers:', e.recognizers?.map((r) => r.options.event));
+        // 7. Press - долгое нажатие
+        const press = new Hammer.Press({
+            time: 500,
+            threshold: 5
         });
-        // Логирование всех распознанных жестов
-        this.hammer.on('singletap doubletap pan panstart panend swipe pinch pinchstart pinchend rotate rotatestart rotateend', (e) => {
-            console.log('Gesture recognized:', e.type, 'at', e.center.x, e.center.y);
-        });
+        // Добавляем распознаватели в менеджер
+        this.hammer.add([tap, doubleTap, pan, swipe, pinch, rotate, press]);
+        // Настройка приоритетов согласно документации Hammer.js
+        this.setupRecognizerPriorities(tap, doubleTap, pan, swipe, pinch, rotate, press);
     }
-    // Обертка для преобразования Hammer координат в Phaser координаты
+    /**
+     * Настройка приоритетов распознавателей согласно документации
+     */
+    setupRecognizerPriorities(tap, doubleTap, _pan, _swipe, pinch, rotate, press) {
+        // Multi-tap приоритеты (согласно документации)
+        doubleTap.recognizeWith(tap);
+        tap.requireFailure(doubleTap);
+        // Pinch и rotate работают вместе
+        pinch.recognizeWith(rotate);
+        // Press требует неудачи tap и doubleTap
+        press.requireFailure([tap, doubleTap]);
+        // Pan и swipe работают независимо (убираем конфликты)
+        // swipe.recognizeWith(pan); // УБРАНО - пусть работают независимо
+        // pan.requireFailure(swipe); // УБРАНО - пусть работают независимо
+    }
+    /**
+     * Привязка событий к распознавателям
+     */
+    bindEvents(events) {
+        if (events.onTap) {
+            this.hammer.on('tap', this.wrapGestureEvent(events.onTap));
+        }
+        if (events.onDoubleTap) {
+            this.hammer.on('doubletap', this.wrapGestureEvent(events.onDoubleTap));
+        }
+        if (events.onPan) {
+            this.hammer.on('pan panstart panend', this.wrapGestureEvent(events.onPan));
+        }
+        if (events.onSwipe) {
+            this.hammer.on('swipe', this.wrapGestureEvent(events.onSwipe));
+        }
+        if (events.onPinch) {
+            this.hammer.on('pinch pinchstart pinchend', this.wrapGestureEvent(events.onPinch));
+        }
+        if (events.onRotate) {
+            this.hammer.on('rotate rotatestart rotateend', this.wrapGestureEvent(events.onRotate));
+        }
+        if (events.onPress) {
+            this.hammer.on('press pressup', this.wrapGestureEvent(events.onPress));
+        }
+    }
+    /**
+     * Обертка для преобразования Hammer координат в Phaser координаты
+     */
     wrapGestureEvent(callback) {
         return (e) => {
             // Преобразуем координаты Hammer в координаты Phaser
             const phaserCoords = this.hammerToPhaserCoords(e.center.x, e.center.y);
-            // Создаем расширенный объект события с Phaser координатами
-            const enhancedEvent = {
+            // Создаем расширенное событие с Phaser координатами
+            const extendedEvent = {
                 ...e,
                 phaserX: phaserCoords.x,
-                phaserY: phaserCoords.y,
-                phaserCoords: phaserCoords
+                phaserY: phaserCoords.y
             };
-            callback(enhancedEvent);
+            callback(extendedEvent);
         };
     }
-    // Преобразование координат Hammer в координаты Phaser
+    /**
+     * Преобразование координат Hammer в координаты Phaser
+     */
     hammerToPhaserCoords(hammerX, hammerY) {
-        const canvasRect = this.gameCanvas.getBoundingClientRect();
-        const scaleX = this.scene.scale.width / canvasRect.width;
-        const scaleY = this.scene.scale.height / canvasRect.height;
-        return new Phaser.Math.Vector2((hammerX - canvasRect.left) * scaleX, (hammerY - canvasRect.top) * scaleY);
+        const canvas = this.gameCanvas;
+        const rect = canvas.getBoundingClientRect();
+        // Нормализуем координаты относительно canvas
+        const x = (hammerX - rect.left) * (canvas.width / rect.width);
+        const y = (hammerY - rect.top) * (canvas.height / rect.height);
+        return { x, y };
     }
-    // Получение направления свайпа в Phaser формате
-    getSwipeDirection(e) {
-        const direction = e.direction;
-        let x = 0, y = 0;
-        if (direction === Hammer.DIRECTION_LEFT)
-            x = -1;
-        else if (direction === Hammer.DIRECTION_RIGHT)
-            x = 1;
-        else if (direction === Hammer.DIRECTION_UP)
-            y = -1;
-        else if (direction === Hammer.DIRECTION_DOWN)
-            y = 1;
-        return new Phaser.Math.Vector2(x, y);
+    /**
+     * Получение направления свайпа в виде строки
+     */
+    getSwipeDirection(direction) {
+        switch (direction) {
+            case Hammer.DIRECTION_LEFT:
+                return '←';
+            case Hammer.DIRECTION_RIGHT:
+                return '→';
+            case Hammer.DIRECTION_UP:
+                return '↑';
+            case Hammer.DIRECTION_DOWN:
+                return '↓';
+            default:
+                return '?';
+        }
     }
-    // Получение силы жеста (для пан и свайп)
+    /**
+     * Получение силы жеста
+     */
     getGestureForce(e) {
-        return e.velocity || 0;
+        return e.force || 0;
     }
-    // Получение масштаба пинча
+    /**
+     * Получение масштаба щипка
+     */
     getPinchScale(e) {
         return e.scale || 1;
     }
-    // Получение угла поворота
+    /**
+     * Получение угла поворота
+     */
     getRotationAngle(e) {
         return e.rotation || 0;
     }
+    /**
+     * Настройка отладочного логирования
+     */
+    setupDebugLogging() {
+        // Логирование всех событий Hammer
+        this.hammer.on('hammer.input', (e) => {
+            console.log('Hammer input:', {
+                type: e.type,
+                eventType: e.eventType,
+                pointers: e.pointers.length,
+                center: { x: e.center.x, y: e.center.y }
+            });
+        });
+        // Логирование распознанных жестов
+        this.hammer.on('tap doubletap pan panstart panend swipe pinch pinchstart pinchend rotate rotatestart rotateend press pressup', (e) => {
+            console.log('Gesture recognized:', {
+                type: e.type,
+                center: { x: e.center.x, y: e.center.y },
+                deltaX: e.deltaX,
+                deltaY: e.deltaY,
+                velocity: e.velocity,
+                scale: e.scale,
+                rotation: e.rotation
+            });
+        });
+    }
+    /**
+     * Получение распознавателя по имени
+     */
+    getRecognizer(name) {
+        return this.hammer.get(name);
+    }
+    /**
+     * Обновление настроек распознавателя
+     */
+    updateRecognizer(name, options) {
+        const recognizer = this.hammer.get(name);
+        if (recognizer) {
+            recognizer.set(options);
+        }
+    }
+    /**
+     * Включение/выключение распознавателя
+     */
+    setRecognizerEnabled(name, enabled) {
+        const recognizer = this.hammer.get(name);
+        if (recognizer) {
+            recognizer.set({ enable: enabled });
+        }
+    }
+    /**
+     * Остановка текущего распознавания
+     */
+    stopRecognition(force = false) {
+        this.hammer.stop(force);
+    }
+    /**
+     * Уничтожение менеджера жестов
+     */
     destroy() {
-        this.hammer.stop(true);
-        this.hammer.destroy();
-        // @ts-expect-error explicit cleanup
-        this.hammer = undefined;
+        if (this.hammer) {
+            this.hammer.destroy();
+            this.hammer = null;
+        }
     }
 }
