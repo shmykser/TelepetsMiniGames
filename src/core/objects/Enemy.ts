@@ -1,26 +1,29 @@
 import { GameObject, GameObjectConfig } from '../GameObject';
+import { enemyTypes, EnemyType, EnemyReaction } from '../types/enemyTypes';
 
 export interface EnemyConfig extends GameObjectConfig {
-  enemyType?: 'basic' | 'fast' | 'tank' | 'ranged';
+  enemyType?: keyof typeof enemyTypes;
   detectionRange?: number;
-  attackPattern?: 'melee' | 'ranged' | 'charge';
 }
 
 export class Enemy extends GameObject {
-  private _enemyType: string;
+  private _enemyType: keyof typeof enemyTypes;
   private _detectionRange: number;
-  private _attackPattern: string;
+  private _enemyData: EnemyType;
   private _lastPlayerPosition: Phaser.Math.Vector2 | null = null;
   private _isChasing: boolean = false;
   private _chaseTimer?: Phaser.Time.TimerEvent;
 
   constructor(scene: Phaser.Scene, config: EnemyConfig) {
-    // Настройки по умолчанию для врага
+    const enemyType = config.enemyType || 'ant';
+    const enemyData = enemyTypes[enemyType];
+    
+    // Настройки из типа врага
     const enemyConfig: GameObjectConfig = {
-      health: config.health || 50,
-      damage: config.damage || 15,
-      speed: config.speed || 100,
-      cooldown: config.cooldown || 1000,
+      health: config.health || enemyData.health,
+      damage: config.damage || enemyData.damage,
+      speed: config.speed || enemyData.speed * 20, // конвертируем 1-10 в пиксели
+      cooldown: config.cooldown || enemyData.cooldown * 1000, // конвертируем секунды в мс
       attackRange: config.attackRange || 40,
       x: config.x,
       y: config.y,
@@ -29,43 +32,40 @@ export class Enemy extends GameObject {
 
     super(scene, enemyConfig);
 
-    this._enemyType = config.enemyType || 'basic';
+    this._enemyType = enemyType;
     this._detectionRange = config.detectionRange || 150;
-    this._attackPattern = config.attackPattern || 'melee';
+    this._enemyData = enemyData;
+
+    // Настраиваем свойства из типа врага
+    this._size = enemyData.size;
+    this._canFly = enemyData.canFly;
 
     // Настраиваем поведение в зависимости от типа
     this.setupEnemyBehavior();
   }
 
   private setupEnemyBehavior(): void {
-    // Настройки в зависимости от типа врага
+    // Настраиваем визуал в зависимости от типа врага
     switch (this._enemyType) {
-      case 'fast':
-        this.speed = 180;
-        this.health = 30;
-        this.damage = 10;
-        this.attackRange = 30;
-        this.setTint(0xff6b6b); // Красный
+      case 'ant':
+        this.setTint(0x8b4513); // Коричневый
         break;
-      
-      case 'tank':
-        this.speed = 60;
-        this.health = 120;
-        this.damage = 25;
-        this.attackRange = 50;
-        this.setTint(0x4ecdc4); // Бирюзовый
+      case 'beetle':
+        this.setTint(0x2f4f4f); // Темно-серый
         break;
-      
-      case 'ranged':
-        this.speed = 80;
-        this.health = 40;
-        this.damage = 20;
-        this.attackRange = 80;
-        this.cooldown = 1500;
-        this.setTint(0xffe66d); // Желтый
+      case 'rhinoceros':
+        this.setTint(0x4a4a4a); // Серый
         break;
-      
-      default: // basic
+      case 'mosquito':
+        this.setTint(0x696969); // Серый
+        break;
+      case 'spider':
+        this.setTint(0x000000); // Черный
+        break;
+      case 'fly':
+        this.setTint(0x808080); // Серый
+        break;
+      default:
         this.setTint(0xef4444); // Красный
         break;
     }
@@ -139,57 +139,10 @@ export class Enemy extends GameObject {
   }
 
   private chasePlayer(player: GameObject): void {
-    // Различные паттерны преследования
-    switch (this._attackPattern) {
-      case 'charge':
-        this.chargeAtPlayer(player);
-        break;
-      
-      case 'ranged':
-        this.maintainDistance(player);
-        break;
-      
-      default: // melee
-        this.startMovementToPoint(player.x, player.y);
-        break;
-    }
+    // Базовое преследование - движемся к игроку
+    this.startMovementToPoint(player.x, player.y);
   }
 
-  private chargeAtPlayer(player: GameObject): void {
-    // Быстрая атака с ускорением
-    const direction = new Phaser.Math.Vector2(
-      player.x - this.x,
-      player.y - this.y
-    ).normalize();
-    
-    this.physicsBody.setVelocity(
-      direction.x * this.speed * 1.5,
-      direction.y * this.speed * 1.5
-    );
-  }
-
-  private maintainDistance(player: GameObject): void {
-    // Поддерживаем дистанцию для дальнобойных атак
-    const distance = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
-    const optimalDistance = this.attackRange * 0.8;
-    
-    if (distance > optimalDistance) {
-      // Слишком далеко - приближаемся
-      this.startMovementToPoint(player.x, player.y);
-    } else if (distance < optimalDistance * 0.6) {
-      // Слишком близко - отходим
-      const direction = new Phaser.Math.Vector2(
-        this.x - player.x,
-        this.y - player.y
-      ).normalize();
-      
-      this.startMovement(direction);
-    } else {
-      // Оптимальная дистанция - атакуем
-      this.stopMovement();
-      this.attack(player);
-    }
-  }
 
   // Переопределяем атаку для разных типов врагов
   override attack(target?: GameObject): boolean {
@@ -205,20 +158,8 @@ export class Enemy extends GameObject {
     
     if (distance > this.attackRange) return false;
 
-    // Специальные атаки в зависимости от типа
-    switch (this._enemyType) {
-      case 'ranged':
-        this.performRangedAttack(attackTarget);
-        break;
-      
-      case 'tank':
-        this.performTankAttack(attackTarget);
-        break;
-      
-      default:
-        this.performBasicAttack(attackTarget);
-        break;
-    }
+    // Базовая атака для всех типов врагов
+    this.performBasicAttack(attackTarget);
 
     return true;
   }
@@ -232,32 +173,37 @@ export class Enemy extends GameObject {
     this.shake(100, 2);
   }
 
-  private performRangedAttack(target: GameObject): void {
-    // Базовая дальнобойная атака
-    target.takeDamage(this.damage);
-    this.emit('attack', target, this.damage);
-  }
 
-  private performTankAttack(target: GameObject): void {
-    // Базовая танковая атака
-    target.takeDamage(this.damage);
-    this.emit('attack', target, this.damage);
+  /**
+   * Получает реакцию врага на защитный объект
+   */
+  getReactionToDefence(defenceType: string): EnemyReaction {
+    const reactions = this._enemyData.reactions;
+    switch (defenceType) {
+      case 'sugar': return reactions.sugar;
+      case 'stone': return reactions.stone;
+      case 'crack': return reactions.crack;
+      case 'spikes': return reactions.spikes;
+      case 'madCucumber': return reactions.madCucumber;
+      case 'pit': return reactions.pit;
+      default: return 'ignore';
+    }
   }
 
   // Геттеры
-  get enemyType(): string { return this._enemyType; }
+  get enemyType(): keyof typeof enemyTypes { return this._enemyType; }
   get detectionRange(): number { return this._detectionRange; }
-  get attackPattern(): string { return this._attackPattern; }
   get isChasing(): boolean { return this._isChasing; }
+  get enemyData(): EnemyType { return this._enemyData; }
 
   // Сеттеры
-  set enemyType(value: string) { 
+  set enemyType(value: keyof typeof enemyTypes) { 
     this._enemyType = value;
+    this._enemyData = enemyTypes[value];
     this.setupEnemyBehavior();
   }
   
   set detectionRange(value: number) { this._detectionRange = Math.max(0, value); }
-  set attackPattern(value: string) { this._attackPattern = value; }
 
   // Уничтожение с очисткой таймеров
   override destroy(): void {

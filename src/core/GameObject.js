@@ -58,6 +58,18 @@ export class GameObject extends Phaser.GameObjects.Sprite {
             writable: true,
             value: null
         });
+        Object.defineProperty(this, "_size", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: 1
+        }); // размер для взаимодействия с ямой
+        Object.defineProperty(this, "_canFly", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: false
+        }); // способность летать
         // Phaser компоненты
         Object.defineProperty(this, "_body", {
             enumerable: true,
@@ -306,4 +318,88 @@ export class GameObject extends Phaser.GameObjects.Sprite {
         this.emit('destroy', this);
         super.destroy();
     }
+    // === ОБЩИЕ МЕТОДЫ ДЛЯ ВСЕХ ОБЪЕКТОВ ===
+    /**
+     * Проверяет, находится ли объект в радиусе действия
+     */
+    isInRange(target, range) {
+        if (!target || !target.isAlive)
+            return false;
+        const distance = Phaser.Math.Distance.Between(this.x, this.y, target.x, target.y);
+        return distance <= range;
+    }
+    /**
+     * Меняет цель объекта
+     */
+    changeTarget(newTarget) {
+        const oldTarget = this._target;
+        this._target = newTarget;
+        if (oldTarget !== newTarget) {
+            this.emit('targetChanged', newTarget, oldTarget);
+        }
+    }
+    /**
+     * Движется к цели со своей скоростью
+     */
+    moveToTarget() {
+        if (!this._target || !this._target.isAlive || this._speed === 0) {
+            this.stopMovement();
+            return;
+        }
+        const direction = new Phaser.Math.Vector2(this._target.x - this.x, this._target.y - this.y).normalize();
+        this.startMovement(direction);
+    }
+    /**
+     * Атакует цель
+     */
+    attackTarget(target) {
+        return this.attack(target);
+    }
+    /**
+     * Обрабатывает реакцию на защитный объект
+     */
+    handleDefenceReaction(defence, reaction) {
+        switch (reaction) {
+            case 'attack':
+                this.changeTarget(defence);
+                break;
+            case 'ignore':
+                // Ничего не делаем
+                break;
+            case 'influence':
+                // Базовое влияние - можно переопределить в дочерних классах
+                this.emit('defenceInfluence', defence);
+                break;
+        }
+    }
+    /**
+     * Проверяет способность летать
+     */
+    canFlyObject() {
+        return this._canFly;
+    }
+    /**
+     * Получает размер объекта
+     */
+    getObjectSize() {
+        return this._size;
+    }
+    /**
+     * Устанавливает размер объекта
+     */
+    setObjectSize(size) {
+        this._size = Math.max(1, size);
+    }
+    /**
+     * Устанавливает способность летать
+     */
+    setCanFlyObject(canFly) {
+        this._canFly = canFly;
+    }
+    // Геттеры для новых свойств
+    get objectSize() { return this._size; }
+    get canFlyProperty() { return this._canFly; }
+    // Сеттеры для новых свойств
+    set objectSize(value) { this.setObjectSize(value); }
+    set canFlyProperty(value) { this.setCanFlyObject(value); }
 }

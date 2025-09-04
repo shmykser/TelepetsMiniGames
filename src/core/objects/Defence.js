@@ -1,12 +1,15 @@
 import { GameObject } from '../GameObject';
+import { defenceTypes } from '../types/defenceTypes';
 export class Defence extends GameObject {
     constructor(scene, config) {
-        // Настройки по умолчанию для защитных сооружений
+        const defenceType = config.defenceType || 'sugar';
+        const defenceData = defenceTypes[defenceType];
+        // Настройки из типа защиты
         const defenceConfig = {
-            health: config.health || 200,
-            damage: 0, // Защитные сооружения не атакуют
-            speed: 0, // Неподвижны
-            cooldown: 0,
+            health: config.health || defenceData.health,
+            damage: config.damage || defenceData.damage,
+            speed: 0, // Защитные сооружения неподвижны
+            cooldown: config.cooldown || defenceData.cooldown * 1000, // конвертируем секунды в мс
             attackRange: 0,
             x: config.x,
             y: config.y,
@@ -61,46 +64,48 @@ export class Defence extends GameObject {
             writable: true,
             value: []
         });
-        this._defenceType = config.defenceType || 'wall';
-        this._protectionRadius = config.protectionRadius || 100;
-        this._defenceMaxHealth = config.maxHealth || 200;
+        Object.defineProperty(this, "_defenceData", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        this._defenceType = defenceType;
+        this._defenceData = defenceData;
+        this._protectionRadius = config.protectionRadius || defenceData.radius * defenceData.size * 10; // конвертируем в пиксели
+        this._defenceMaxHealth = config.maxHealth || defenceData.health;
         this._repairRate = config.repairRate || 5; // Восстановление здоровья в секунду
         this._autoRepair = config.autoRepair !== false; // По умолчанию включено
+        // Настраиваем размер из типа защиты
+        this._size = defenceData.size;
         // Настраиваем поведение в зависимости от типа
         this.setupDefenceBehaviour();
         // Запускаем систему защиты
         this.startProtectionSystem();
     }
     setupDefenceBehaviour() {
-        // Настройки в зависимости от типа защиты
+        // Настраиваем визуал в зависимости от типа защиты
         switch (this._defenceType) {
-            case 'wall':
-                this.health = 300;
-                this._defenceMaxHealth = 300;
-                this._protectionRadius = 50;
-                this.setTint(0x8b4513); // Коричневый
-                this.setScale(1.5, 0.8); // Широкая стена
+            case 'sugar':
+                this.setTint(0xfbbf24); // Желтый
                 break;
-            case 'tower':
-                this.health = 150;
-                this._defenceMaxHealth = 150;
-                this._protectionRadius = 120;
-                this.setTint(0x696969); // Серый
-                this.setScale(1.2, 1.5); // Высокая башня
+            case 'stone':
+                this.setTint(0x6b7280); // Серый
+                this.setScale(1.5, 1.5); // Большой размер
                 break;
-            case 'shield':
-                this.health = 100;
-                this._defenceMaxHealth = 100;
-                this._protectionRadius = 80;
-                this.setTint(0x4169e1); // Синий
-                this.setAlpha(0.7); // Полупрозрачный
+            case 'crack':
+                this.setTint(0x374151); // Темно-серый
+                this.setScale(1.0, 2.0); // Длинная трещина
                 break;
-            case 'barrier':
-                this.health = 250;
-                this._defenceMaxHealth = 250;
-                this._protectionRadius = 60;
-                this.setTint(0x2f4f4f); // Темно-серый
-                this.setScale(1.3, 1.0);
+            case 'spikes':
+                this.setTint(0xdc2626); // Красный
+                this.setScale(1.2, 1.2);
+                break;
+            case 'madCucumber':
+                this.setTint(0x16a34a); // Зеленый
+                break;
+            case 'pit':
+                this.setTint(0x1f2937); // Очень темный
                 break;
             default:
                 this.setTint(0x808080); // Серый
@@ -256,9 +261,11 @@ export class Defence extends GameObject {
     get autoRepair() { return this._autoRepair; }
     get isRepairing() { return this._isRepairing; }
     get protectedObjects() { return this._protectedObjects; }
+    get defenceData() { return this._defenceData; }
     // Сеттеры
     set defenceType(value) {
         this._defenceType = value;
+        this._defenceData = defenceTypes[value];
         this.setupDefenceBehaviour();
     }
     set protectionRadius(value) { this._protectionRadius = Math.max(0, value); }

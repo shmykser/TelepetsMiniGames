@@ -36,6 +36,9 @@ export class Egg extends GameObject {
         });
         this._hatchTime = config.hatchTime || 10000; // 10 секунд по умолчанию
         this._hatchType = config.hatchType || 'default';
+        // Яйцо - основная цель врагов
+        this._size = 2; // Размер яйца
+        this._canFly = false;
         // Настраиваем физику для яйца
         this.setupEggPhysics();
         // Запускаем таймер вылупления
