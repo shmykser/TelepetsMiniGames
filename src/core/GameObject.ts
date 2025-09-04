@@ -133,7 +133,7 @@ export class GameObject extends Phaser.GameObjects.Sprite {
 
   // Методы атаки через Phaser Timer
   attack(target?: GameObject): boolean {
-    if (!this._isAlive) return false;
+    if (!this._isAlive || !this.scene) return false;
     
     const currentTime = this.scene.time.now;
     if (currentTime - this._lastAttackTime < this._cooldown) {
@@ -166,7 +166,7 @@ export class GameObject extends Phaser.GameObjects.Sprite {
   }
 
   takeDamage(damage: number): void {
-    if (!this._isAlive) return;
+    if (!this._isAlive || !this.scene) return;
     
     this.health -= damage;
     this.emit('damage', damage, this._health);
@@ -229,18 +229,23 @@ export class GameObject extends Phaser.GameObjects.Sprite {
     this.stopMovement();
     
     // Анимация смерти с помощью Phaser Tween
-    this._tweenManager.add({
-      targets: this,
-      alpha: 0.3,
-      scaleX: 0.5,
-      scaleY: 0.5,
-      tint: 0x666666,
-      duration: 500,
-      ease: 'Power2',
-      onComplete: () => {
-        this.emit('death', this);
-      }
-    });
+    if (this.scene) {
+      this._tweenManager.add({
+        targets: this,
+        alpha: 0.3,
+        scaleX: 0.5,
+        scaleY: 0.5,
+        tint: 0x666666,
+        duration: 500,
+        ease: 'Power2',
+        onComplete: () => {
+          this.emit('death', this);
+        }
+      });
+    } else {
+      // Если сцена недоступна, просто эмитим событие
+      this.emit('death', this);
+    }
   }
 
   // Обновление через Phaser update цикл
@@ -276,6 +281,8 @@ export class GameObject extends Phaser.GameObjects.Sprite {
 
   // Эффекты через Phaser Tweens
   shake(duration: number = 200, intensity: number = 5): void {
+    if (!this.scene) return;
+    
     this._tweenManager.add({
       targets: this,
       x: this.x + Phaser.Math.Between(-intensity, intensity),
@@ -290,6 +297,8 @@ export class GameObject extends Phaser.GameObjects.Sprite {
   }
 
   pulse(scale: number = 1.2, duration: number = 300): void {
+    if (!this.scene) return;
+    
     this._tweenManager.add({
       targets: this,
       scaleX: scale,

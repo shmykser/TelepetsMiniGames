@@ -7,12 +7,30 @@ export function initTelegram() {
         // Инициализация темы и размеров
         WebApp.ready();
         WebApp.expand();
-        WebApp.setHeaderColor('secondary_bg_color');
-        // Кнопка назад закрывает мини-приложение
-        WebApp.BackButton.onClick(() => WebApp.close());
-        WebApp.BackButton.show();
+        // Проверяем поддержку методов для совместимости с версией 6.0
+        if (WebApp.setHeaderColor && typeof WebApp.setHeaderColor === 'function') {
+            try {
+                WebApp.setHeaderColor('secondary_bg_color');
+            }
+            catch (error) {
+                console.warn('[Telegram.WebApp] Header color not supported in this version');
+            }
+        }
+        // Кнопка назад закрывает мини-приложение (только если поддерживается)
+        if (WebApp.BackButton && typeof WebApp.BackButton.onClick === 'function') {
+            try {
+                WebApp.BackButton.onClick(() => WebApp.close());
+                if (typeof WebApp.BackButton.show === 'function') {
+                    WebApp.BackButton.show();
+                }
+            }
+            catch (error) {
+                console.warn('[Telegram.WebApp] BackButton not supported in this version');
+            }
+        }
     }
-    catch {
+    catch (error) {
         // В небраузерной среде/без Telegram SDK — мягкая деградация
+        console.warn('[Telegram.WebApp] Initialization failed:', error);
     }
 }

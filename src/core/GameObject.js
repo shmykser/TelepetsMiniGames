@@ -154,7 +154,7 @@ export class GameObject extends Phaser.GameObjects.Sprite {
     }
     // Методы атаки через Phaser Timer
     attack(target) {
-        if (!this._isAlive)
+        if (!this._isAlive || !this.scene)
             return false;
         const currentTime = this.scene.time.now;
         if (currentTime - this._lastAttackTime < this._cooldown) {
@@ -177,7 +177,7 @@ export class GameObject extends Phaser.GameObjects.Sprite {
         return true;
     }
     takeDamage(damage) {
-        if (!this._isAlive)
+        if (!this._isAlive || !this.scene)
             return;
         this.health -= damage;
         this.emit('damage', damage, this._health);
@@ -229,18 +229,24 @@ export class GameObject extends Phaser.GameObjects.Sprite {
         this._target = null;
         this.stopMovement();
         // Анимация смерти с помощью Phaser Tween
-        this._tweenManager.add({
-            targets: this,
-            alpha: 0.3,
-            scaleX: 0.5,
-            scaleY: 0.5,
-            tint: 0x666666,
-            duration: 500,
-            ease: 'Power2',
-            onComplete: () => {
-                this.emit('death', this);
-            }
-        });
+        if (this.scene) {
+            this._tweenManager.add({
+                targets: this,
+                alpha: 0.3,
+                scaleX: 0.5,
+                scaleY: 0.5,
+                tint: 0x666666,
+                duration: 500,
+                ease: 'Power2',
+                onComplete: () => {
+                    this.emit('death', this);
+                }
+            });
+        }
+        else {
+            // Если сцена недоступна, просто эмитим событие
+            this.emit('death', this);
+        }
     }
     // Обновление через Phaser update цикл
     update(_time, _delta) {
@@ -269,6 +275,8 @@ export class GameObject extends Phaser.GameObjects.Sprite {
     }
     // Эффекты через Phaser Tweens
     shake(duration = 200, intensity = 5) {
+        if (!this.scene)
+            return;
         this._tweenManager.add({
             targets: this,
             x: this.x + Phaser.Math.Between(-intensity, intensity),
@@ -282,6 +290,8 @@ export class GameObject extends Phaser.GameObjects.Sprite {
         });
     }
     pulse(scale = 1.2, duration = 300) {
+        if (!this.scene)
+            return;
         this._tweenManager.add({
             targets: this,
             scaleX: scale,
