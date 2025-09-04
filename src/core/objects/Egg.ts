@@ -1,15 +1,11 @@
 import { GameObject, GameObjectConfig } from '../GameObject';
 
 export interface EggConfig extends GameObjectConfig {
-  hatchTime?: number;
-  hatchType?: string;
+  // Яйцо - статичный объект без вылупления
 }
 
 export class Egg extends GameObject {
-  private _hatchTime: number;
-  private _hatchType: string;
-  private _isHatching: boolean = false;
-  private _hatchTimer?: Phaser.Time.TimerEvent;
+  // Яйцо - статичный объект без вылупления
 
   constructor(scene: Phaser.Scene, config: EggConfig) {
     // Настройки для яйца - неподвижное, без атак
@@ -23,18 +19,12 @@ export class Egg extends GameObject {
 
     super(scene, eggConfig);
 
-    this._hatchTime = config.hatchTime || 10000; // 10 секунд по умолчанию
-    this._hatchType = config.hatchType || 'default';
-
     // Яйцо - основная цель врагов
     this._size = 2; // Размер яйца
     this._canFly = false;
 
     // Настраиваем физику для яйца
     this.setupEggPhysics();
-    
-    // Запускаем таймер вылупления
-    this.startHatchTimer();
   }
 
   private setupEggPhysics(): void {
@@ -45,13 +35,6 @@ export class Egg extends GameObject {
     this.physicsBody.setDrag(1000, 1000); // Максимальное сопротивление
   }
 
-  private startHatchTimer(): void {
-    if (!this.scene) return;
-
-    this._hatchTimer = this.scene.time.delayedCall(this._hatchTime, () => {
-      this.hatch();
-    });
-  }
 
   // Переопределяем методы движения - яйцо не может двигаться
   override startMovement(_direction: Phaser.Math.Vector2): void {
@@ -75,43 +58,5 @@ export class Egg extends GameObject {
     return false;
   }
 
-  // Процесс вылупления
-  hatch(): void {
-    if (this._isHatching || !this._isAlive) return;
-
-    this._isHatching = true;
-    console.log(`Яйцо вылупляется! Тип: ${this._hatchType}`);
-
-    // Эмитим событие вылупления
-    this.emit('hatch', this._hatchType, this.x, this.y);
-    
-    // Уничтожаем яйцо
-    this.destroy();
-  }
-
-  // Геттеры
-  get hatchTime(): number { return this._hatchTime; }
-  get hatchType(): string { return this._hatchType; }
-  get isHatching(): boolean { return this._isHatching; }
-
-  // Сеттеры
-  set hatchTime(value: number) { 
-    this._hatchTime = Math.max(0, value);
-    // Перезапускаем таймер если он активен
-    if (this._hatchTimer && !this._isHatching) {
-      this._hatchTimer.destroy();
-      this.startHatchTimer();
-    }
-  }
-
-  set hatchType(value: string) { this._hatchType = value; }
-
-  // Уничтожение с очисткой таймера
-  override destroy(): void {
-    if (this._hatchTimer) {
-      this._hatchTimer.destroy();
-      this._hatchTimer = undefined;
-    }
-    super.destroy();
-  }
+  // Яйцо - статичный объект без вылупления
 }

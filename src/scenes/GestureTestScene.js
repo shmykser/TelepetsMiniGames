@@ -88,9 +88,7 @@ export class GestureTestScene extends Phaser.Scene {
             cooldown: 0,
             x: width / 2,
             y: height / 2,
-            texture: 'egg',
-            hatchTime: 30000, // 30 секунд для тестирования
-            hatchType: 'test'
+            texture: 'egg'
         });
     }
     createEnemies() {
