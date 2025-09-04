@@ -8,6 +8,7 @@ export interface GameObjectConfig {
   x?: number;
   y?: number;
   texture?: string;
+  attackRange?: number;
 }
 
 export class GameObject extends Phaser.GameObjects.Sprite {
@@ -17,15 +18,16 @@ export class GameObject extends Phaser.GameObjects.Sprite {
   protected _damage: number;
   protected _speed: number;
   protected _cooldown: number;
+  protected _attackRange: number;
   protected _lastAttackTime: number = 0;
 
   // Состояние
-  protected _isMoving: boolean = false;
   protected _isAlive: boolean = true;
   protected _target: GameObject | null = null;
 
-  // Физика
+  // Phaser компоненты
   protected _body: Phaser.Physics.Arcade.Body;
+  protected _tweenManager: Phaser.Tweens.TweenManager;
 
   constructor(scene: Phaser.Scene, config: GameObjectConfig) {
     super(scene, config.x || 0, config.y || 0, config.texture || '');
@@ -36,13 +38,22 @@ export class GameObject extends Phaser.GameObjects.Sprite {
     this._damage = config.damage;
     this._speed = config.speed;
     this._cooldown = config.cooldown;
+    this._attackRange = config.attackRange || 50;
 
-    // Добавляем в сцену
+    // Добавляем в сцену и физику
     scene.add.existing(this);
     scene.physics.add.existing(this);
     
     this._body = this.body as Phaser.Physics.Arcade.Body;
     this._body.setCollideWorldBounds(true);
+    this._body.setBounce(0.2);
+    this._body.setDrag(100, 100); // Сопротивление для плавного движения
+    
+    // Получаем менеджеры из сцены
+    this._tweenManager = scene.tweens;
+    
+    // Настраиваем события физики
+    this.setupPhysicsEvents();
   }
 
   // Геттеры для свойств
@@ -51,9 +62,11 @@ export class GameObject extends Phaser.GameObjects.Sprite {
   get damage(): number { return this._damage; }
   get speed(): number { return this._speed; }
   get cooldown(): number { return this._cooldown; }
-  get isMoving(): boolean { return this._isMoving; }
+  get attackRange(): number { return this._attackRange; }
+  get isMoving(): boolean { return this._body.velocity.length() > 0; }
   get isAlive(): boolean { return this._isAlive; }
   get target(): GameObject | null { return this._target; }
+  get physicsBody(): Phaser.Physics.Arcade.Body { return this._body; }
 
   // Сеттеры для свойств
   set health(value: number) { 
@@ -66,12 +79,26 @@ export class GameObject extends Phaser.GameObjects.Sprite {
   set damage(value: number) { this._damage = Math.max(0, value); }
   set speed(value: number) { this._speed = Math.max(0, value); }
   set cooldown(value: number) { this._cooldown = Math.max(0, value); }
+  set attackRange(value: number) { this._attackRange = Math.max(0, value); }
 
-  // Методы движения
+  // Настройка событий физики
+  private setupPhysicsEvents(): void {
+    // События столкновения
+    this._body.onWorldBounds = true;
+    this.on('worldbounds', this.onWorldBounds, this);
+    
+    // События движения
+    this._body.onOverlap = true;
+  }
+
+  private onWorldBounds(): void {
+    this.emit('worldbounds', this);
+  }
+
+  // Методы движения через Phaser Physics
   startMovement(direction: Phaser.Math.Vector2): void {
     if (!this._isAlive) return;
     
-    this._isMoving = true;
     const normalizedDirection = direction.normalize();
     this._body.setVelocity(
       normalizedDirection.x * this._speed,
@@ -87,11 +114,24 @@ export class GameObject extends Phaser.GameObjects.Sprite {
   }
 
   stopMovement(): void {
-    this._isMoving = false;
     this._body.setVelocity(0, 0);
   }
 
-  // Методы атаки
+  // Движение с помощью Phaser Tweens
+  moveToPointTween(x: number, y: number, duration: number = 1000): Phaser.Tweens.Tween {
+    return this._tweenManager.add({
+      targets: this,
+      x: x,
+      y: y,
+      duration: duration,
+      ease: 'Power2',
+      onComplete: () => {
+        this.stopMovement();
+      }
+    });
+  }
+
+  // Методы атаки через Phaser Timer
   attack(target?: GameObject): boolean {
     if (!this._isAlive) return false;
     
@@ -105,13 +145,13 @@ export class GameObject extends Phaser.GameObjects.Sprite {
       return false;
     }
 
-    // Проверяем расстояние до цели
+    // Проверяем расстояние до цели через Phaser.Math.Distance
     const distance = Phaser.Math.Distance.Between(
       this.x, this.y, 
       attackTarget.x, attackTarget.y
     );
     
-    if (distance > this.getAttackRange()) {
+    if (distance > this._attackRange) {
       return false; // Цель слишком далеко
     }
 
@@ -131,14 +171,20 @@ export class GameObject extends Phaser.GameObjects.Sprite {
     this.health -= damage;
     this.emit('damage', damage, this._health);
     
-    // Эффект получения урона
-    this.setTint(0xff0000);
-    this.scene.time.delayedCall(100, () => {
-      this.clearTint();
+    // Эффект получения урона через Phaser Tween
+    this._tweenManager.add({
+      targets: this,
+      tint: 0xff0000,
+      duration: 100,
+      yoyo: true,
+      repeat: 1,
+      onComplete: () => {
+        this.clearTint();
+      }
     });
   }
 
-  // Методы определения цели
+  // Методы определения цели через Phaser.Math
   setTarget(target: GameObject | null): void {
     this._target = target;
     this.emit('targetChanged', target);
@@ -167,25 +213,37 @@ export class GameObject extends Phaser.GameObjects.Sprite {
     return nearestTarget;
   }
 
-  // Вспомогательные методы
-  protected getAttackRange(): number {
-    return 50; // Базовый радиус атаки
+  // Поиск целей в радиусе через Phaser.Geom.Circle
+  findTargetsInRange(targets: GameObject[], range: number = this._attackRange): GameObject[] {
+    const circle = new Phaser.Geom.Circle(this.x, this.y, range);
+    return targets.filter(target => {
+      if (!target._isAlive) return false;
+      return Phaser.Geom.Circle.Contains(circle, target.x, target.y);
+    });
   }
 
+  // Анимация смерти через Phaser Tweens
   protected die(): void {
     this._isAlive = false;
-    this._isMoving = false;
     this._target = null;
     this.stopMovement();
     
-    // Анимация смерти
-    this.setTint(0x666666);
-    this.setAlpha(0.5);
-    
-    this.emit('death', this);
+    // Анимация смерти с помощью Phaser Tween
+    this._tweenManager.add({
+      targets: this,
+      alpha: 0.3,
+      scaleX: 0.5,
+      scaleY: 0.5,
+      tint: 0x666666,
+      duration: 500,
+      ease: 'Power2',
+      onComplete: () => {
+        this.emit('death', this);
+      }
+    });
   }
 
-  // Обновление (вызывается в update цикле сцены)
+  // Обновление через Phaser update цикл
   override update(_time: number, _delta: number): void {
     if (!this._isAlive) return;
     
@@ -196,7 +254,7 @@ export class GameObject extends Phaser.GameObjects.Sprite {
         this._target.x, this._target.y
       );
       
-      if (distance > this.getAttackRange()) {
+      if (distance > this._attackRange) {
         // Двигаемся к цели
         this.startMovementToPoint(this._target.x, this._target.y);
       } else {
@@ -205,6 +263,41 @@ export class GameObject extends Phaser.GameObjects.Sprite {
         this.attack();
       }
     }
+  }
+
+  // Дополнительные методы для работы с Phaser
+  addPhysicsCollider(other: GameObject, callback?: Phaser.Types.Physics.Arcade.ArcadePhysicsCallback): void {
+    this.scene.physics.add.collider(this, other, callback);
+  }
+
+  addPhysicsOverlap(other: GameObject, callback?: Phaser.Types.Physics.Arcade.ArcadePhysicsCallback): void {
+    this.scene.physics.add.overlap(this, other, callback);
+  }
+
+  // Эффекты через Phaser Tweens
+  shake(duration: number = 200, intensity: number = 5): void {
+    this._tweenManager.add({
+      targets: this,
+      x: this.x + Phaser.Math.Between(-intensity, intensity),
+      y: this.y + Phaser.Math.Between(-intensity, intensity),
+      duration: duration,
+      yoyo: true,
+      repeat: 3,
+      onComplete: () => {
+        this.setPosition(this.x, this.y);
+      }
+    });
+  }
+
+  pulse(scale: number = 1.2, duration: number = 300): void {
+    this._tweenManager.add({
+      targets: this,
+      scaleX: scale,
+      scaleY: scale,
+      duration: duration,
+      yoyo: true,
+      ease: 'Power2'
+    });
   }
 
   // Уничтожение объекта

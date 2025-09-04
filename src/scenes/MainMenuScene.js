@@ -20,7 +20,7 @@ export class MainMenuScene extends Phaser.Scene {
             this.scene.start('Game');
         });
         // Игра с GameObject
-        const advancedGame = this.add.text(width / 2, height * 0.55, 'Игра с боем', {
+        const advancedGame = this.add.text(width / 2, height * 0.45, 'Игра с боем', {
             fontFamily: 'Arial',
             fontSize: '20px',
             color: '#3b82f6'
@@ -28,10 +28,24 @@ export class MainMenuScene extends Phaser.Scene {
         advancedGame.on('pointerup', () => {
             this.scene.start('GameWithGameObject');
         });
+        // Игра с жестами
+        const gestureGame = this.add.text(width / 2, height * 0.55, 'Игра с жестами', {
+            fontFamily: 'Arial',
+            fontSize: '20px',
+            color: '#f59e0b'
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        gestureGame.on('pointerup', () => {
+            this.scene.start('GestureGame');
+        });
         // Инструкции
         this.add.text(width / 2, height * 0.75, 'Управление: Стрелки - движение, Пробел - атака', {
             fontFamily: 'Arial',
-            fontSize: '14px',
+            fontSize: '12px',
+            color: '#9ca3af'
+        }).setOrigin(0.5);
+        this.add.text(width / 2, height * 0.8, 'Жесты: Тап - движение, Двойной тап - атака, Свайп - толчок', {
+            fontFamily: 'Arial',
+            fontSize: '12px',
             color: '#9ca3af'
         }).setOrigin(0.5);
     }
