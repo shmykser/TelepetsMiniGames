@@ -19,12 +19,12 @@ export class Enemy extends GameObject {
     const enemyType = config.enemyType || 'ant';
     const enemyData = enemyTypes[enemyType];
     
-    // Настройки из типа врага
+    // Настройки из типа врага (приоритет у переданных значений)
     const enemyConfig: GameObjectConfig = {
-      health: config.health || enemyData.health,
-      damage: config.damage || enemyData.damage,
-      speed: config.speed || enemyData.speed * 20, // конвертируем 1-10 в пиксели
-      cooldown: config.cooldown || enemyData.cooldown * 1000, // конвертируем секунды в мс
+      health: config.health !== undefined ? config.health : enemyData.health,
+      damage: config.damage !== undefined ? config.damage : enemyData.damage,
+      speed: config.speed !== undefined ? config.speed : enemyData.speed * 20, // конвертируем 1-10 в пиксели
+      cooldown: config.cooldown !== undefined ? config.cooldown : enemyData.cooldown * 1000, // конвертируем секунды в мс
       attackRange: config.attackRange || 40,
       x: config.x,
       y: config.y,

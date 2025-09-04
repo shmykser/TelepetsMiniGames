@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { Enemy } from '../core/objects/Enemy';
 import { ActionManager } from '../systems/actions/ActionManager';
 import { GestureManager } from '../systems/gesture/GestureManager';
+import { enemyTypes } from '../core/types/enemyTypes';
 
 /**
  * Сцена для тестирования жестов с врагами
@@ -128,15 +129,17 @@ export class GestureTestScene extends Phaser.Scene {
     ];
 
     enemyConfigs.forEach(config => {
+      const enemyData = enemyTypes[config.type];
+      
       const enemy = new Enemy(this, {
         x: config.x,
         y: config.y,
         texture: config.type, // Используем текстуру соответствующую типу врага
         enemyType: config.type,
-        health: 50,
-        damage: 10,
-        speed: 100,
-        cooldown: 1000
+        health: enemyData.health,
+        damage: enemyData.damage,
+        speed: enemyData.speed * 10, // Умножаем на 10 для Phaser координат
+        cooldown: enemyData.cooldown * 1000 // Умножаем на 1000 для миллисекунд
       });
       
       // Устанавливаем размер для смайликов (уменьшаем в 2 раза)
