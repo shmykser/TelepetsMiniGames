@@ -4,6 +4,7 @@ import { BootScene } from '@/scenes/BootScene';
 import { PreloadScene } from '@/scenes/PreloadScene';
 import { MainMenuScene } from '@/scenes/MainMenuScene';
 import { GameScene } from '@/scenes/GameScene';
+import { GameSceneWithGameObject } from '@/scenes/GameSceneWithGameObject';
 import { UIScene } from '@/scenes/UIScene';
 const config = {
     type: Phaser.AUTO,
@@ -16,7 +17,7 @@ const config = {
         parent: 'game'
     },
     physics: settings.physics,
-    scene: [BootScene, PreloadScene, MainMenuScene, GameScene, UIScene],
+    scene: [BootScene, PreloadScene, MainMenuScene, GameScene, GameSceneWithGameObject, UIScene],
     render: {
         pixelArt: false,
         antialias: true
