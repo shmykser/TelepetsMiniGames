@@ -35,33 +35,33 @@ export class GestureManager {
      * Настройка распознавателей жестов согласно документации Hammer.js
      */
     setupRecognizers() {
-        // 1. Tap - одинарный тап
+        // 1. Tap - одинарный тап (согласно документации)
         const tap = new Hammer.Tap({
             event: 'tap',
             taps: 1,
             interval: 300,
             time: 250,
-            threshold: 2,
+            threshold: 9, // Увеличиваем порог движения согласно документации
             posThreshold: 10
         });
-        // 2. DoubleTap - двойной тап
+        // 2. DoubleTap - двойной тап (согласно документации)
         const doubleTap = new Hammer.Tap({
             event: 'doubletap',
             taps: 2,
             interval: 300,
             time: 250,
-            threshold: 2,
+            threshold: 9, // Увеличиваем порог движения согласно документации
             posThreshold: 10
         });
-        // 3. Pan - удержание и перетаскивание
+        // 3. Pan - удержание и перетаскивание (увеличиваем порог)
         const pan = new Hammer.Pan({
-            threshold: 10,
+            threshold: 15, // Увеличиваем порог для pan
             pointers: 1,
             direction: Hammer.DIRECTION_ALL
         });
-        // 4. Swipe - быстрый свайп
+        // 4. Swipe - быстрый свайп (согласно документации)
         const swipe = new Hammer.Swipe({
-            velocity: 0.3,
+            velocity: 0.65, // Используем значение из документации
             threshold: 10,
             direction: Hammer.DIRECTION_ALL
         });
@@ -86,17 +86,19 @@ export class GestureManager {
     /**
      * Настройка приоритетов распознавателей согласно документации
      */
-    setupRecognizerPriorities(tap, doubleTap, _pan, _swipe, pinch, rotate, press) {
-        // Multi-tap приоритеты (согласно документации)
+    setupRecognizerPriorities(tap, doubleTap, pan, swipe, pinch, rotate, press) {
+        // Multi-tap приоритеты (согласно документации Hammer.js)
+        // Правильный порядок: tripleTap -> doubleTap -> singleTap
         doubleTap.recognizeWith(tap);
         tap.requireFailure(doubleTap);
         // Pinch и rotate работают вместе
         pinch.recognizeWith(rotate);
         // Press требует неудачи tap и doubleTap
         press.requireFailure([tap, doubleTap]);
-        // Pan и swipe работают независимо (убираем конфликты)
-        // swipe.recognizeWith(pan); // УБРАНО - пусть работают независимо
-        // pan.requireFailure(swipe); // УБРАНО - пусть работают независимо
+        // Swipe и pan приоритеты (согласно документации)
+        // Swipe должен иметь приоритет над pan для быстрых движений
+        swipe.recognizeWith(pan);
+        pan.requireFailure(swipe);
     }
     /**
      * Привязка событий к распознавателям
