@@ -8,24 +8,30 @@ export function initTelegram() {
         WebApp.ready();
         WebApp.expand();
         // Проверяем поддержку методов для совместимости с версией 6.0
-        if (WebApp.setHeaderColor && typeof WebApp.setHeaderColor === 'function') {
-            try {
-                WebApp.setHeaderColor('secondary_bg_color');
-            }
-            catch (error) {
-                console.warn('[Telegram.WebApp] Header color not supported in this version');
-            }
-        }
-        // Кнопка назад закрывает мини-приложение (только если поддерживается)
-        if (WebApp.BackButton && typeof WebApp.BackButton.onClick === 'function') {
-            try {
-                WebApp.BackButton.onClick(() => WebApp.close());
-                if (typeof WebApp.BackButton.show === 'function') {
-                    WebApp.BackButton.show();
+        // setHeaderColor не поддерживается в версии 6.0, пропускаем
+        if (WebApp.version && parseFloat(WebApp.version) >= 6.1) {
+            if (WebApp.setHeaderColor && typeof WebApp.setHeaderColor === 'function') {
+                try {
+                    WebApp.setHeaderColor('secondary_bg_color');
+                }
+                catch (error) {
+                    console.warn('[Telegram.WebApp] Header color not supported in this version');
                 }
             }
-            catch (error) {
-                console.warn('[Telegram.WebApp] BackButton not supported in this version');
+        }
+        
+        // BackButton не поддерживается в версии 6.0, пропускаем
+        if (WebApp.version && parseFloat(WebApp.version) >= 6.1) {
+            if (WebApp.BackButton && typeof WebApp.BackButton.onClick === 'function') {
+                try {
+                    WebApp.BackButton.onClick(() => WebApp.close());
+                    if (typeof WebApp.BackButton.show === 'function') {
+                        WebApp.BackButton.show();
+                    }
+                }
+                catch (error) {
+                    console.warn('[Telegram.WebApp] BackButton not supported in this version');
+                }
             }
         }
     }
