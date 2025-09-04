@@ -240,7 +240,8 @@ export class GestureTestScene extends Phaser.Scene {
       onPan: this.handlePan.bind(this),
       onSwipe: this.handleSwipe.bind(this),
       onPinch: this.handlePinch.bind(this),
-      onRotate: this.handleRotate.bind(this)
+      onRotate: this.handleRotate.bind(this),
+      onPress: this.handlePress.bind(this)
     });
   }
 
@@ -281,6 +282,12 @@ export class GestureTestScene extends Phaser.Scene {
     console.log('Rotate at:', e.phaserX, e.phaserY, 'on:', object, 'rotation:', e.rotation);
   }
 
+  private handlePress(e: any): void {
+    const object = this.getObjectAtPosition(e.phaserX, e.phaserY);
+    this.updateLabels('Долгое нажатие', object);
+    console.log('Press at:', e.phaserX, e.phaserY, 'on:', object);
+  }
+
   private getObjectAtPosition(x: number, y: number): string {
     // Проверяем яйцо
     if (this.egg && this.egg.isAlive) {
@@ -316,11 +323,12 @@ export class GestureTestScene extends Phaser.Scene {
   }
 
   private getSwipeDirection(direction: number): string {
+    // Используем правильные константы Hammer.js
     switch (direction) {
-      case 2: return '←'; // LEFT
-      case 4: return '→'; // RIGHT
-      case 8: return '↑'; // UP
-      case 16: return '↓'; // DOWN
+      case 2: return '←'; // Hammer.DIRECTION_LEFT
+      case 4: return '→'; // Hammer.DIRECTION_RIGHT  
+      case 8: return '↑'; // Hammer.DIRECTION_UP
+      case 16: return '↓'; // Hammer.DIRECTION_DOWN
       default: return '?';
     }
   }
