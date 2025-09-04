@@ -142,6 +142,18 @@ export class GestureTestScene extends Phaser.Scene {
       // Устанавливаем размер для смайликов (уменьшаем в 2 раза)
       enemy.setScale(0.75);
       
+      // Создаем полосу здоровья для врага
+      enemy.createHealthBar({
+        showWhenFull: false, // Не показываем при полном здоровье
+        showWhenEmpty: true, // Показываем при смерти
+        offsetY: -35, // Смещение вверх от объекта
+        colors: {
+          background: 0x000000,
+          health: 0x00ff00,
+          border: 0xffffff
+        }
+      });
+      
       this.enemies.push(enemy);
     });
   }

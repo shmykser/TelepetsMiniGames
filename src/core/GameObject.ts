@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { HealthBar, HealthObject } from '../components/HealthBar';
 
 export interface GameObjectConfig {
   health: number;
@@ -11,7 +12,7 @@ export interface GameObjectConfig {
   attackRange?: number;
 }
 
-export class GameObject extends Phaser.GameObjects.Sprite {
+export class GameObject extends Phaser.GameObjects.Sprite implements HealthObject {
   // Основные свойства
   protected _health: number;
   protected _maxHealth: number;
@@ -30,6 +31,7 @@ export class GameObject extends Phaser.GameObjects.Sprite {
   // Phaser компоненты
   protected _body: Phaser.Physics.Arcade.Body;
   protected _tweenManager: Phaser.Tweens.TweenManager;
+  protected _healthBar?: HealthBar;
 
   constructor(scene: Phaser.Scene, config: GameObjectConfig) {
     super(scene, config.x || 0, config.y || 0, config.texture || '');
@@ -69,10 +71,17 @@ export class GameObject extends Phaser.GameObjects.Sprite {
   get isAlive(): boolean { return this._isAlive; }
   get target(): GameObject | null { return this._target; }
   get physicsBody(): Phaser.Physics.Arcade.Body { return this._body; }
+  
+  // Геттеры для HealthObject интерфейса
+  get objectWidth(): number { return this.displayWidth; }
+  get objectHeight(): number { return this.displayHeight; }
+  get objectScaleX(): number { return this.scaleX; }
+  get objectScaleY(): number { return this.scaleY; }
 
   // Сеттеры для свойств
   set health(value: number) { 
     this._health = Math.max(0, Math.min(value, this._maxHealth));
+    this.updateHealthBar();
     if (this._health <= 0) {
       this.die();
     }
@@ -313,6 +322,7 @@ export class GameObject extends Phaser.GameObjects.Sprite {
 
   // Уничтожение объекта
   override destroy(): void {
+    this.destroyHealthBar();
     this.emit('destroy', this);
     super.destroy();
   }
@@ -422,4 +432,53 @@ export class GameObject extends Phaser.GameObjects.Sprite {
   // Сеттеры для новых свойств
   set objectSize(value: number) { this.setObjectSize(value); }
   set canFlyProperty(value: boolean) { this.setCanFlyObject(value); }
+
+  // Методы для работы с HealthBar
+  /**
+   * Создает полосу здоровья для объекта
+   */
+  createHealthBar(options?: {
+    showWhenFull?: boolean;
+    showWhenEmpty?: boolean;
+    offsetY?: number;
+    colors?: {
+      background?: number;
+      health?: number;
+      border?: number;
+    };
+  }): void {
+    if (this._healthBar) {
+      this._healthBar.destroy();
+    }
+    
+    this._healthBar = new HealthBar(this.scene, this, options);
+  }
+
+  /**
+   * Обновляет полосу здоровья
+   */
+  updateHealthBar(): void {
+    if (this._healthBar) {
+      this._healthBar.updateHealth();
+    }
+  }
+
+  /**
+   * Уничтожает полосу здоровья
+   */
+  destroyHealthBar(): void {
+    if (this._healthBar) {
+      this._healthBar.destroy();
+      this._healthBar = undefined;
+    }
+  }
+
+  /**
+   * Показывает/скрывает полосу здоровья
+   */
+  setHealthBarVisible(visible: boolean): void {
+    if (this._healthBar) {
+      this._healthBar.setVisible(visible);
+    }
+  }
 }
