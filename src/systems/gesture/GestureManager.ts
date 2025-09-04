@@ -22,18 +22,23 @@ export class GestureManager {
     // Создаем Hammer Manager для canvas
     this.hammer = new Hammer.Manager(this.gameCanvas);
 
-    // Настройка жестов
-    const tap = new Hammer.Tap({ 
+    // Настройка жестов согласно документации Hammer.js
+    const singleTap = new Hammer.Tap({ 
+      event: 'singletap',
       taps: 1,
       interval: 300,
+      time: 250,
+      threshold: 2,
       posThreshold: 10
     });
     
     const doubleTap = new Hammer.Tap({ 
       event: 'doubletap', 
       taps: 2, 
-      interval: 300, 
-      posThreshold: 30 
+      interval: 300,
+      time: 250,
+      threshold: 2,
+      posThreshold: 10
     });
     
     const pan = new Hammer.Pan({ 
@@ -56,18 +61,21 @@ export class GestureManager {
       threshold: 0.1
     });
 
-    // Настройка приоритетов жестов
-    doubleTap.recognizeWith(tap);
-    pinch.recognizeWith(rotate);
+    // Правильные приоритеты согласно документации Hammer.js
+    // Для multi-tap: двойной тап работает с одинарным
+    doubleTap.recognizeWith(singleTap);
     
-    // Правильные приоритеты: swipe имеет приоритет над pan
-    swipe.recognizeWith(pan);
-    pan.requireFailure(swipe);
+    // Одинарный тап ждет неудачи двойного тапа
+    singleTap.requireFailure(doubleTap);
+    
+    // Swipe и pan работают независимо
+    // pinch и rotate работают вместе
+    pinch.recognizeWith(rotate);
 
-    this.hammer.add([tap, doubleTap, pan, swipe, pinch, rotate]);
+    this.hammer.add([singleTap, doubleTap, pan, swipe, pinch, rotate]);
 
     // Привязка событий
-    if (events.onTap) this.hammer.on('tap', this.wrapGestureEvent(events.onTap));
+    if (events.onTap) this.hammer.on('singletap', this.wrapGestureEvent(events.onTap));
     if (events.onDoubleTap) this.hammer.on('doubletap', this.wrapGestureEvent(events.onDoubleTap));
     if (events.onPan) this.hammer.on('pan panstart panend', this.wrapGestureEvent(events.onPan));
     if (events.onSwipe) this.hammer.on('swipe', this.wrapGestureEvent(events.onSwipe));
@@ -80,7 +88,7 @@ export class GestureManager {
     });
     
     // Логирование всех распознанных жестов
-    this.hammer.on('tap doubletap pan panstart panend swipe pinch pinchstart pinchend rotate rotatestart rotateend', (e: any) => {
+    this.hammer.on('singletap doubletap pan panstart panend swipe pinch pinchstart pinchend rotate rotatestart rotateend', (e: any) => {
       console.log('Gesture recognized:', e.type, 'at', e.center.x, e.center.y);
     });
   }
