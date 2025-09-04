@@ -41,7 +41,7 @@ export class GestureManager {
             taps: 1,
             interval: 300,
             time: 250,
-            threshold: 9, // Увеличиваем порог движения согласно документации
+            threshold: 2, // Согласно документации: "a minimal movement is ok, but keep it low"
             posThreshold: 10
         });
         // 2. DoubleTap - двойной тап (согласно документации)
@@ -50,19 +50,19 @@ export class GestureManager {
             taps: 2,
             interval: 300,
             time: 250,
-            threshold: 9, // Увеличиваем порог движения согласно документации
+            threshold: 2, // Согласно документации: "a minimal movement is ok, but keep it low"
             posThreshold: 10
         });
-        // 3. Pan - удержание и перетаскивание (увеличиваем порог)
+        // 3. Pan - удержание и перетаскивание (согласно документации)
         const pan = new Hammer.Pan({
-            threshold: 15, // Увеличиваем порог для pan
+            threshold: 10, // Согласно документации: default 10
             pointers: 1,
             direction: Hammer.DIRECTION_ALL
         });
         // 4. Swipe - быстрый свайп (согласно документации)
         const swipe = new Hammer.Swipe({
-            velocity: 0.65, // Используем значение из документации
-            threshold: 10,
+            velocity: 0.3, // Согласно документации: default 0.3
+            threshold: 10, // Согласно документации: default 10
             direction: Hammer.DIRECTION_ALL
         });
         // 5. Pinch - щипок (масштабирование)
@@ -84,11 +84,12 @@ export class GestureManager {
         this.setupRecognizerPriorities(tap, doubleTap, pan, swipe, pinch, rotate, press);
     }
     /**
-     * Настройка приоритетов распознавателей согласно документации
+     * Настройка приоритетов распознавателей согласно документации Hammer.js
      */
     setupRecognizerPriorities(tap, doubleTap, pan, swipe, pinch, rotate, press) {
         // Multi-tap приоритеты (согласно документации Hammer.js)
         // Правильный порядок: tripleTap -> doubleTap -> singleTap
+        // doubleTap должен работать одновременно с tap, но tap должен ждать неудачи doubleTap
         doubleTap.recognizeWith(tap);
         tap.requireFailure(doubleTap);
         // Pinch и rotate работают вместе
@@ -97,6 +98,7 @@ export class GestureManager {
         press.requireFailure([tap, doubleTap]);
         // Swipe и pan приоритеты (согласно документации)
         // Swipe должен иметь приоритет над pan для быстрых движений
+        // НО: swipe должен работать одновременно с pan, а pan должен ждать неудачи swipe
         swipe.recognizeWith(pan);
         pan.requireFailure(swipe);
     }
