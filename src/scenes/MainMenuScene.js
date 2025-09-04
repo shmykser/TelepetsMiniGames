@@ -38,16 +38,6 @@ export class MainMenuScene extends Phaser.Scene {
             this.scene.start('GameWithGameObject');
         });
         currentY += buttonSpacing;
-        // Игра с жестами
-        const gestureGame = this.add.text(width / 2, currentY, 'Игра с жестами', {
-            fontFamily: 'Arial',
-            fontSize: `${buttonFontSize}px`,
-            color: '#f59e0b'
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        gestureGame.on('pointerup', () => {
-            this.scene.start('GestureGame');
-        });
-        currentY += buttonSpacing;
         // Тест жестов
         const gestureTest = this.add.text(width / 2, currentY, 'Тест жестов', {
             fontFamily: 'Arial',
@@ -56,16 +46,6 @@ export class MainMenuScene extends Phaser.Scene {
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
         gestureTest.on('pointerup', () => {
             this.scene.start('GestureTest');
-        });
-        currentY += buttonSpacing;
-        // Действия по жестам
-        const gestureActions = this.add.text(width / 2, currentY, 'Действия по жестам', {
-            fontFamily: 'Arial',
-            fontSize: `${buttonFontSize}px`,
-            color: '#10b981'
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        gestureActions.on('pointerup', () => {
-            this.scene.start('GestureActionScene');
         });
         // Инструкции с переносами строк
         const instructionY = height * 0.75;

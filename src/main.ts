@@ -4,11 +4,7 @@ import { BootScene } from '@/scenes/BootScene';
 import { PreloadScene } from '@/scenes/PreloadScene';
 import { MainMenuScene } from '@/scenes/MainMenuScene';
 import { GameScene } from '@/scenes/GameScene';
-import { GameSceneWithGameObject } from '@/scenes/GameSceneWithGameObject';
-import { GestureGameScene } from '@/scenes/GestureGameScene';
 import { GestureTestScene } from '@/scenes/GestureTestScene';
-import { GestureActionScene } from '@/scenes/GestureActionScene';
-import { UIScene } from '@/scenes/UIScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -29,7 +25,7 @@ const config: Phaser.Types.Core.GameConfig = {
     }
   },
   physics: settings.physics,
-  scene: [BootScene, PreloadScene, MainMenuScene, GameScene, GameSceneWithGameObject, GestureGameScene, GestureTestScene, GestureActionScene, UIScene],
+  scene: [BootScene, PreloadScene, MainMenuScene, GameScene, GestureTestScene],
   render: {
     pixelArt: false,
     antialias: true
