@@ -37,14 +37,14 @@ export class GestureManager {
     });
     
     const pan = new Hammer.Pan({ 
-      threshold: 5,
+      threshold: 10,
       pointers: 1,
       direction: Hammer.DIRECTION_ALL
     });
     
     const swipe = new Hammer.Swipe({ 
-      velocity: 0.5, 
-      threshold: 15,
+      velocity: 0.3, 
+      threshold: 10,
       direction: Hammer.DIRECTION_ALL
     });
     
@@ -59,8 +59,10 @@ export class GestureManager {
     // Настройка приоритетов жестов
     doubleTap.recognizeWith(tap);
     pinch.recognizeWith(rotate);
-    // Убираем конфликт между pan и swipe - пусть работают независимо
-    // pan.requireFailure(swipe);
+    
+    // Правильные приоритеты: swipe имеет приоритет над pan
+    swipe.recognizeWith(pan);
+    pan.requireFailure(swipe);
 
     this.hammer.add([tap, doubleTap, pan, swipe, pinch, rotate]);
 
@@ -74,7 +76,12 @@ export class GestureManager {
 
     // Отладочное логирование всех событий Hammer
     this.hammer.on('hammer.input', (e: any) => {
-      console.log('Hammer input:', e.type, e.eventType, e.pointers.length);
+      console.log('Hammer input:', e.type, e.eventType, e.pointers.length, 'recognizers:', e.recognizers?.map((r: any) => r.options.event));
+    });
+    
+    // Логирование всех распознанных жестов
+    this.hammer.on('tap doubletap pan panstart panend swipe pinch pinchstart pinchend rotate rotatestart rotateend', (e: any) => {
+      console.log('Gesture recognized:', e.type, 'at', e.center.x, e.center.y);
     });
   }
 
