@@ -49,6 +49,12 @@ export class HealthBar extends Phaser.GameObjects.Container {
             writable: true,
             value: void 0
         });
+        Object.defineProperty(this, "offsetX", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         Object.defineProperty(this, "showWhenFull", {
             enumerable: true,
             configurable: true,
@@ -66,6 +72,7 @@ export class HealthBar extends Phaser.GameObjects.Container {
         this.barWidth = options.barWidth || this.calculateBarWidth();
         this.barHeight = options.barHeight || 6;
         this.offsetY = options.offsetY || -40;
+        this.offsetX = options.offsetX || 0;
         this.showWhenFull = options.showWhenFull || false;
         this.showWhenEmpty = options.showWhenEmpty || true;
         // Цвета по умолчанию
@@ -105,18 +112,18 @@ export class HealthBar extends Phaser.GameObjects.Container {
         this.backgroundBar.clear();
         this.healthBar.clear();
         this.borderBar.clear();
-        // Фон
+        // Фон (центрируем по горизонтали)
         this.backgroundBar.fillStyle(colors.background, 0.8);
-        this.backgroundBar.fillRect(0, 0, this.barWidth, this.barHeight);
-        // Граница
+        this.backgroundBar.fillRect(-this.barWidth / 2, 0, this.barWidth, this.barHeight);
+        // Граница (центрируем по горизонтали)
         this.borderBar.lineStyle(1, colors.border, 1);
-        this.borderBar.strokeRect(0, 0, this.barWidth, this.barHeight);
+        this.borderBar.strokeRect(-this.barWidth / 2, 0, this.barWidth, this.barHeight);
     }
     /**
      * Обновляет позицию полосы здоровья относительно объекта
      */
     updatePosition() {
-        this.x = this.targetObject.x;
+        this.x = this.targetObject.x + this.offsetX;
         this.y = this.targetObject.y + this.offsetY;
     }
     /**
@@ -137,9 +144,9 @@ export class HealthBar extends Phaser.GameObjects.Container {
         const healthWidth = this.barWidth * healthPercent;
         // Определяем цвет в зависимости от процента здоровья
         const healthColor = this.getHealthColor(healthPercent);
-        // Рисуем полосу здоровья
+        // Рисуем полосу здоровья (центрируем по горизонтали)
         this.healthBar.fillStyle(healthColor, 0.9);
-        this.healthBar.fillRect(0, 0, healthWidth, this.barHeight);
+        this.healthBar.fillRect(-this.barWidth / 2, 0, healthWidth, this.barHeight);
     }
     /**
      * Определяет, нужно ли показывать полосу здоровья
@@ -181,6 +188,9 @@ export class HealthBar extends Phaser.GameObjects.Container {
         }
         if (options.offsetY !== undefined) {
             this.offsetY = options.offsetY;
+        }
+        if (options.offsetX !== undefined) {
+            this.offsetX = options.offsetX;
         }
         this.updateHealth();
     }

@@ -5,6 +5,7 @@ export const enemyTypes = {
         damage: 5,
         cooldown: 5,
         speed: 7,
+        attackRange: 30,
         canFly: false,
         size: 1,
         reactions: {
@@ -22,6 +23,7 @@ export const enemyTypes = {
         damage: 10,
         cooldown: 5,
         speed: 5,
+        attackRange: 35,
         canFly: false,
         size: 2,
         reactions: {
@@ -37,8 +39,9 @@ export const enemyTypes = {
         name: 'Жук-носорог',
         health: 60,
         damage: 20,
-        cooldown: 10,
+        cooldown: 5,
         speed: 4,
+        attackRange: 40,
         canFly: false,
         size: 3,
         reactions: {
@@ -56,6 +59,7 @@ export const enemyTypes = {
         damage: 2,
         cooldown: 5,
         speed: 5,
+        attackRange: 25,
         canFly: true,
         size: 1,
         reactions: {
@@ -71,8 +75,9 @@ export const enemyTypes = {
         name: 'Паук',
         health: 100,
         damage: 10,
-        cooldown: 10,
+        cooldown: 5,
         speed: 2,
+        attackRange: 50,
         canFly: false,
         size: 2,
         reactions: {
@@ -90,6 +95,7 @@ export const enemyTypes = {
         damage: 3,
         cooldown: 5,
         speed: 8,
+        attackRange: 30,
         canFly: true,
         size: 1,
         reactions: {

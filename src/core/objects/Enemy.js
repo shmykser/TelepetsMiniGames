@@ -77,7 +77,14 @@ export class Enemy extends GameObject {
     update(_time, _delta) {
         if (!this._isAlive || !this.scene)
             return;
-        // Ищем игрока в сцене
+        
+        // Если есть цель (яйцо), движемся к ней
+        if (this._target && this._target._isAlive) {
+            this.moveToTarget();
+            return;
+        }
+        
+        // Ищем игрока в сцене (старая логика для совместимости)
         const player = this.findPlayer();
         if (!player)
             return;
@@ -130,16 +137,68 @@ export class Enemy extends GameObject {
         // Базовое преследование - движемся к игроку
         this.startMovementToPoint(player.x, player.y);
     }
+    
+    /**
+     * Движется к цели (яйцу) с определенной скоростью через Phaser Physics
+     */
+    moveToTarget() {
+        if (!this._target || !this._target._isAlive || !this._isAlive) {
+            this.stopMovement();
+            return;
+        }
+        
+        // Вычисляем расстояние до цели
+        const distance = Phaser.Math.Distance.Between(this.x, this.y, this._target.x, this._target.y);
+        
+        // Если цель в радиусе атаки, останавливаемся и атакуем
+        if (distance <= this.attackRange) {
+            this.stopMovement();
+            this.attack(this._target);
+            return;
+        }
+        
+        // Вычисляем направление к цели
+        const direction = new Phaser.Math.Vector2(
+            this._target.x - this.x,
+            this._target.y - this.y
+        ).normalize();
+        
+        // Устанавливаем скорость через Phaser Physics (speed как коэффициент)
+        const baseSpeed = 10; // Базовая скорость в пикселях в секунду (уменьшена в 5 раз)
+        const actualSpeed = baseSpeed * this.speed;
+        const velocityX = direction.x * actualSpeed;
+        const velocityY = direction.y * actualSpeed;
+        
+        this.physicsBody.setVelocity(velocityX, velocityY);
+        
+        
+        // Поворачиваем спрайт в направлении движения (опционально)
+        if (velocityX !== 0 || velocityY !== 0) {
+            const angle = Math.atan2(velocityY, velocityX) * (180 / Math.PI);
+            this.setRotation(angle * (Math.PI / 180));
+        }
+    }
     // Переопределяем атаку для разных типов врагов
     attack(target) {
         if (!this._isAlive || !this.scene)
             return false;
+            
+        // Проверяем кулдаун
+        const currentTime = this.scene.time.now;
+        if (currentTime - this._lastAttackTime < this.cooldown) {
+            return false; // Еще на перезарядке
+        }
+        
         const attackTarget = target || this._target;
         if (!attackTarget || !attackTarget.isAlive)
             return false;
         const distance = Phaser.Math.Distance.Between(this.x, this.y, attackTarget.x, attackTarget.y);
         if (distance > this.attackRange)
             return false;
+            
+        // Обновляем время последней атаки
+        this._lastAttackTime = currentTime;
+        
         // Базовая атака для всех типов врагов
         this.performBasicAttack(attackTarget);
         return true;
@@ -148,6 +207,9 @@ export class Enemy extends GameObject {
         // Базовая атака
         target.takeDamage(this.damage);
         this.emit('attack', target, this.damage);
+        
+        // Логирование атаки
+        
         // Эффект атаки
         this.shake(100, 2);
     }
@@ -179,6 +241,26 @@ export class Enemy extends GameObject {
         this.setupEnemyBehavior();
     }
     set detectionRange(value) { this._detectionRange = Math.max(0, value); }
+    
+    /**
+     * Устанавливает цель для врага (яйцо)
+     */
+    setTarget(target) {
+        this._target = target;
+        this.emit('targetChanged', target);
+    }
+    // Переопределяем die для добавления события enemyKilled
+    die() {
+        // Проверяем, что враг еще жив (защита от повторного вызова)
+        if (!this._isAlive) {
+            return;
+        }
+        
+        // Эмитим событие смерти врага для системы волн
+        this.emit('enemyKilled', this);
+        super.die();
+    }
+
     // Уничтожение с очисткой таймеров
     destroy() {
         if (this._chaseTimer) {
@@ -204,13 +286,15 @@ export class Enemy extends GameObject {
             speed: enemyData.speed * 10, // Умножаем на 10 для Phaser координат
             cooldown: enemyData.cooldown * 1000 // Умножаем на 1000 для миллисекунд
         });
-        // Настраиваем размер
-        enemy.setScale(0.75);
+        // Настраиваем размер на основе типа врага (стандарт 10 пикселей * size)
+        const baseSize = 10; // базовый размер в пикселях
+        const enemySize = baseSize * enemyData.size;
+        enemy.setScale(enemySize / 32); // 32 - это размер текстуры по умолчанию в Phaser
         // Создаем полосу здоровья
         enemy.createHealthBar({
             showWhenFull: false, // Не показываем при полном здоровье
             showWhenEmpty: true, // Показываем при смерти
-            offsetY: -35, // Смещение вверх от объекта
+            offsetY: -(enemySize / 2 + 5), // Смещение вверх от объекта с учетом размера
             colors: {
                 background: 0x000000,
                 health: 0x00ff00,

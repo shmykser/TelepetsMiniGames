@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import { Enemy } from '../core/objects/Enemy';
 import { ActionManager } from '../systems/actions/ActionManager';
-import { GestureManager } from '../systems/gesture/GestureManager';
 import { TextureManager } from '../core/TextureManager';
 import { EnemySpawner } from '../core/EnemySpawner';
 
@@ -60,22 +59,6 @@ export class GestureTestScene extends Phaser.Scene {
   private initializeManagers(): void {
     // Создаем ActionManager
     this.actionManager = new ActionManager(this, this.enemies, []);
-    
-    // Создаем GestureManager с обработчиками событий
-    new GestureManager(this, {
-      onTap: (e) => {
-        console.log(`Тап в позиции: (${e.phaserX}, ${e.phaserY})`);
-        this.actionManager!.handleAction('tap', 'enemy', e.phaserX, e.phaserY);
-      },
-      onDoubleTap: (e) => {
-        console.log(`Двойной тап в позиции: (${e.phaserX}, ${e.phaserY})`);
-        this.actionManager!.handleAction('doubleTap', 'field', e.phaserX, e.phaserY);
-      },
-      onPress: (e) => {
-        console.log(`Долгое нажатие в позиции: (${e.phaserX}, ${e.phaserY})`);
-        this.actionManager!.handleAction('press', 'field', e.phaserX, e.phaserY);
-      }
-    });
   }
 
   override update(): void {

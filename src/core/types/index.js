@@ -1,3 +1,4 @@
 export * from './enemyTypes';
 export * from './defenceTypes';
-export * from './gestureActions';
+export * from './waveTypes';
+export * from './gestureTypes';

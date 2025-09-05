@@ -1,304 +1,305 @@
-import Hammer from 'hammerjs';
 /**
- * Менеджер жестов для Phaser игры
- * Основан на официальной документации Hammer.js
+ * Менеджер жестов на основе Phaser Input Events
+ * Поддерживает: tap, doubleTap, longTap, swipe
  */
 export class GestureManager {
-    constructor(scene, events = {}) {
-        Object.defineProperty(this, "hammer", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "gameCanvas", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "instantTapHandler", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        this.gameCanvas = scene.game.canvas;
-        // Создаем Hammer Manager для canvas
-        this.hammer = new Hammer.Manager(this.gameCanvas, {
-            touchAction: 'auto',
-            domEvents: false,
-            enable: true
-        });
-        // Создаем распознаватели жестов согласно документации
-        this.setupRecognizers();
-        // Привязываем события
-        this.bindEvents(events);
-        // Отладочное логирование
-        this.setupDebugLogging();
-        // Добавляем мгновенный отклик на pointerdown для быстрых тапов
-        this.setupInstantTapResponse(events);
-        // Отключаем Hammer.js обработчик тапов, чтобы избежать дублирования
-        this.setRecognizerEnabled('tap', false);
-    }
-    /**
-     * Настройка распознавателей жестов согласно документации Hammer.js
-     */
-    setupRecognizers() {
-        // 1. Tap - одинарный тап (быстрый отклик)
-        const tap = new Hammer.Tap({
-            event: 'tap',
-            taps: 1,
-            interval: 200, // Уменьшено с 300 до 200
-            time: 100, // Уменьшено с 250 до 100 для быстрого отклика
-            threshold: 2,
-            posThreshold: 10
-        });
-        // 2. DoubleTap - двойной тап
-        const doubleTap = new Hammer.Tap({
-            event: 'doubletap',
-            taps: 2,
-            interval: 200, // Уменьшено с 300 до 200
-            time: 100, // Уменьшено с 250 до 100
-            threshold: 2,
-            posThreshold: 10
-        });
-        // 3. Pan - удержание и перетаскивание (согласно документации)
-        const pan = new Hammer.Pan({
-            threshold: 10, // Согласно документации: default 10
-            pointers: 1,
-            direction: Hammer.DIRECTION_ALL
-        });
-        // 4. Swipe - быстрый свайп (согласно документации)
-        const swipe = new Hammer.Swipe({
-            velocity: 0.3, // Согласно документации: default 0.3
-            threshold: 10, // Согласно документации: default 10
-            direction: Hammer.DIRECTION_ALL
-        });
-        // 5. Pinch - щипок (масштабирование)
-        const pinch = new Hammer.Pinch({
-            threshold: 0.1
-        });
-        // 6. Rotate - вращение
-        const rotate = new Hammer.Rotate({
-            threshold: 0.1
-        });
-        // 7. Press - долгое нажатие
-        const press = new Hammer.Press({
-            time: 500,
-            threshold: 5
-        });
-        // Добавляем распознаватели в менеджер
-        this.hammer.add([tap, doubleTap, pan, swipe, pinch, rotate, press]);
-        // Настройка приоритетов согласно документации Hammer.js
-        this.setupRecognizerPriorities(tap, doubleTap, pan, swipe, pinch, rotate, press);
-    }
-    /**
-     * Настройка приоритетов распознавателей согласно документации Hammer.js
-     */
-    setupRecognizerPriorities(tap, doubleTap, pan, swipe, pinch, rotate, press) {
-        // Multi-tap приоритеты (согласно документации Hammer.js)
-        // Правильный порядок: tripleTap -> doubleTap -> singleTap
-        // doubleTap должен работать одновременно с tap, но tap должен ждать неудачи doubleTap
-        doubleTap.recognizeWith(tap);
-        tap.requireFailure(doubleTap);
-        // Pinch и rotate работают вместе
-        pinch.recognizeWith(rotate);
-        // Press требует неудачи tap и doubleTap
-        press.requireFailure([tap, doubleTap]);
-        // Swipe и pan приоритеты (согласно документации)
-        // Swipe должен иметь приоритет над pan для быстрых движений
-        // НО: swipe должен работать одновременно с pan, а pan должен ждать неудачи swipe
-        swipe.recognizeWith(pan);
-        pan.requireFailure(swipe);
-    }
-    /**
-     * Привязка событий к распознавателям
-     */
-    bindEvents(events) {
-        if (events.onTap) {
-            this.hammer.on('tap', this.wrapGestureEvent(events.onTap));
-        }
-        if (events.onDoubleTap) {
-            this.hammer.on('doubletap', this.wrapGestureEvent(events.onDoubleTap));
-        }
-        if (events.onPan) {
-            this.hammer.on('pan panstart panend', this.wrapGestureEvent(events.onPan));
-        }
-        if (events.onSwipe) {
-            this.hammer.on('swipe', this.wrapGestureEvent(events.onSwipe));
-        }
-        if (events.onPinch) {
-            this.hammer.on('pinch pinchstart pinchend', this.wrapGestureEvent(events.onPinch));
-        }
-        if (events.onRotate) {
-            this.hammer.on('rotate rotatestart rotateend', this.wrapGestureEvent(events.onRotate));
-        }
-        if (events.onPress) {
-            this.hammer.on('press pressup', this.wrapGestureEvent(events.onPress));
-        }
-    }
-    /**
-     * Обертка для преобразования Hammer координат в Phaser координаты
-     */
-    wrapGestureEvent(callback) {
-        return (e) => {
-            // Преобразуем координаты Hammer в координаты Phaser
-            const phaserCoords = this.hammerToPhaserCoords(e.center.x, e.center.y);
-            // Создаем расширенное событие с Phaser координатами
-            const extendedEvent = {
-                ...e,
-                phaserX: phaserCoords.x,
-                phaserY: phaserCoords.y
-            };
-            callback(extendedEvent);
-        };
-    }
-    /**
-     * Преобразование координат Hammer в координаты Phaser
-     */
-    hammerToPhaserCoords(hammerX, hammerY) {
-        const canvas = this.gameCanvas;
-        const rect = canvas.getBoundingClientRect();
-        // Нормализуем координаты относительно canvas
-        const x = (hammerX - rect.left) * (canvas.width / rect.width);
-        const y = (hammerY - rect.top) * (canvas.height / rect.height);
-        return { x, y };
-    }
-    /**
-     * Получение направления свайпа в виде строки
-     */
-    getSwipeDirection(direction) {
-        switch (direction) {
-            case Hammer.DIRECTION_LEFT:
-                return '←';
-            case Hammer.DIRECTION_RIGHT:
-                return '→';
-            case Hammer.DIRECTION_UP:
-                return '↑';
-            case Hammer.DIRECTION_DOWN:
-                return '↓';
-            default:
-                return '?';
-        }
-    }
-    /**
-     * Получение силы жеста
-     */
-    getGestureForce(e) {
-        return e.force || 0;
-    }
-    /**
-     * Получение масштаба щипка
-     */
-    getPinchScale(e) {
-        return e.scale || 1;
-    }
-    /**
-     * Получение угла поворота
-     */
-    getRotationAngle(e) {
-        return e.rotation || 0;
-    }
-    /**
-     * Настройка отладочного логирования
-     */
-    setupDebugLogging() {
-        // Логирование всех событий Hammer
-        this.hammer.on('hammer.input', (e) => {
-            console.log('Hammer input:', {
-                type: e.type,
-                eventType: e.eventType,
-                pointers: e.pointers.length,
-                center: { x: e.center.x, y: e.center.y }
-            });
-        });
-        // Логирование распознанных жестов
-        this.hammer.on('tap doubletap pan panstart panend swipe pinch pinchstart pinchend rotate rotatestart rotateend press pressup', (e) => {
-            console.log('Gesture recognized:', {
-                type: e.type,
-                center: { x: e.center.x, y: e.center.y },
-                deltaX: e.deltaX,
-                deltaY: e.deltaY,
-                velocity: e.velocity,
-                scale: e.scale,
-                rotation: e.rotation
-            });
-        });
-    }
-    /**
-     * Получение распознавателя по имени
-     */
-    getRecognizer(name) {
-        return this.hammer.get(name);
-    }
-    /**
-     * Обновление настроек распознавателя
-     */
-    updateRecognizer(name, options) {
-        const recognizer = this.hammer.get(name);
-        if (recognizer) {
-            recognizer.set(options);
-        }
-    }
-    /**
-     * Включение/выключение распознавателя
-     */
-    setRecognizerEnabled(name, enabled) {
-        const recognizer = this.hammer.get(name);
-        if (recognizer) {
-            recognizer.set({ enable: enabled });
-        }
-    }
-    /**
-     * Остановка текущего распознавания
-     */
-    stopRecognition(force = false) {
-        this.hammer.stop(force);
-    }
-    /**
-     * Настройка мгновенного отклика на pointerdown для быстрых тапов
-     */
-    setupInstantTapResponse(events) {
-        if (!events.onTap)
-            return;
-        // Создаем обработчик pointerdown для мгновенного отклика
-        this.instantTapHandler = (event) => {
-            // Преобразуем координаты в Phaser координаты
-            const rect = this.gameCanvas.getBoundingClientRect();
-            const phaserX = event.clientX - rect.left;
-            const phaserY = event.clientY - rect.top;
-            // Создаем расширенное событие Hammer
-            const hammerEvent = {
-                type: 'tap',
-                center: { x: phaserX, y: phaserY },
-                deltaX: 0,
-                deltaY: 0,
-                velocity: 0,
-                phaserX: phaserX,
-                phaserY: phaserY
-            };
-            // Вызываем обработчик тапа мгновенно
-            console.log(`Мгновенный тап в позиции: (${phaserX}, ${phaserY})`);
-            if (events.onTap) {
-                events.onTap(hammerEvent);
+    constructor(scene, callbacks = {}) {
+        this.scene = scene;
+        this.callbacks = callbacks;
+        
+        // Настройки жестов
+        this.settings = {
+            tap: {
+                maxDuration: 200,      // Максимальная длительность тапа (мс)
+                maxDistance: 10        // Максимальное расстояние для тапа (пиксели)
+            },
+            doubleTap: {
+                maxInterval: 300,      // Максимальный интервал между тапами (мс)
+                maxDistance: 20        // Максимальное расстояние между тапами (пиксели)
+            },
+            longTap: {
+                minDuration: 500,      // Минимальная длительность долгого тапа (мс)
+                maxDistance: 10        // Максимальное расстояние для долгого тапа (пиксели)
+            },
+            swipe: {
+                minDistance: 50,       // Минимальное расстояние для свайпа (пиксели)
+                maxDuration: 300,      // Максимальная длительность свайпа (мс)
+                minVelocity: 0.3       // Минимальная скорость для свайпа (пиксели/мс)
             }
         };
-        // Добавляем обработчик
-        this.gameCanvas.addEventListener('pointerdown', this.instantTapHandler, { passive: false });
+        
+        // Состояние жестов
+        this.gestureState = {
+            isPointerDown: false,
+            startTime: 0,
+            startX: 0,
+            startY: 0,
+            lastTapTime: 0,
+            lastTapX: 0,
+            lastTapY: 0,
+            currentX: 0,
+            currentY: 0,
+            moveDistance: 0
+        };
+        
+        this.setupInputHandlers();
     }
+    
+    /**
+     * Настройка обработчиков Phaser Input Events
+     */
+    setupInputHandlers() {
+        // Начало касания
+        this.scene.input.on('pointerdown', (pointer) => {
+            this.handlePointerDown(pointer);
+        });
+        
+        // Движение пальца
+        this.scene.input.on('pointermove', (pointer) => {
+            this.handlePointerMove(pointer);
+        });
+        
+        // Конец касания
+        this.scene.input.on('pointerup', (pointer) => {
+            this.handlePointerUp(pointer);
+        });
+        
+        // Выход за пределы экрана
+        this.scene.input.on('pointerupoutside', (pointer) => {
+            this.handlePointerUp(pointer);
+        });
+    }
+    
+    /**
+     * Обработка начала касания
+     */
+    handlePointerDown(pointer) {
+        this.gestureState.isPointerDown = true;
+        this.gestureState.startTime = this.scene.time.now;
+        this.gestureState.startX = pointer.x;
+        this.gestureState.startY = pointer.y;
+        this.gestureState.currentX = pointer.x;
+        this.gestureState.currentY = pointer.y;
+        this.gestureState.moveDistance = 0;
+        
+    }
+    
+    /**
+     * Обработка движения пальца
+     */
+    handlePointerMove(pointer) {
+        if (!this.gestureState.isPointerDown) return;
+        
+        this.gestureState.currentX = pointer.x;
+        this.gestureState.currentY = pointer.y;
+        
+        // Вычисляем общее расстояние движения
+        const distance = Phaser.Math.Distance.Between(
+            this.gestureState.startX, 
+            this.gestureState.startY, 
+            pointer.x, 
+            pointer.y
+        );
+        this.gestureState.moveDistance = distance;
+    }
+    
+    /**
+     * Обработка окончания касания
+     */
+    handlePointerUp(pointer) {
+        if (!this.gestureState.isPointerDown) return;
+        
+        const currentTime = this.scene.time.now;
+        const duration = currentTime - this.gestureState.startTime;
+        const distance = this.gestureState.moveDistance;
+        
+        
+        // Определяем тип жеста
+        const gesture = this.detectGesture(duration, distance, pointer);
+        
+        if (gesture) {
+            this.executeGesture(gesture, pointer);
+        }
+        
+        // Сбрасываем состояние
+        this.gestureState.isPointerDown = false;
+    }
+    
+    /**
+     * Определение типа жеста
+     */
+    detectGesture(duration, distance, pointer) {
+        const settings = this.settings;
+        
+        // Проверяем свайп (приоритет над другими жестами)
+        if (distance >= settings.swipe.minDistance && 
+            duration <= settings.swipe.maxDuration) {
+            
+            const velocity = distance / duration;
+            if (velocity >= settings.swipe.minVelocity) {
+                return this.createSwipeGesture(pointer);
+            }
+        }
+        
+        // Проверяем долгий тап
+        if (duration >= settings.longTap.minDuration && 
+            distance <= settings.longTap.maxDistance) {
+            return this.createLongTapGesture(pointer);
+        }
+        
+        // Проверяем обычный тап
+        if (duration <= settings.tap.maxDuration && 
+            distance <= settings.tap.maxDistance) {
+            
+            // Проверяем двойной тап
+            if (this.isDoubleTap(pointer)) {
+                return this.createDoubleTapGesture(pointer);
+            }
+            
+            return this.createTapGesture(pointer);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Проверка на двойной тап
+     */
+    isDoubleTap(pointer) {
+        const currentTime = this.scene.time.now;
+        const timeSinceLastTap = currentTime - this.gestureState.lastTapTime;
+        const distanceFromLastTap = Phaser.Math.Distance.Between(
+            this.gestureState.lastTapX,
+            this.gestureState.lastTapY,
+            pointer.x,
+            pointer.y
+        );
+        
+        return timeSinceLastTap <= this.settings.doubleTap.maxInterval &&
+               distanceFromLastTap <= this.settings.doubleTap.maxDistance;
+    }
+    
+    /**
+     * Создание жеста тапа
+     */
+    createTapGesture(pointer) {
+        return {
+            type: 'tap',
+            x: pointer.x,
+            y: pointer.y,
+            duration: this.scene.time.now - this.gestureState.startTime,
+            target: this.getTargetAtPosition(pointer.x, pointer.y)
+        };
+    }
+    
+    /**
+     * Создание жеста двойного тапа
+     */
+    createDoubleTapGesture(pointer) {
+        return {
+            type: 'doubleTap',
+            x: pointer.x,
+            y: pointer.y,
+            duration: this.scene.time.now - this.gestureState.startTime,
+            target: this.getTargetAtPosition(pointer.x, pointer.y)
+        };
+    }
+    
+    /**
+     * Создание жеста долгого тапа
+     */
+    createLongTapGesture(pointer) {
+        return {
+            type: 'longTap',
+            x: pointer.x,
+            y: pointer.y,
+            duration: this.scene.time.now - this.gestureState.startTime,
+            target: this.getTargetAtPosition(pointer.x, pointer.y)
+        };
+    }
+    
+    /**
+     * Создание жеста свайпа
+     */
+    createSwipeGesture(pointer) {
+        const deltaX = pointer.x - this.gestureState.startX;
+        const deltaY = pointer.y - this.gestureState.startY;
+        
+        // Определяем направление свайпа
+        let direction = 'unknown';
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            direction = deltaX > 0 ? 'right' : 'left';
+        } else {
+            direction = deltaY > 0 ? 'down' : 'up';
+        }
+        
+        return {
+            type: 'swipe',
+            x: pointer.x,
+            y: pointer.y,
+            startX: this.gestureState.startX,
+            startY: this.gestureState.startY,
+            direction: direction,
+            distance: this.gestureState.moveDistance,
+            duration: this.scene.time.now - this.gestureState.startTime,
+            target: this.getTargetAtPosition(pointer.x, pointer.y)
+        };
+    }
+    
+    /**
+     * Выполнение жеста
+     */
+    executeGesture(gesture, pointer) {
+        
+        // Обновляем время последнего тапа для двойного тапа
+        if (gesture.type === 'tap' || gesture.type === 'doubleTap') {
+            this.gestureState.lastTapTime = this.scene.time.now;
+            this.gestureState.lastTapX = gesture.x;
+            this.gestureState.lastTapY = gesture.y;
+        }
+        
+        // Вызываем соответствующий callback
+        const callback = this.callbacks[`on${gesture.type.charAt(0).toUpperCase() + gesture.type.slice(1)}`];
+        if (callback && typeof callback === 'function') {
+            callback(gesture);
+        }
+    }
+    
+    /**
+     * Определение цели жеста (враг, яйцо, поле)
+     */
+    getTargetAtPosition(x, y) {
+        // Здесь можно добавить логику определения цели
+        // Пока возвращаем простую структуру
+        return {
+            type: 'field', // 'enemy', 'egg', 'field'
+            x: x,
+            y: y
+        };
+    }
+    
+    /**
+     * Установка callback'ов для жестов
+     */
+    setCallbacks(callbacks) {
+        this.callbacks = { ...this.callbacks, ...callbacks };
+    }
+    
+    /**
+     * Обновление настроек жестов
+     */
+    updateSettings(newSettings) {
+        this.settings = { ...this.settings, ...newSettings };
+    }
+    
     /**
      * Уничтожение менеджера жестов
      */
     destroy() {
-        // Удаляем обработчик мгновенного тапа
-        if (this.instantTapHandler) {
-            this.gameCanvas.removeEventListener('pointerdown', this.instantTapHandler);
-            this.instantTapHandler = undefined;
-        }
-        if (this.hammer) {
-            this.hammer.destroy();
-            this.hammer = null;
-        }
+        // Удаляем обработчики событий
+        this.scene.input.off('pointerdown');
+        this.scene.input.off('pointermove');
+        this.scene.input.off('pointerup');
+        this.scene.input.off('pointerupoutside');
     }
 }

@@ -1,12 +1,38 @@
 import { Enemy } from './objects/Enemy';
+
 /**
- * Спавнер врагов для создания всех врагов на сцене
+ * Спавнер врагов (упрощенная версия для совместимости)
+ * Основная логика теперь в WaveManager
  */
 export class EnemySpawner {
+    constructor(scene) {
+        this.scene = scene;
+        this.enemies = [];
+        
+        console.log('⚠️ EnemySpawner устарел. Используйте WaveManager для новой системы волн.');
+    }
+
     /**
-     * Создает всех врагов на сцене
+     * Получает список врагов (для совместимости)
+     */
+    getEnemies() {
+        return this.enemies;
+    }
+
+    /**
+     * Обновляет состояние (для совместимости)
+     */
+    update() {
+        // Очищаем мертвых врагов
+        this.enemies = this.enemies.filter(enemy => enemy && enemy.isAlive);
+    }
+
+    /**
+     * Статический метод для обратной совместимости
+     * @deprecated Используйте new EnemySpawner(scene).startFirstWave()
      */
     static createAllEnemies(scene) {
+        console.warn('EnemySpawner.createAllEnemies() устарел. Используйте new EnemySpawner(scene).startFirstWave()');
         const { width, height } = scene.scale;
         const enemies = [];
         // Конфигурация врагов

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { HealthBar } from '../components/HealthBar';
+import { DamageIndicator } from '../components/DamageIndicator';
 export class GameObject extends Phaser.GameObjects.Sprite {
     constructor(scene, config) {
         super(scene, config.x || 0, config.y || 0, config.texture || '');
@@ -206,6 +207,17 @@ export class GameObject extends Phaser.GameObjects.Sprite {
             return;
         this.health -= damage;
         this.emit('damage', damage, this._health);
+        
+        // Показываем цифровой урон
+        DamageIndicator.showDamageWithOffset(this.scene, this, damage, {
+            duration: 1500,
+            driftDistance: 60,
+            fontSize: 28,
+            color: 0xff0000, // Красный цвет
+            strokeColor: 0xffffff, // Белая обводка
+            strokeThickness: 3
+        });
+        
         // Эффект получения урона через Phaser Tween
         this._tweenManager.add({
             targets: this,

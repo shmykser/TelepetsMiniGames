@@ -22,7 +22,7 @@ export const enemyTypes: Record<string, EnemyType> = {
   ant: {
     name: 'Муравей',
     health: 10,
-    damage: 5,
+    damage: 2,
     cooldown: 5,
     speed: 7,
     canFly: false,
@@ -40,7 +40,7 @@ export const enemyTypes: Record<string, EnemyType> = {
   beetle: {
     name: 'Жук',
     health: 30,
-    damage: 10,
+    damage: 5,
     cooldown: 5,
     speed: 5,
     canFly: false,
@@ -58,8 +58,8 @@ export const enemyTypes: Record<string, EnemyType> = {
   rhinoceros: {
     name: 'Жук-носорог',
     health: 60,
-    damage: 20,
-    cooldown: 10,
+    damage: 10,
+    cooldown: 5,
     speed: 4,
     canFly: false,
     size: 3,
@@ -95,7 +95,7 @@ export const enemyTypes: Record<string, EnemyType> = {
     name: 'Паук',
     health: 100,
     damage: 10,
-    cooldown: 10,
+    cooldown: 5,
     speed: 2,
     canFly: false,
     size: 2,
