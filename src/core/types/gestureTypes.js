@@ -15,7 +15,8 @@ export const TARGET_TYPES = {
     ENEMY: 'enemy',
     EGG: 'egg',
     FIELD: 'field',
-    DEFENCE: 'defence'
+    DEFENCE: 'defence',
+    ITEM: 'item'
 };
 
 // Направления свайпа
@@ -40,6 +41,12 @@ export const GESTURE_ACTIONS = {
         name: 'protect_egg',
         description: 'Защитить яйцо',
         shield: 5
+    },
+    
+    // Тап по предмету - собрать
+    'tap_item': {
+        name: 'collect_item',
+        description: 'Собрать предмет'
     },
     
     // Тап по полю - создать защиту

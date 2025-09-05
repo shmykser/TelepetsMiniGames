@@ -21,11 +21,17 @@ export class TextureManager {
         TextureManager.createEmojiTexture(scene, '🔺', 'spikes'); // Шипы
         TextureManager.createEmojiTexture(scene, '🥒', 'madCucumber'); // Бешеный огурец
         TextureManager.createEmojiTexture(scene, '🕳️', 'pit'); // Яма
+        
+        // Создаем текстуры для предметов
+        console.log(`🎨 Создаем текстуры для предметов`);
+        TextureManager.createEmojiTexture(scene, '❤️', 'heart');
+        TextureManager.createEmojiTexture(scene, '🍀', 'clover');
     }
     /**
      * Создает одну эмодзи-текстуру
      */
     static createEmojiTexture(scene, emoji, textureKey) {
+        console.log(`🎨 Создаем текстуру ${textureKey} с эмодзи ${emoji}`);
         // Создаем RenderTexture для рендеринга эмодзи
         const renderTexture = scene.add.renderTexture(0, 0, 64, 64);
         // Создаем текстовый объект с эмодзи
@@ -37,6 +43,7 @@ export class TextureManager {
         renderTexture.draw(text);
         // Сохраняем как текстуру
         renderTexture.saveTexture(textureKey);
+        console.log(`✅ Текстура ${textureKey} создана успешно`);
         // Очищаем
         text.destroy();
         renderTexture.destroy();

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { ActionManager } from '../systems/actions/ActionManager';
 import { GestureManager } from '../systems/gesture/GestureManager';
+import { ItemDropManager } from '../systems/ItemDropManager';
 import { TextureManager } from '../core/TextureManager';
 import { WaveManager } from '../core/WaveManager';
 import { GameTimer, WaveIndicator } from '../components';
@@ -116,6 +117,8 @@ export class GestureTestScene extends Phaser.Scene {
         
         // Обработчик смерти врага
         this.events.on('enemyKilled', (killData) => {
+            // Обрабатываем дроп предметов
+            this.itemDropManager.onEnemyKilled(killData.enemy);
             this.updateEnemyCount();
         });
         
@@ -140,8 +143,11 @@ export class GestureTestScene extends Phaser.Scene {
     }
 
     initializeManagers() {
+        // Создаем ItemDropManager
+        this.itemDropManager = new ItemDropManager(this, this.egg);
+        
         // Создаем ActionManager с врагами из менеджера волн и яйцом
-        this.actionManager = new ActionManager(this, this.waveManager.enemies, [], this.egg);
+        this.actionManager = new ActionManager(this, this.waveManager.enemies, [], this.egg, this.itemDropManager);
         
         // Создаем GestureManager с обработчиками жестов
         this.gestureManager = new GestureManager(this, {
@@ -197,6 +203,11 @@ export class GestureTestScene extends Phaser.Scene {
         // Обновляем списки объектов в ActionManager
         if (this.actionManager && this.waveManager) {
             this.actionManager.updateObjects(this.waveManager.enemies, []);
+        }
+        
+        // Обновляем ItemDropManager
+        if (this.itemDropManager) {
+            this.itemDropManager.update(this.time.now, this.game.loop.delta);
         }
         
         // Обновляем прогресс волны

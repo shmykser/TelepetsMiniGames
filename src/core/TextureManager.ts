@@ -24,6 +24,10 @@ export class TextureManager {
     TextureManager.createEmojiTexture(scene, '🔺', 'spikes'); // Шипы
     TextureManager.createEmojiTexture(scene, '🥒', 'madCucumber'); // Бешеный огурец
     TextureManager.createEmojiTexture(scene, '🕳️', 'pit'); // Яма
+    
+    // Создаем текстуры для предметов
+    TextureManager.createEmojiTexture(scene, '❤️', 'heart');
+    TextureManager.createEmojiTexture(scene, '🍀', 'clover');
   }
 
   /**

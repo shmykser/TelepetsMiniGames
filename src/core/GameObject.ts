@@ -251,11 +251,13 @@ export class GameObject extends Phaser.GameObjects.Sprite implements HealthObjec
         ease: 'Power2',
         onComplete: () => {
           this.emit('death', this);
+          this.destroy();
         }
       });
     } else {
-      // Если сцена недоступна, просто эмитим событие
+      // Если сцена недоступна, просто эмитим событие и уничтожаем
       this.emit('death', this);
+      this.destroy();
     }
   }
 

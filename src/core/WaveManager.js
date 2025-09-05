@@ -309,6 +309,7 @@ export class WaveManager {
      * Обработчик смерти врага
      */
     onEnemyKilled(enemy) {
+        console.log(`💀 WaveManager.onEnemyKilled: враг ${enemy.enemyType || 'неизвестный'} убит`);
         this.totalEnemiesKilled++;
         this.currentEnemiesOnScreen--;
         
@@ -316,10 +317,13 @@ export class WaveManager {
         const index = this.enemies.indexOf(enemy);
         if (index > -1) {
             this.enemies.splice(index, 1);
+            console.log(`💀 WaveManager.onEnemyKilled: враг удален из списка, осталось врагов: ${this.enemies.length}`);
         }
         
         // Эмитим событие смерти
+        console.log(`💀 WaveManager.onEnemyKilled: эмитим событие enemyKilled в сцену`);
         this.scene.events.emit('enemyKilled', {
+            enemy: enemy,
             enemyType: enemy.enemyType,
             totalKilled: this.totalEnemiesKilled
         });

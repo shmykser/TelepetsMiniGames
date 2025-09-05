@@ -249,17 +249,6 @@ export class Enemy extends GameObject {
         this._target = target;
         this.emit('targetChanged', target);
     }
-    // Переопределяем die для добавления события enemyKilled
-    die() {
-        // Проверяем, что враг еще жив (защита от повторного вызова)
-        if (!this._isAlive) {
-            return;
-        }
-        
-        // Эмитим событие смерти врага для системы волн
-        this.emit('enemyKilled', this);
-        super.die();
-    }
 
     // Уничтожение с очисткой таймеров
     destroy() {

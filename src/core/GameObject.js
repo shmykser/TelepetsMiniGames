@@ -205,7 +205,10 @@ export class GameObject extends Phaser.GameObjects.Sprite {
     takeDamage(damage) {
         if (!this._isAlive || !this.scene)
             return;
+        
+        console.log(`💥 GameObject.takeDamage: получен урон ${damage}, здоровье было ${this.health}`);
         this.health -= damage;
+        console.log(`💥 GameObject.takeDamage: здоровье стало ${this.health}`);
         this.emit('damage', damage, this._health);
         
         // Показываем цифровой урон
@@ -229,6 +232,11 @@ export class GameObject extends Phaser.GameObjects.Sprite {
                 this.clearTint();
             }
         });
+        
+        // Проверяем смерть
+        if (this.health <= 0) {
+            this.die();
+        }
     }
     // Методы определения цели через Phaser.Math
     setTarget(target) {
@@ -262,6 +270,7 @@ export class GameObject extends Phaser.GameObjects.Sprite {
     }
     // Анимация смерти через Phaser Tweens
     die() {
+        console.log(`💀 GameObject.die: вызывается die() для объекта`);
         this._isAlive = false;
         this._target = null;
         this.stopMovement();
@@ -276,13 +285,26 @@ export class GameObject extends Phaser.GameObjects.Sprite {
                 duration: 500,
                 ease: 'Power2',
                 onComplete: () => {
+                    console.log(`💀 GameObject.die: анимация смерти завершена, эмитим событие death`);
                     this.emit('death', this);
+                    // Если это враг, эмитим событие enemyKilled
+                    if (this.enemyType) {
+                        console.log(`💀 GameObject.die: эмитим событие enemyKilled для врага ${this.enemyType}`);
+                        this.emit('enemyKilled', this);
+                    }
+                    this.destroy();
                 }
             });
         }
         else {
-            // Если сцена недоступна, просто эмитим событие
+            // Если сцена недоступна, просто эмитим событие и уничтожаем
             this.emit('death', this);
+            // Если это враг, эмитим событие enemyKilled
+            if (this.enemyType) {
+                console.log(`💀 GameObject.die: эмитим событие enemyKilled для врага ${this.enemyType}`);
+                this.emit('enemyKilled', this);
+            }
+            this.destroy();
         }
     }
     // Обновление через Phaser update цикл

@@ -91,4 +91,64 @@ export class Egg extends GameObject {
 
         return egg;
     }
+    
+    /**
+     * Лечит яйцо на указанное количество HP
+     */
+    heal(amount) {
+        if (!this.isAlive) {
+            return false;
+        }
+        
+        const oldHealth = this.health;
+        this.health = Math.min(this.maxHealth, this.health + amount);
+        const actualHeal = this.health - oldHealth;
+        
+        // Обновляем HealthBar
+        if (this.healthBar) {
+            this.healthBar.updateHealth(this.health, this.maxHealth);
+        }
+        
+        // Показываем эффект лечения
+        if (actualHeal > 0) {
+            this.showHealEffect(actualHeal);
+        }
+        
+        return actualHeal > 0;
+    }
+    
+    /**
+     * Показывает эффект лечения
+     */
+    showHealEffect(amount) {
+        // Создаем текстовый эффект
+        const healText = this.scene.add.text(this.x, this.y - 50, `+${amount}`, {
+            fontSize: '24px',
+            fill: '#00ff00',
+            stroke: '#000000',
+            strokeThickness: 2
+        });
+        
+        // Анимация подъема и исчезновения
+        this.scene.tweens.add({
+            targets: healText,
+            y: healText.y - 30,
+            alpha: 0,
+            duration: 1000,
+            ease: 'Power2',
+            onComplete: () => {
+                healText.destroy();
+            }
+        });
+        
+        // Эффект свечения
+        this.scene.tweens.add({
+            targets: this,
+            scaleX: 1.1,
+            scaleY: 1.1,
+            duration: 200,
+            yoyo: true,
+            ease: 'Power2'
+        });
+    }
 }

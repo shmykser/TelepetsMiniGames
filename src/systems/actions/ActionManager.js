@@ -1,10 +1,11 @@
 import { GESTURE_ACTIONS, TARGET_TYPES, TARGET_SETTINGS } from '../../core/types/gestureTypes';
+import { ITEM_TYPES } from '../../core/types/itemTypes';
 
 /**
  * Менеджер действий по жестам
  */
 export class ActionManager {
-    constructor(scene, enemies, defences, egg = null) {
+    constructor(scene, enemies, defences, egg = null, itemDropManager = null) {
         Object.defineProperty(this, "scene", {
             enumerable: true,
             configurable: true,
@@ -29,10 +30,17 @@ export class ActionManager {
             writable: true,
             value: void 0
         });
+        Object.defineProperty(this, "itemDropManager", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         this.scene = scene;
         this.enemies = enemies;
         this.defences = defences;
         this.egg = egg;
+        this.itemDropManager = itemDropManager;
     }
     
     /**
@@ -84,7 +92,18 @@ export class ActionManager {
             };
         }
         
-        // Проверяем защиту (приоритет 1)
+        // Проверяем предметы (приоритет 1)
+        const item = this.getItemAtPosition(x, y);
+        if (item) {
+            return {
+                type: TARGET_TYPES.ITEM,
+                object: item,
+                x: x,
+                y: y
+            };
+        }
+        
+        // Проверяем защиту (приоритет 2)
         const defence = this.getDefenceAtPosition(x, y);
         if (defence) {
             return {
@@ -146,6 +165,9 @@ export class ActionManager {
                 case 'crush_effect':
                     return this.crushEffect(target.x, target.y, action.damage, action.slow);
                     
+                case 'collect_item':
+                    return this.collectItem(target.object);
+                    
                 default:
                     return false;
             }
@@ -157,13 +179,20 @@ export class ActionManager {
      * Наносит урон врагу
      */
     damageEnemy(enemy, damage = 10) {
+        console.log(`⚔️ ActionManager.damageEnemy: атака по врагу ${enemy.enemyType || 'неизвестный'}, урон ${damage}`);
+        console.log(`⚔️ ActionManager.damageEnemy: враг жив? ${enemy.isAlive}, здоровье: ${enemy.health}`);
+        
         if (!enemy || !enemy.isAlive) {
+            console.log(`⚔️ ActionManager.damageEnemy: враг мертв или не найден, выходим`);
             return false;
         }
         
+        console.log(`⚔️ ActionManager.damageEnemy: вызываем enemy.takeDamage(${damage})`);
         enemy.takeDamage(damage);
         
+        console.log(`⚔️ ActionManager.damageEnemy: после takeDamage враг жив? ${enemy.isAlive}, здоровье: ${enemy.health}`);
         if (!enemy.isAlive) {
+            console.log(`⚔️ ActionManager.damageEnemy: враг мертв, показываем эффект смерти`);
             this.showDeathEffect(enemy);
         }
         return true;
@@ -538,6 +567,36 @@ export class ActionManager {
             }
         });
     }
+    /**
+     * Находит предмет в позиции
+     */
+    getItemAtPosition(x, y) {
+        if (!this.itemDropManager) {
+            return null;
+        }
+        
+        for (const item of this.itemDropManager.items) {
+            if (item && !item.isCollected && item.body) {
+                const distance = Phaser.Math.Distance.Between(x, y, item.x, item.y);
+                if (distance <= item.width / 2) {
+                    return item;
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Собирает предмет
+     */
+    collectItem(item) {
+        if (!item || !this.itemDropManager) {
+            return false;
+        }
+        
+        return this.itemDropManager.collectItem(item);
+    }
+    
     /**
      * Обновляет списки объектов
      */
