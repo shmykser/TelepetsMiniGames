@@ -55,7 +55,7 @@ export class ItemDropManager {
         const items = [ITEM_TYPES.HEART]; // Сердце всегда доступно
         
         // Клевер выпадает только если везение <= 10
-        if (this.luck <= DROP_SETTINGS.cloverMaxLuck) {
+        if (this.luck <= DROP_SETTINGS.maxLuck) {
             items.push(ITEM_TYPES.CLOVER);
         }
         

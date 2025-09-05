@@ -168,11 +168,11 @@ export class ActionManager {
                 case 'collect_item':
                     return this.collectItem(target.object);
                     
-                default:
+            default:
                     return false;
             }
         } catch (error) {
-            return false;
+                return false;
         }
     }
     /**

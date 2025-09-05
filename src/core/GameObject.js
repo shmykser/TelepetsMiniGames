@@ -274,6 +274,9 @@ export class GameObject extends Phaser.GameObjects.Sprite {
         this._isAlive = false;
         this._target = null;
         this.stopMovement();
+        
+        // Уничтожаем HealthBar сразу при смерти
+        this.destroyHealthBar();
         // Анимация смерти с помощью Phaser Tween
         if (this.scene) {
             this._tweenManager.add({
