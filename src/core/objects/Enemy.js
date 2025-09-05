@@ -81,6 +81,8 @@ export class Enemy extends GameObject {
         // Если есть цель (яйцо), движемся к ней
         if (this._target && this._target._isAlive) {
             this.moveToTarget();
+            // Обновляем HealthBar при движении врага
+            this.updateHealthBar();
             return;
         }
         
@@ -96,6 +98,10 @@ export class Enemy extends GameObject {
         else {
             this.handlePlayerLost();
         }
+        
+        // Обновляем HealthBar при движении врага
+        this.updateHealthBar();
+        
         // Вызываем родительский update для базовой логики
         super.update(_time, _delta);
     }
