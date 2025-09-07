@@ -1,96 +1,27 @@
 import Phaser from 'phaser';
 import { HealthBar } from '../components/HealthBar';
 import { DamageIndicator } from '../components/DamageIndicator';
+import { PropertyUtils } from '../utils/PropertyUtils.js';
 export class GameObject extends Phaser.GameObjects.Sprite {
     constructor(scene, config) {
         super(scene, config.x || 0, config.y || 0, config.texture || '');
-        // Основные свойства
-        Object.defineProperty(this, "_health", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "_maxHealth", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "_damage", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "_speed", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "_cooldown", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "_attackRange", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "_lastAttackTime", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 0
-        });
-        // Состояние
-        Object.defineProperty(this, "_isAlive", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: true
-        });
-        Object.defineProperty(this, "_target", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: null
-        });
-        Object.defineProperty(this, "_size", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 1
-        }); // размер для взаимодействия с ямой
-        Object.defineProperty(this, "_canFly", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        }); // способность летать
+        // Основные свойства - используем утилитарную функцию
+        PropertyUtils.defineProperty(this, "_health", undefined);
+        PropertyUtils.defineProperty(this, "_maxHealth", undefined);
+        PropertyUtils.defineProperty(this, "_damage", undefined);
+        PropertyUtils.defineProperty(this, "_speed", undefined);
+        PropertyUtils.defineProperty(this, "_cooldown", undefined);
+        PropertyUtils.defineProperty(this, "_attackRange", undefined);
+        PropertyUtils.defineProperty(this, "_lastAttackTime", 0);
+        // Состояние - используем утилитарную функцию
+        PropertyUtils.defineProperty(this, "_isAlive", true);
+        PropertyUtils.defineProperty(this, "_target", null);
+        PropertyUtils.defineProperty(this, "_size", 1); // размер для взаимодействия с ямой
+        PropertyUtils.defineProperty(this, "_canFly", false); // способность летать
         // Phaser компоненты
-        Object.defineProperty(this, "_body", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "_tweenManager", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "_healthBar", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        PropertyUtils.defineProperty(this, "_body", undefined);
+        PropertyUtils.defineProperty(this, "_tweenManager", undefined);
+        PropertyUtils.defineProperty(this, "_healthBar", undefined);
         // Инициализация свойств
         this._health = config.health;
         this._maxHealth = config.health;
@@ -487,5 +418,49 @@ export class GameObject extends Phaser.GameObjects.Sprite {
         if (this._healthBar) {
             this._healthBar.setVisible(visible);
         }
+    }
+
+    /**
+     * Базовый фабричный метод для создания игровых объектов
+     * Следует принципу Factory Method Pattern
+     * @param {Phaser.Scene} scene - Сцена
+     * @param {string} type - Тип объекта
+     * @param {Object} config - Конфигурация
+     * @returns {GameObject} Созданный объект
+     */
+    static createGameObject(scene, type, config = {}) {
+        const defaultConfig = {
+            x: 0,
+            y: 0,
+            texture: type,
+            health: 100,
+            damage: 10,
+            speed: 1,
+            cooldown: 1000,
+            attackRange: 50,
+            size: 1,
+            canFly: false
+        };
+
+        const finalConfig = { ...defaultConfig, ...config };
+        
+        // Создаем объект с базовой конфигурацией
+        const gameObject = new this(scene, finalConfig);
+        
+        // Применяем специфичные настройки для типа
+        gameObject.applyTypeSpecificConfig(type, finalConfig);
+        
+        return gameObject;
+    }
+
+    /**
+     * Применяет специфичные настройки для типа объекта
+     * Переопределяется в наследниках
+     * @param {string} type - Тип объекта
+     * @param {Object} config - Конфигурация
+     */
+    applyTypeSpecificConfig(type, config) {
+        // Базовая реализация - переопределяется в наследниках
+        this.setTexture(type);
     }
 }

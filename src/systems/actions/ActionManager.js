@@ -47,7 +47,6 @@ export class ActionManager {
      * Обрабатывает жест
      */
     handleGesture(gesture) {
-        console.log(`🎯 Обработка жеста: ${gesture.type} в позиции (${gesture.x}, ${gesture.y})`);
         
         // Определяем цель жеста
         const target = this.detectTarget(gesture.x, gesture.y);

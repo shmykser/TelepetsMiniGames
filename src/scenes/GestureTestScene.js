@@ -107,8 +107,6 @@ export class GestureTestScene extends Phaser.Scene {
             this.toggleUniqueMovement();
         });
         
-        // Отладочный лог
-        console.log(`🎮 GestureTestScene initialized with uniqueMovementEnabled:`, this.uniqueMovementEnabled);
     }
 
     createEgg() {
@@ -233,16 +231,13 @@ export class GestureTestScene extends Phaser.Scene {
         
         // Применяем настройку ко всем существующим врагам
         if (this.waveManager && this.waveManager.enemies) {
-            console.log(`🎮 Applying unique movement to ${this.waveManager.enemies.length} enemies`);
             this.waveManager.enemies.forEach(enemy => {
                 if (enemy && enemy.setUniqueMovement) {
                     enemy.setUniqueMovement(this.uniqueMovementEnabled);
-                    console.log(`🎮 Set unique movement for ${enemy.enemyType}:`, this.uniqueMovementEnabled);
                 }
             });
         }
         
-        console.log(`🎮 Уникальное движение: ${this.uniqueMovementEnabled ? 'ВКЛЮЧЕНО' : 'ВЫКЛЮЧЕНО'}`);
     }
     
     update() {

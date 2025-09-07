@@ -93,7 +93,6 @@ export class MovementTestScene extends Phaser.Scene {
         
         // Обработчик для клика по тестовому объекту
         this.testObject.on('pointerdown', () => {
-            console.log('🎯 Test object clicked');
             this.nextPattern();
         });
     }
@@ -113,7 +112,6 @@ export class MovementTestScene extends Phaser.Scene {
         
         // Отладочная информация (каждые 2 секунды)
         if (Math.floor(time / 2000) !== Math.floor((time - delta) / 2000)) {
-            console.log(`🎯 Pattern: ${this.movementPattern.type}, Position: (${this.testObject.x.toFixed(1)}, ${this.testObject.y.toFixed(1)}) -> (${newPosition.x.toFixed(1)}, ${newPosition.y.toFixed(1)})`);
         }
         
         // Применяем новую позицию
@@ -128,11 +126,9 @@ export class MovementTestScene extends Phaser.Scene {
     setPattern(patternType) {
         this.movementPattern = new InsectMovementPatterns(patternType);
         this.patternText.setText(`Insect: ${patternType}`);
-        console.log(`🐛 Switched to insect pattern: ${patternType}`);
     }
 
     nextPattern() {
-        console.log('🔄 Switching pattern...');
         this.currentPatternIndex = (this.currentPatternIndex + 1) % this.patterns.length;
         this.setPattern(this.patterns[this.currentPatternIndex]);
     }

@@ -2,6 +2,8 @@ import { GameObject } from '../GameObject';
 import { enemyTypes } from '../types/enemyTypes';
 import { settings } from '../../../config/settings.js';
 import { MovementSystem } from '../../systems/movement/MovementSystem.js';
+import { PropertyUtils } from '../../utils/PropertyUtils.js';
+import { GeometryUtils } from '../../utils/GeometryUtils.js';
 export class Enemy extends GameObject {
     constructor(scene, config) {
         const enemyType = config.enemyType || 'ant';
@@ -18,61 +20,19 @@ export class Enemy extends GameObject {
             texture: config.texture
         };
         super(scene, enemyConfig);
-        Object.defineProperty(this, "_enemyType", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "_detectionRange", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "_enemyData", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "_lastPlayerPosition", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: null
-        });
-        Object.defineProperty(this, "_isChasing", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
-        Object.defineProperty(this, "_chaseTimer", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "_id", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        // Используем утилитарную функцию для определения свойств
+        PropertyUtils.defineProperty(this, "_enemyType", undefined);
+        PropertyUtils.defineProperty(this, "_detectionRange", undefined);
+        PropertyUtils.defineProperty(this, "_enemyData", undefined);
+        PropertyUtils.defineProperty(this, "_lastPlayerPosition", null);
+        PropertyUtils.defineProperty(this, "_isChasing", false);
+        PropertyUtils.defineProperty(this, "_chaseTimer", undefined);
+        PropertyUtils.defineProperty(this, "_id", undefined);
         this._id = `${enemyType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         this._enemyType = enemyType;
         this._detectionRange = config.detectionRange || 150;
         this._enemyData = enemyData;
         
-        // Отладочный лог для проверки типа врага
-        if (enemyType === 'ant') {
-            console.log(`🐜 Enemy Constructor Debug:`, {
-                enemyType: enemyType,
-                _enemyType: this._enemyType,
-                id: this._id
-            });
-        }
         // Настраиваем свойства из типа врага
         this._size = enemyData.size;
         this._canFly = enemyData.canFly;
@@ -81,14 +41,6 @@ export class Enemy extends GameObject {
         this._movementSystem = null;
         this._useUniqueMovement = config.useUniqueMovement !== false; // По умолчанию включено
         
-        // Логи для отладки скорости (только для муравья)
-        if (enemyType === 'ant') {
-            console.log(`🐜 Ant Speed Debug:`, {
-                originalSpeed: enemyData.speed,
-                finalSpeed: this.speed,
-                note: 'Speed is now used as coefficient (no *20 multiplication)'
-            });
-        }
         
         
         // Настраиваем поведение в зависимости от типа
@@ -114,17 +66,9 @@ export class Enemy extends GameObject {
         // Получаем или создаем систему движения в сцене
         if (!this.scene.movementSystem) {
             this.scene.movementSystem = new MovementSystem(this.scene);
-            console.log(`🔄 Created MovementSystem for scene`);
         }
         this._movementSystem = this.scene.movementSystem;
         
-        // Отладочный лог
-        if (this.enemyType === 'ant') {
-            console.log(`🐜 MovementSystem initialized for ${this.enemyType}`, {
-                hasMovementSystem: !!this._movementSystem,
-                sceneHasMovementSystem: !!this.scene.movementSystem
-            });
-        }
     }
     // Переопределяем update для ИИ поведения
     update(_time, _delta) {
@@ -143,7 +87,7 @@ export class Enemy extends GameObject {
         const player = this.findPlayer();
         if (!player)
             return;
-        const distanceToPlayer = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
+        const distanceToPlayer = GeometryUtils.distance(this.x, this.y, player.x, player.y);
         // Логика поведения в зависимости от расстояния
         if (distanceToPlayer <= this._detectionRange) {
             this.handlePlayerDetected(player, distanceToPlayer);
@@ -207,7 +151,7 @@ export class Enemy extends GameObject {
         }
         
         // Вычисляем расстояние до цели
-        const distance = Phaser.Math.Distance.Between(this.x, this.y, this._target.x, this._target.y);
+        const distance = GeometryUtils.distance(this.x, this.y, this._target.x, this._target.y);
         
         // Если цель в радиусе атаки, останавливаемся и атакуем
         if (distance <= this.attackRange) {
@@ -218,32 +162,10 @@ export class Enemy extends GameObject {
         
         // Используем уникальное движение если включено
         if (this._useUniqueMovement && this._movementSystem) {
-            // Отладочный лог для проверки типа врага
-            if (this.enemyType === 'ant' && Math.random() < 0.1) {
-                console.log(`🐜 Enemy Debug:`, {
-                    enemyType: this.enemyType,
-                    useUniqueMovement: this._useUniqueMovement,
-                    hasMovementSystem: !!this._movementSystem,
-                    position: `(${this.x.toFixed(1)}, ${this.y.toFixed(1)})`,
-                    target: this._target ? `(${this._target.x.toFixed(1)}, ${this._target.y.toFixed(1)})` : 'none',
-                    movementType: 'UNIQUE'
-                });
-            }
             this._movementSystem.updateEnemyMovement(this, this._target, this.scene.game.loop.delta);
             return;
         }
         
-        // Логируем, если используется линейное движение
-        if (this.enemyType === 'ant' && Math.random() < 0.1) {
-            console.log(`🐜 Enemy Debug:`, {
-                enemyType: this.enemyType,
-                useUniqueMovement: this._useUniqueMovement,
-                hasMovementSystem: !!this._movementSystem,
-                position: `(${this.x.toFixed(1)}, ${this.y.toFixed(1)})`,
-                target: this._target ? `(${this._target.x.toFixed(1)}, ${this._target.y.toFixed(1)})` : 'none',
-                movementType: 'LINEAR'
-            });
-        }
         
         // Стандартное линейное движение
         this.moveToTargetLinear();
@@ -265,29 +187,12 @@ export class Enemy extends GameObject {
         const velocityX = direction.x * actualSpeed;
         const velocityY = direction.y * actualSpeed;
         
-        // Логи для отладки движения (только для муравья)
-        if (this.enemyType === 'ant' && Math.random() < 0.1) { // 10% шанс логирования
-            console.log(`🐜 Ant Movement Debug:`, {
-                position: `(${this.x.toFixed(1)}, ${this.y.toFixed(1)})`,
-                target: `(${this._target.x.toFixed(1)}, ${this._target.y.toFixed(1)})`,
-                distance: Phaser.Math.Distance.Between(this.x, this.y, this._target.x, this._target.y).toFixed(1),
-                direction: `(${direction.x.toFixed(3)}, ${direction.y.toFixed(3)})`,
-                speed: {
-                    base: baseSpeed,
-                    coefficient: this.speed,
-                    actual: actualSpeed.toFixed(1)
-                },
-                velocity: `(${velocityX.toFixed(1)}, ${velocityY.toFixed(1)})`,
-                deltaTime: this.scene.game.loop.delta,
-                movementType: 'linear'
-            });
-        }
         
         this.physicsBody.setVelocity(velocityX, velocityY);
         
         // Поворачиваем спрайт в направлении движения (опционально)
         if (velocityX !== 0 || velocityY !== 0) {
-            const angle = Math.atan2(velocityY, velocityX) * (180 / Math.PI);
+            const angle = GeometryUtils.angle(0, 0, velocityX, velocityY) * (180 / Math.PI);
             this.setRotation(angle * (Math.PI / 180));
         }
     }
@@ -305,7 +210,7 @@ export class Enemy extends GameObject {
         const attackTarget = target || this._target;
         if (!attackTarget || !attackTarget.isAlive)
             return false;
-        const distance = Phaser.Math.Distance.Between(this.x, this.y, attackTarget.x, attackTarget.y);
+        const distance = GeometryUtils.distance(this.x, this.y, attackTarget.x, attackTarget.y);
         if (distance > this.attackRange)
             return false;
             
@@ -400,8 +305,8 @@ export class Enemy extends GameObject {
      */
     static CreateEnemy(scene, enemyType, x, y) {
         const enemyData = enemyTypes[enemyType];
-        // Создаем врага
-        const enemy = new Enemy(scene, {
+        
+        const config = {
             x: x,
             y: y,
             texture: enemyType,
@@ -409,8 +314,14 @@ export class Enemy extends GameObject {
             health: enemyData.health,
             damage: enemyData.damage,
             speed: enemyData.speed * 10, // Умножаем на 10 для Phaser координат
-            cooldown: enemyData.cooldown * 1000 // Умножаем на 1000 для миллисекунд
-        });
+            cooldown: enemyData.cooldown * 1000, // Умножаем на 1000 для миллисекунд
+            attackRange: enemyData.attackRange,
+            size: enemyData.size,
+            canFly: enemyData.canFly
+        };
+        
+        // Используем фабричный метод из базового класса
+        const enemy = this.createGameObject(scene, enemyType, config);
         // Настраиваем размер на основе типа врага (стандарт 10 пикселей * size)
         const baseSize = 10; // базовый размер в пикселях
         const enemySize = baseSize * enemyData.size;

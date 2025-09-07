@@ -305,11 +305,6 @@ export class WaveManager {
         // Включаем уникальное движение если оно включено в сцене
         if (this.scene.uniqueMovementEnabled !== false) {
             enemy.setUniqueMovement(true);
-            console.log(`🔄 Set unique movement for ${enemyType}:`, {
-                enemyType: enemyType,
-                uniqueMovementEnabled: this.scene.uniqueMovementEnabled,
-                enemyHasUniqueMovement: enemy.getUniqueMovement()
-            });
         }
         
         return enemy;

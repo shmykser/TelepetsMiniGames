@@ -1,72 +1,26 @@
 import Phaser from 'phaser';
+import { BaseUIComponent } from '../core/BaseUIComponent.js';
+import { PropertyUtils } from '../utils/PropertyUtils.js';
 /**
  * Универсальный компонент полосы здоровья
  * Может использоваться для врагов, яйца, защиты и любых других объектов
  */
-export class HealthBar extends Phaser.GameObjects.Container {
+export class HealthBar extends BaseUIComponent {
     constructor(scene, targetObject, options = {}) {
-        super(scene, 0, 0);
-        Object.defineProperty(this, "backgroundBar", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "healthBar", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "borderBar", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "targetObject", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        // Настройки полосы здоровья
-        Object.defineProperty(this, "barWidth", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "barHeight", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "offsetY", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "offsetX", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "showWhenFull", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "showWhenEmpty", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        super(scene, 0, 0, options);
+        
+        // Используем утилитарную функцию для определения свойств
+        PropertyUtils.defineProperty(this, "backgroundBar", undefined);
+        PropertyUtils.defineProperty(this, "healthBar", undefined);
+        PropertyUtils.defineProperty(this, "borderBar", undefined);
+        PropertyUtils.defineProperty(this, "targetObject", undefined);
+        // Настройки полосы здоровья - используем утилитарную функцию
+        PropertyUtils.defineProperty(this, "barWidth", undefined);
+        PropertyUtils.defineProperty(this, "barHeight", undefined);
+        PropertyUtils.defineProperty(this, "offsetY", undefined);
+        PropertyUtils.defineProperty(this, "offsetX", undefined);
+        PropertyUtils.defineProperty(this, "showWhenFull", undefined);
+        PropertyUtils.defineProperty(this, "showWhenEmpty", undefined);
         this.targetObject = targetObject;
         // Настройки по умолчанию
         this.barWidth = options.barWidth || this.calculateBarWidth();

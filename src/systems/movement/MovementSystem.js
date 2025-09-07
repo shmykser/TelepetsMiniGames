@@ -25,7 +25,6 @@ export class MovementSystem {
         if (!this.patterns.has(enemyId)) {
             const pattern = new InsectMovementPatterns(enemyType);
             this.patterns.set(enemyId, pattern);
-            console.log(`🔄 Created movement pattern for ${enemyType} (ID: ${enemyId})`);
         }
         return this.patterns.get(enemyId);
     }
@@ -39,15 +38,6 @@ export class MovementSystem {
     updateEnemyMovement(enemy, target, deltaTime) {
         const pattern = this.getPattern(enemy.enemyType, enemy.id);
         
-        // Отладочный лог для проверки паттерна
-        if (enemy.enemyType === 'ant' && Math.random() < 0.05) {
-            console.log(`🐜 MovementSystem Pattern Debug:`, {
-                enemyType: enemy.enemyType,
-                patternType: pattern.type,
-                patternParams: pattern.params,
-                hasPattern: !!pattern
-            });
-        }
         
         // Обновляем контекст
         this.updateContext(enemy, target);
@@ -70,23 +60,6 @@ export class MovementSystem {
         const baseSpeed = 10; // Базовая скорость
         const actualSpeed = baseSpeed * enemy.speed;
         
-        // Отладочные логи для муравья
-        if (enemy.enemyType === 'ant' && Math.random() < 0.1) {
-            console.log(`🐜 MovementSystem Debug:`, {
-                enemyType: enemy.enemyType,
-                position: `(${enemy.x.toFixed(1)}, ${enemy.y.toFixed(1)})`,
-                target: `(${target.x.toFixed(1)}, ${target.y.toFixed(1)})`,
-                newPosition: `(${newPosition.x.toFixed(1)}, ${newPosition.y.toFixed(1)})`,
-                direction: `(${direction.x.toFixed(3)}, ${direction.y.toFixed(3)})`,
-                speed: {
-                    base: baseSpeed,
-                    enemy: enemy.speed,
-                    actual: actualSpeed.toFixed(1)
-                },
-                velocity: `(${(direction.x * actualSpeed).toFixed(1)}, ${(direction.y * actualSpeed).toFixed(1)})`,
-                deltaTime: deltaTime
-            });
-        }
         
         enemy.physicsBody.setVelocity(
             direction.x * actualSpeed,
