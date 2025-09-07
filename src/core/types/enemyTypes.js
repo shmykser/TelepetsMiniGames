@@ -112,5 +112,59 @@ export const enemyTypes = {
             madCucumber: 'influence',
             pit: 'influence'
         }
+    },
+    bee: {
+        name: 'Пчела',
+        health: 15,
+        damage: 4,
+        cooldown: 4,
+        speed: 6,
+        attackRange: 35,
+        canFly: true,
+        size: 1.2,
+        reactions: {
+            sugar: 'attack',
+            stone: 'ignore',
+            crack: 'ignore',
+            spikes: 'ignore',
+            madCucumber: 'influence',
+            pit: 'influence'
+        }
+    },
+    butterfly: {
+        name: 'Бабочка',
+        health: 8,
+        damage: 1,
+        cooldown: 6,
+        speed: 4,
+        attackRange: 20,
+        canFly: true,
+        size: 1.5,
+        reactions: {
+            sugar: 'ignore',
+            stone: 'ignore',
+            crack: 'ignore',
+            spikes: 'ignore',
+            madCucumber: 'ignore',
+            pit: 'influence'
+        }
+    },
+    dragonfly: {
+        name: 'Стрекоза',
+        health: 25,
+        damage: 6,
+        cooldown: 3,
+        speed: 12,
+        attackRange: 40,
+        canFly: true,
+        size: 1.8,
+        reactions: {
+            sugar: 'ignore',
+            stone: 'ignore',
+            crack: 'ignore',
+            spikes: 'ignore',
+            madCucumber: 'influence',
+            pit: 'influence'
+        }
     }
 };

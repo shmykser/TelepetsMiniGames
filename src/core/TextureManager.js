@@ -6,14 +6,18 @@ export class TextureManager {
      * Создает все необходимые эмодзи-текстуры для игры
      */
     static createAllTextures(scene) {
-        // Создаем текстуры для врагов
         TextureManager.createEmojiTexture(scene, '🥚', 'egg');
+        // Создаем текстуры для врагов
         TextureManager.createEmojiTexture(scene, '🕷️', 'spider');
         TextureManager.createEmojiTexture(scene, '🐞', 'beetle');
         TextureManager.createEmojiTexture(scene, '🐜', 'ant');
-        TextureManager.createEmojiTexture(scene, '🦏', 'rhinoceros');
-        TextureManager.createEmojiTexture(scene, '🦋', 'fly');
+        TextureManager.createEmojiTexture(scene, '🐛', 'rhinoceros');
+        TextureManager.createEmojiTexture(scene, '🪰', 'fly');
         TextureManager.createEmojiTexture(scene, '🦟', 'mosquito');
+        TextureManager.createEmojiTexture(scene, '🐝', 'bee');
+        TextureManager.createEmojiTexture(scene, '🦋', 'butterfly');
+        TextureManager.createEmojiTexture(scene, '🪲', 'dragonfly');
+        
         // Создаем текстуры для защитных объектов
         TextureManager.createEmojiTexture(scene, '🍯', 'sugar'); // Сахар
         TextureManager.createEmojiTexture(scene, '🪨', 'stone'); // Камень

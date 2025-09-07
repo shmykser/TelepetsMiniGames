@@ -32,8 +32,8 @@ export class MovementPatternFactory {
             ant: {
                 strategy: 'wave',
                 params: {
-                    amplitude: 0.5,
-                    frequency: 0.05,
+                    amplitude: 1.5,
+                    frequency: 0.1,
                     offset: 0.5
                 }
             },

@@ -14,8 +14,13 @@ export class TextureManager {
     TextureManager.createEmojiTexture(scene, '🐞', 'beetle');
     TextureManager.createEmojiTexture(scene, '🐜', 'ant');
     TextureManager.createEmojiTexture(scene, '🦏', 'rhinoceros');
-    TextureManager.createEmojiTexture(scene, '🦋', 'fly');
+    TextureManager.createEmojiTexture(scene, '🪰', 'fly');
     TextureManager.createEmojiTexture(scene, '🦟', 'mosquito');
+    
+    // Новые враги
+    TextureManager.createEmojiTexture(scene, '🐝', 'bee');
+    TextureManager.createEmojiTexture(scene, '🦋', 'butterfly');
+    TextureManager.createEmojiTexture(scene, '🪲', 'dragonfly');
     
     // Создаем текстуры для защитных объектов
     TextureManager.createEmojiTexture(scene, '🍯', 'sugar'); // Сахар
