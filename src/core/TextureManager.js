@@ -30,6 +30,9 @@ export class TextureManager {
         console.log(`🎨 Создаем текстуры для предметов`);
         TextureManager.createEmojiTexture(scene, '❤️', 'heart');
         TextureManager.createEmojiTexture(scene, '🍀', 'clover');
+        
+        // Создаем текстуры для эффектов усиления
+        TextureManager.createEmojiTexture(scene, '✨', 'sparkle');
     }
     /**
      * Создает одну эмодзи-текстуру

@@ -107,6 +107,11 @@ export class GestureTestScene extends Phaser.Scene {
             this.toggleUniqueMovement();
         });
         
+        // Добавляем обработчик для усиленных врагов
+        this.events.on('enhancedEnemySpawned', (data) => {
+            console.log(`🌟 Усиленный враг появился: ${data.level.name} ${data.enemy._enemyData.name}`);
+        });
+        
     }
 
     createEgg() {

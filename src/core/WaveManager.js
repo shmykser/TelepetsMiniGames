@@ -2,6 +2,7 @@ import { settings } from '../../config/settings.js';
 import { Enemy } from './objects/Enemy';
 import { enemyTypes } from './types/enemyTypes';
 import { enemyTypesByMinute, enemyWeights } from './types/waveTypes.js';
+import { EnhancementSystem } from './EnhancementSystem.js';
 
 /**
  * Менеджер волн в стиле Vampire Survivors
@@ -307,7 +308,11 @@ export class WaveManager {
             enemy.setUniqueMovement(true);
         }
         
-        return enemy;
+        // Применяем систему усиления
+        const gameTime = this.scene.time.now;
+        const enhancedEnemy = EnhancementSystem.enhanceEnemy(enemy, enemyType, gameTime);
+        
+        return enhancedEnemy;
     }
     
     /**

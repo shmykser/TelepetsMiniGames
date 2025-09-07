@@ -85,6 +85,10 @@ export class HealthBar extends BaseUIComponent {
      */
     updateHealth() {
         const healthPercent = this.targetObject.health / this.targetObject.maxHealth;
+        
+        // Отладочная информация
+        console.log(`💚 HealthBar: ${this.targetObject._enemyData?.name || 'Unknown'} - Health: ${this.targetObject.health}/${this.targetObject.maxHealth} (${(healthPercent * 100).toFixed(1)}%)`);
+        
         // Определяем, нужно ли показывать полосу
         const shouldShow = this.shouldShowBar(healthPercent);
         this.setVisible(shouldShow);
@@ -101,6 +105,22 @@ export class HealthBar extends BaseUIComponent {
         // Рисуем полосу здоровья (центрируем по горизонтали)
         this.healthBar.fillStyle(healthColor, 0.9);
         this.healthBar.fillRect(-this.barWidth / 2, 0, healthWidth, this.barHeight);
+    }
+    
+    /**
+     * Обновляет размер полосы здоровья при изменении размера объекта
+     */
+    updateBarSize() {
+        // Пересчитываем ширину на основе нового размера объекта
+        this.barWidth = this.calculateBarWidth();
+        // Перерисовываем полосу с новыми размерами
+        this.setColors({
+            background: 0x000000,
+            health: 0x00ff00,
+            border: 0xffffff
+        });
+        // Обновляем отображение здоровья
+        this.updateHealth();
     }
     /**
      * Определяет, нужно ли показывать полосу здоровья

@@ -1,5 +1,6 @@
 import { GESTURE_ACTIONS, TARGET_TYPES, TARGET_SETTINGS } from '../../core/types/gestureTypes';
 import { ITEM_TYPES } from '../../core/types/itemTypes';
+import { DAMAGE_CONSTANTS, EFFECT_CONSTANTS } from '../../core/constants/index.js';
 
 /**
  * Менеджер действий по жестам
@@ -177,7 +178,7 @@ export class ActionManager {
     /**
      * Наносит урон врагу
      */
-    damageEnemy(enemy, damage = 10) {
+    damageEnemy(enemy, damage = DAMAGE_CONSTANTS.TAP_DAMAGE) {
         console.log(`⚔️ ActionManager.damageEnemy: атака по врагу ${enemy.enemyType || 'неизвестный'}, урон ${damage}`);
         console.log(`⚔️ ActionManager.damageEnemy: враг жив? ${enemy.isAlive}, здоровье: ${enemy.health}`);
         
@@ -200,7 +201,7 @@ export class ActionManager {
     /**
      * Критический урон врагу
      */
-    criticalDamageEnemy(enemy, damage = 25) {
+    criticalDamageEnemy(enemy, damage = DAMAGE_CONSTANTS.CRITICAL_DAMAGE) {
         if (!enemy || !enemy.isAlive) {
             return false;
         }
@@ -298,7 +299,7 @@ export class ActionManager {
     /**
      * Взрыв в области
      */
-    explosion(x, y, radius = 100, damage = 15) {
+    explosion(x, y, radius = EFFECT_CONSTANTS.EXPLOSION_RADIUS, damage = DAMAGE_CONSTANTS.EXPLOSION_DAMAGE) {
         
         // Находим врагов в радиусе взрыва
         const enemiesInRange = this.getEnemiesInRadius(x, y, radius);
@@ -315,7 +316,7 @@ export class ActionManager {
     /**
      * Волна урона
      */
-    damageWave(x, y, direction, damage = 8, range = 150) {
+    damageWave(x, y, direction, damage = DAMAGE_CONSTANTS.WAVE_DAMAGE, range = EFFECT_CONSTANTS.WAVE_RANGE) {
         
         // Находим врагов в направлении волны
         const enemiesInWave = this.getEnemiesInDirection(x, y, direction, range);
@@ -332,10 +333,10 @@ export class ActionManager {
     /**
      * Эффект подъема
      */
-    liftEffect(x, y, force = 200) {
+    liftEffect(x, y, force = EFFECT_CONSTANTS.LIFT_FORCE) {
         
         // Находим врагов в области
-        const enemiesInArea = this.getEnemiesInRadius(x, y, 100);
+        const enemiesInArea = this.getEnemiesInRadius(x, y, EFFECT_CONSTANTS.EXPLOSION_RADIUS);
         enemiesInArea.forEach(enemy => {
             if (enemy.body) {
                 enemy.body.setVelocityY(-force);
@@ -348,10 +349,10 @@ export class ActionManager {
     /**
      * Эффект придавливания
      */
-    crushEffect(x, y, damage = 12, slow = 0.5) {
+    crushEffect(x, y, damage = DAMAGE_CONSTANTS.CRUSH_DAMAGE, slow = EFFECT_CONSTANTS.CRUSH_SLOW) {
         
         // Находим врагов в области
-        const enemiesInArea = this.getEnemiesInRadius(x, y, 100);
+        const enemiesInArea = this.getEnemiesInRadius(x, y, EFFECT_CONSTANTS.EXPLOSION_RADIUS);
         enemiesInArea.forEach(enemy => {
             this.damageEnemy(enemy, damage);
             // Замедляем врага
@@ -370,7 +371,7 @@ export class ActionManager {
             return false;
         }
         const distance = Phaser.Math.Distance.Between(x, y, this.egg.x, this.egg.y);
-        const hitRadius = 30; // Радиус попадания по яйцу
+        const hitRadius = TARGET_SETTINGS.egg.hitRadius;
         return distance <= hitRadius;
     }
     /**
@@ -381,7 +382,7 @@ export class ActionManager {
             if (!enemy.isAlive)
                 continue;
             const distance = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
-            const hitRadius = 50; // Радиус попадания
+            const hitRadius = TARGET_SETTINGS.enemy.hitRadius;
             if (distance <= hitRadius) {
                 return enemy;
             }
@@ -394,7 +395,7 @@ export class ActionManager {
     getDefenceAtPosition(x, y) {
         for (const defence of this.defences) {
             const distance = Phaser.Math.Distance.Between(x, y, defence.x, defence.y);
-            const hitRadius = 50; // Радиус попадания
+            const hitRadius = TARGET_SETTINGS.defence.hitRadius;
             if (distance <= hitRadius) {
                 return defence;
             }

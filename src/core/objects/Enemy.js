@@ -28,10 +28,18 @@ export class Enemy extends GameObject {
         PropertyUtils.defineProperty(this, "_isChasing", false);
         PropertyUtils.defineProperty(this, "_chaseTimer", undefined);
         PropertyUtils.defineProperty(this, "_id", undefined);
+        PropertyUtils.defineProperty(this, "enhancementLevel", undefined);
+        PropertyUtils.defineProperty(this, "enhancementParticles", undefined);
+        PropertyUtils.defineProperty(this, "displayName", undefined);
         this._id = `${enemyType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         this._enemyType = enemyType;
         this._detectionRange = config.detectionRange || 150;
         this._enemyData = enemyData;
+        
+        // Инициализация свойств усиления
+        this.enhancementLevel = null;
+        this.enhancementParticles = null;
+        this.displayName = enemyData.name;
         
         // Настраиваем свойства из типа врага
         this._size = enemyData.size;
@@ -74,6 +82,11 @@ export class Enemy extends GameObject {
     update(_time, _delta) {
         if (!this._isAlive || !this.scene)
             return;
+        
+        // Обновляем позицию частиц усиления
+        if (this.enhancementParticles) {
+            this.enhancementParticles.setPosition(this.x, this.y);
+        }
         
         // Если есть цель (яйцо), движемся к ней
         if (this._target && this._target._isAlive) {
@@ -295,6 +308,12 @@ export class Enemy extends GameObject {
         // Очищаем систему движения
         if (this._movementSystem) {
             this._movementSystem.removePattern(this._id);
+        }
+        
+        // Очищаем эффекты усиления
+        if (this.enhancementParticles) {
+            this.enhancementParticles.destroy();
+            this.enhancementParticles = null;
         }
         
         super.destroy();

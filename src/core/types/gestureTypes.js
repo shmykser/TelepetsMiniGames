@@ -1,14 +1,7 @@
 /**
  * Типы жестов и действий
  */
-
-// Типы жестов
-export const GESTURE_TYPES = {
-    TAP: 'tap',
-    DOUBLE_TAP: 'doubleTap', 
-    LONG_TAP: 'longTap',
-    SWIPE: 'swipe'
-};
+import { DAMAGE_CONSTANTS, EFFECT_CONSTANTS } from '../constants/index.js';
 
 // Типы целей
 export const TARGET_TYPES = {
@@ -19,21 +12,13 @@ export const TARGET_TYPES = {
     ITEM: 'item'
 };
 
-// Направления свайпа
-export const SWIPE_DIRECTIONS = {
-    UP: 'up',
-    DOWN: 'down',
-    LEFT: 'left',
-    RIGHT: 'right'
-};
-
 // Действия по жестам
 export const GESTURE_ACTIONS = {
     // Тап по врагу - нанести урон
     'tap_enemy': {
         name: 'damage_enemy',
         description: 'Нанести урон врагу',
-        damage: 10
+        damage: DAMAGE_CONSTANTS.TAP_DAMAGE
     },
     
     // Тап по яйцу - защитить
@@ -60,7 +45,7 @@ export const GESTURE_ACTIONS = {
     'doubleTap_enemy': {
         name: 'critical_damage',
         description: 'Критический урон врагу',
-        damage: 25,
+        damage: DAMAGE_CONSTANTS.CRITICAL_DAMAGE,
         critical: true
     },
     
@@ -75,23 +60,23 @@ export const GESTURE_ACTIONS = {
     'doubleTap_field': {
         name: 'explosion',
         description: 'Взрыв в области',
-        radius: 100,
-        damage: 15
+        radius: EFFECT_CONSTANTS.EXPLOSION_RADIUS,
+        damage: DAMAGE_CONSTANTS.EXPLOSION_DAMAGE
     },
     
     // Долгий тап по врагу - заморозка
     'longTap_enemy': {
         name: 'freeze_enemy',
         description: 'Заморозить врага',
-        freezeDuration: 2000
+        freezeDuration: EFFECT_CONSTANTS.FREEZE_DURATION
     },
     
     // Долгий тап по яйцу - щит
     'longTap_egg': {
         name: 'shield_egg',
         description: 'Создать щит для яйца',
-        shieldDuration: 5000,
-        shieldStrength: 50
+        shieldDuration: EFFECT_CONSTANTS.SHIELD_DURATION,
+        shieldStrength: EFFECT_CONSTANTS.SHIELD_STRENGTH
     },
     
     // Долгий тап по полю - стена
@@ -106,8 +91,8 @@ export const GESTURE_ACTIONS = {
         name: 'damage_wave',
         description: 'Волна урона влево',
         direction: 'left',
-        damage: 8,
-        range: 150
+        damage: DAMAGE_CONSTANTS.WAVE_DAMAGE,
+        range: EFFECT_CONSTANTS.WAVE_RANGE
     },
     
     // Свайп вправо - волна урона
@@ -115,8 +100,8 @@ export const GESTURE_ACTIONS = {
         name: 'damage_wave',
         description: 'Волна урона вправо',
         direction: 'right',
-        damage: 8,
-        range: 150
+        damage: DAMAGE_CONSTANTS.WAVE_DAMAGE,
+        range: EFFECT_CONSTANTS.WAVE_RANGE
     },
     
     // Свайп вверх - подъем
@@ -124,7 +109,7 @@ export const GESTURE_ACTIONS = {
         name: 'lift_effect',
         description: 'Поднять врагов',
         direction: 'up',
-        force: 200
+        force: EFFECT_CONSTANTS.LIFT_FORCE
     },
     
     // Свайп вниз - придавить
@@ -132,34 +117,8 @@ export const GESTURE_ACTIONS = {
         name: 'crush_effect',
         description: 'Придавить врагов',
         direction: 'down',
-        damage: 12,
-        slow: 0.5
-    }
-};
-
-// Настройки жестов
-export const GESTURE_SETTINGS = {
-    tap: {
-        maxDuration: 200,
-        maxDistance: 10,
-        damage: 10
-    },
-    doubleTap: {
-        maxInterval: 300,
-        maxDistance: 20,
-        damage: 25,
-        critical: true
-    },
-    longTap: {
-        minDuration: 500,
-        maxDistance: 10,
-        specialEffect: true
-    },
-    swipe: {
-        minDistance: 50,
-        maxDuration: 300,
-        minVelocity: 0.3,
-        areaEffect: true
+        damage: DAMAGE_CONSTANTS.CRUSH_DAMAGE,
+        slow: EFFECT_CONSTANTS.CRUSH_SLOW
     }
 };
 
@@ -180,5 +139,9 @@ export const TARGET_SETTINGS = {
     defence: {
         hitRadius: 40,
         priority: 1
+    },
+    item: {
+        hitRadius: 25,
+        priority: 3
     }
 };
