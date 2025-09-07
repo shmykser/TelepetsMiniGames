@@ -1,6 +1,7 @@
 import { settings } from '../../config/settings.js';
 import { Enemy } from './objects/Enemy';
 import { enemyTypes } from './types/enemyTypes';
+import { enemyTypesByMinute, enemyWeights } from './types/waveTypes.js';
 
 /**
  * Менеджер волн в стиле Vampire Survivors
@@ -185,7 +186,7 @@ export class WaveManager {
         }
         
         // Получаем веса для доступных типов
-        const weights = availableTypes.map(type => this.gameSettings.waves.enemyWeights[type] || 1);
+        const weights = availableTypes.map(type => enemyWeights[type] || 1);
         
         // Выбираем случайный тип с учетом весов (используем простой метод)
         const selectedType = this.selectRandomWithWeights(availableTypes, weights);
@@ -223,7 +224,6 @@ export class WaveManager {
      * Получает доступные типы врагов для текущей минуты
      */
     getAvailableEnemyTypes() {
-        const enemyTypesByMinute = this.gameSettings.waves.enemyTypesByMinute;
         // Находим все типы врагов, доступные до текущей минуты
         const availableTypes = [];
         for (let minute = 1; minute <= this.currentMinute; minute++) {
@@ -301,6 +301,16 @@ export class WaveManager {
         
         // Устанавливаем радиус атаки
         enemy.attackRange = enemyData.attackRange;
+        
+        // Включаем уникальное движение если оно включено в сцене
+        if (this.scene.uniqueMovementEnabled !== false) {
+            enemy.setUniqueMovement(true);
+            console.log(`🔄 Set unique movement for ${enemyType}:`, {
+                enemyType: enemyType,
+                uniqueMovementEnabled: this.scene.uniqueMovementEnabled,
+                enemyHasUniqueMovement: enemy.getUniqueMovement()
+            });
+        }
         
         return enemy;
     }

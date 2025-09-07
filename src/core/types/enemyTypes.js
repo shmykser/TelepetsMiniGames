@@ -44,6 +44,12 @@ export const enemyTypes = {
         attackRange: 40,
         canFly: false,
         size: 3,
+        // Параметры движения и поведения
+        chargeCooldown: 4000,    // Кулдаун между зарядами (мс)
+        chargeSpeed: 15.0,       // Скорость во время заряда
+        rammingPower: 2.0,       // Множитель урона при заряде
+        unstoppable: true,       // Неостановимый (игнорирует препятствия)
+        groundShake: true,       // Тряска земли при движении
         reactions: {
             sugar: 'attack',
             stone: 'attack',

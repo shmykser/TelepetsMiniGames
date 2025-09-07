@@ -5,7 +5,7 @@
 export const waveConfig = [
     // Волна 1: Только муравьи
     {
-        waveNumber: 1,
+        waveNumber: 10,
         name: "Первая волна",
         enemies: [
             { type: 'ant', count: 10 }
@@ -65,7 +65,7 @@ export const waveConfig = [
     
     // Волна 6: Добавляем жуков-носорогов
     {
-        waveNumber: 6,
+        waveNumber: 1,
         name: "Шестая волна",
         enemies: [
             { type: 'ant', count: 3 },
@@ -107,3 +107,28 @@ export function getWaveEnemyCount(waveNumber) {
 export function getMaxWaveNumber() {
     return waveConfig.length;
 }
+
+/**
+ * Конфигурация типов врагов по минутам игры
+ * Каждая минута добавляет новые типы врагов
+ */
+export const enemyTypesByMinute = {
+    5: ['ant', 'beetle'],
+    2: ['ant', 'beetle', 'mosquito'],
+    3: ['ant', 'beetle', 'mosquito', 'fly'],
+    4: ['ant', 'beetle', 'mosquito', 'fly', 'spider'],
+    1: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros']
+};
+
+/**
+ * Веса врагов для случайного выбора
+ * Чем больше вес, тем чаще появляется враг
+ */
+export const enemyWeights = {
+    ant: 10,
+    beetle: 5,
+    mosquito: 3,
+    fly: 2,
+    spider: 1,
+    rhinoceros: 1
+};

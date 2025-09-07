@@ -14,7 +14,7 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "types": ["phaser", "hammerjs"],
+    "types": ["phaser"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],

@@ -1,5 +1,7 @@
 import { GameObject } from '../GameObject';
 import { enemyTypes } from '../types/enemyTypes';
+import { settings } from '../../../config/settings.js';
+import { MovementSystem } from '../../systems/movement/MovementSystem.js';
 export class Enemy extends GameObject {
     constructor(scene, config) {
         const enemyType = config.enemyType || 'ant';
@@ -8,7 +10,7 @@ export class Enemy extends GameObject {
         const enemyConfig = {
             health: config.health !== undefined ? config.health : enemyData.health,
             damage: config.damage !== undefined ? config.damage : enemyData.damage,
-            speed: config.speed !== undefined ? config.speed : enemyData.speed * 20, // конвертируем 1-10 в пиксели
+            speed: config.speed !== undefined ? config.speed : enemyData.speed, // используем скорость как коэффициент
             cooldown: config.cooldown !== undefined ? config.cooldown : enemyData.cooldown * 1000, // конвертируем секунды в мс
             attackRange: config.attackRange || 40,
             x: config.x,
@@ -62,9 +64,33 @@ export class Enemy extends GameObject {
         this._enemyType = enemyType;
         this._detectionRange = config.detectionRange || 150;
         this._enemyData = enemyData;
+        
+        // Отладочный лог для проверки типа врага
+        if (enemyType === 'ant') {
+            console.log(`🐜 Enemy Constructor Debug:`, {
+                enemyType: enemyType,
+                _enemyType: this._enemyType,
+                id: this._id
+            });
+        }
         // Настраиваем свойства из типа врага
         this._size = enemyData.size;
         this._canFly = enemyData.canFly;
+        
+        // Инициализируем систему движения
+        this._movementSystem = null;
+        this._useUniqueMovement = config.useUniqueMovement !== false; // По умолчанию включено
+        
+        // Логи для отладки скорости (только для муравья)
+        if (enemyType === 'ant') {
+            console.log(`🐜 Ant Speed Debug:`, {
+                originalSpeed: enemyData.speed,
+                finalSpeed: this.speed,
+                note: 'Speed is now used as coefficient (no *20 multiplication)'
+            });
+        }
+        
+        
         // Настраиваем поведение в зависимости от типа
         this.setupEnemyBehavior();
     }
@@ -72,6 +98,33 @@ export class Enemy extends GameObject {
         // Настраиваем физику
         this.physicsBody.setBounce(0.1);
         this.physicsBody.setDrag(50, 50);
+        
+        // Инициализируем систему движения если включена
+        if (this._useUniqueMovement && this.scene) {
+            this.initializeMovementSystem();
+        }
+    }
+    
+    /**
+     * Инициализирует систему движения для врага
+     */
+    initializeMovementSystem() {
+        if (!this.scene || this._movementSystem) return;
+        
+        // Получаем или создаем систему движения в сцене
+        if (!this.scene.movementSystem) {
+            this.scene.movementSystem = new MovementSystem(this.scene);
+            console.log(`🔄 Created MovementSystem for scene`);
+        }
+        this._movementSystem = this.scene.movementSystem;
+        
+        // Отладочный лог
+        if (this.enemyType === 'ant') {
+            console.log(`🐜 MovementSystem initialized for ${this.enemyType}`, {
+                hasMovementSystem: !!this._movementSystem,
+                sceneHasMovementSystem: !!this.scene.movementSystem
+            });
+        }
     }
     // Переопределяем update для ИИ поведения
     update(_time, _delta) {
@@ -163,6 +216,43 @@ export class Enemy extends GameObject {
             return;
         }
         
+        // Используем уникальное движение если включено
+        if (this._useUniqueMovement && this._movementSystem) {
+            // Отладочный лог для проверки типа врага
+            if (this.enemyType === 'ant' && Math.random() < 0.1) {
+                console.log(`🐜 Enemy Debug:`, {
+                    enemyType: this.enemyType,
+                    useUniqueMovement: this._useUniqueMovement,
+                    hasMovementSystem: !!this._movementSystem,
+                    position: `(${this.x.toFixed(1)}, ${this.y.toFixed(1)})`,
+                    target: this._target ? `(${this._target.x.toFixed(1)}, ${this._target.y.toFixed(1)})` : 'none',
+                    movementType: 'UNIQUE'
+                });
+            }
+            this._movementSystem.updateEnemyMovement(this, this._target, this.scene.game.loop.delta);
+            return;
+        }
+        
+        // Логируем, если используется линейное движение
+        if (this.enemyType === 'ant' && Math.random() < 0.1) {
+            console.log(`🐜 Enemy Debug:`, {
+                enemyType: this.enemyType,
+                useUniqueMovement: this._useUniqueMovement,
+                hasMovementSystem: !!this._movementSystem,
+                position: `(${this.x.toFixed(1)}, ${this.y.toFixed(1)})`,
+                target: this._target ? `(${this._target.x.toFixed(1)}, ${this._target.y.toFixed(1)})` : 'none',
+                movementType: 'LINEAR'
+            });
+        }
+        
+        // Стандартное линейное движение
+        this.moveToTargetLinear();
+    }
+    
+    /**
+     * Стандартное линейное движение к цели
+     */
+    moveToTargetLinear() {
         // Вычисляем направление к цели
         const direction = new Phaser.Math.Vector2(
             this._target.x - this.x,
@@ -170,13 +260,30 @@ export class Enemy extends GameObject {
         ).normalize();
         
         // Устанавливаем скорость через Phaser Physics (speed как коэффициент)
-        const baseSpeed = 10; // Базовая скорость в пикселях в секунду (уменьшена в 5 раз)
+        const baseSpeed = 10; // Базовая скорость в пикселях в секунду
         const actualSpeed = baseSpeed * this.speed;
         const velocityX = direction.x * actualSpeed;
         const velocityY = direction.y * actualSpeed;
         
-        this.physicsBody.setVelocity(velocityX, velocityY);
+        // Логи для отладки движения (только для муравья)
+        if (this.enemyType === 'ant' && Math.random() < 0.1) { // 10% шанс логирования
+            console.log(`🐜 Ant Movement Debug:`, {
+                position: `(${this.x.toFixed(1)}, ${this.y.toFixed(1)})`,
+                target: `(${this._target.x.toFixed(1)}, ${this._target.y.toFixed(1)})`,
+                distance: Phaser.Math.Distance.Between(this.x, this.y, this._target.x, this._target.y).toFixed(1),
+                direction: `(${direction.x.toFixed(3)}, ${direction.y.toFixed(3)})`,
+                speed: {
+                    base: baseSpeed,
+                    coefficient: this.speed,
+                    actual: actualSpeed.toFixed(1)
+                },
+                velocity: `(${velocityX.toFixed(1)}, ${velocityY.toFixed(1)})`,
+                deltaTime: this.scene.game.loop.delta,
+                movementType: 'linear'
+            });
+        }
         
+        this.physicsBody.setVelocity(velocityX, velocityY);
         
         // Поворачиваем спрайт в направлении движения (опционально)
         if (velocityX !== 0 || velocityY !== 0) {
@@ -255,6 +362,23 @@ export class Enemy extends GameObject {
         this._target = target;
         this.emit('targetChanged', target);
     }
+    
+    /**
+     * Включает/выключает уникальное движение
+     */
+    setUniqueMovement(enabled) {
+        this._useUniqueMovement = enabled;
+        if (enabled && !this._movementSystem) {
+            this.initializeMovementSystem();
+        }
+    }
+    
+    /**
+     * Получает статус уникального движения
+     */
+    getUniqueMovement() {
+        return this._useUniqueMovement;
+    }
 
     // Уничтожение с очисткой таймеров
     destroy() {
@@ -262,6 +386,12 @@ export class Enemy extends GameObject {
             this._chaseTimer.destroy();
             this._chaseTimer = undefined;
         }
+        
+        // Очищаем систему движения
+        if (this._movementSystem) {
+            this._movementSystem.removePattern(this._id);
+        }
+        
         super.destroy();
     }
     /**

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ActionManager } from '../systems/actions/ActionManager';
 import { GestureManager } from '../systems/gesture/GestureManager';
 import { ItemDropManager } from '../systems/ItemDropManager';
+import { MovementSystem } from '../systems/movement/MovementSystem';
 import { TextureManager } from '../core/TextureManager';
 import { WaveManager } from '../core/WaveManager';
 import { GameTimer, WaveIndicator } from '../components';
@@ -60,6 +61,9 @@ export class GestureTestScene extends Phaser.Scene {
         // Создаем менеджер волн
         this.waveManager = new WaveManager(this);
         
+        // Создаем систему движения
+        this.movementSystem = new MovementSystem(this);
+        
         // Настраиваем обработчики событий
         this.setupGameEvents();
         
@@ -77,6 +81,34 @@ export class GestureTestScene extends Phaser.Scene {
         
         // Создаем таймер игры (вверху справа)
         this.gameTimer = new GameTimer(this, width - 75, 60, settings.game.ui.timer);
+        
+        // Создаем кнопку возврата в меню
+        const menuButton = this.add.text(width - 10, 10, 'Menu', {
+            fontSize: '16px',
+            fill: '#ffffff',
+            backgroundColor: '#34495e',
+            padding: { x: 10, y: 5 }
+        }).setOrigin(1, 0).setInteractive();
+        
+        menuButton.on('pointerdown', () => {
+            this.scene.start('MenuScene');
+        });
+        
+        // Создаем кнопку переключения уникального движения
+        this.uniqueMovementButton = this.add.text(width - 10, 50, 'Уникальное движение: ВКЛ', {
+            fontSize: '14px',
+            fill: '#ffffff',
+            backgroundColor: '#27ae60',
+            padding: { x: 8, y: 4 }
+        }).setOrigin(1, 0).setInteractive();
+        
+        this.uniqueMovementEnabled = true;
+        this.uniqueMovementButton.on('pointerdown', () => {
+            this.toggleUniqueMovement();
+        });
+        
+        // Отладочный лог
+        console.log(`🎮 GestureTestScene initialized with uniqueMovementEnabled:`, this.uniqueMovementEnabled);
     }
 
     createEgg() {
@@ -185,6 +217,34 @@ export class GestureTestScene extends Phaser.Scene {
             this.waveIndicator.updateEnemyCount(this.waveManager.currentEnemiesOnScreen);
         }
     }
+    
+    /**
+     * Переключает уникальное движение для всех врагов
+     */
+    toggleUniqueMovement() {
+        this.uniqueMovementEnabled = !this.uniqueMovementEnabled;
+        
+        // Обновляем текст кнопки
+        const buttonText = this.uniqueMovementEnabled ? 'Уникальное движение: ВКЛ' : 'Уникальное движение: ВЫКЛ';
+        const buttonColor = this.uniqueMovementEnabled ? '#27ae60' : '#e74c3c';
+        
+        this.uniqueMovementButton.setText(buttonText);
+        this.uniqueMovementButton.setBackgroundColor(buttonColor);
+        
+        // Применяем настройку ко всем существующим врагам
+        if (this.waveManager && this.waveManager.enemies) {
+            console.log(`🎮 Applying unique movement to ${this.waveManager.enemies.length} enemies`);
+            this.waveManager.enemies.forEach(enemy => {
+                if (enemy && enemy.setUniqueMovement) {
+                    enemy.setUniqueMovement(this.uniqueMovementEnabled);
+                    console.log(`🎮 Set unique movement for ${enemy.enemyType}:`, this.uniqueMovementEnabled);
+                }
+            });
+        }
+        
+        console.log(`🎮 Уникальное движение: ${this.uniqueMovementEnabled ? 'ВКЛЮЧЕНО' : 'ВЫКЛЮЧЕНО'}`);
+    }
+    
     update() {
         // Обновляем менеджер волн
         if (this.waveManager) {

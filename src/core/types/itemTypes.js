@@ -26,7 +26,6 @@ export const ITEMS = {
     }
 };
 
-
 // Настройки дропа
 export const DROP_SETTINGS = {
     baseLuck: 5,        // Начальное везение (%)
