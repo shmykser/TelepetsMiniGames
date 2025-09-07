@@ -1,5 +1,6 @@
 import { Item } from '../core/objects/Item';
 import { ITEM_TYPES, DROP_SETTINGS } from '../core/types/itemTypes';
+import { AnimationLibrary } from '../animations/AnimationLibrary.js';
 
 /**
  * Менеджер дропа предметов
@@ -17,13 +18,8 @@ export class ItemDropManager {
      * Обработка дропа после убийства врага
      */
     onEnemyKilled(enemy) {
-        console.log(`🎁 ItemDropManager.onEnemyKilled: получен враг:`, enemy);
         if (this.shouldDropItem()) {
-            console.log(`🎁 ItemDropManager.onEnemyKilled: дроп выпал!`);
-            console.log(`🎁 ItemDropManager.onEnemyKilled: создаем предмет в позиции (${enemy.x}, ${enemy.y})`);
             this.dropRandomItem(enemy.x, enemy.y);
-        } else {
-            console.log(`🎁 ItemDropManager.onEnemyKilled: дроп не выпал`);
         }
     }
     
@@ -66,8 +62,6 @@ export class ItemDropManager {
      * Создание предмета
      */
     createItem(x, y, itemType) {
-        console.log(`🎁 ItemDropManager.createItem: создаем ${itemType} в позиции (${x}, ${y})`);
-        
         const item = new Item(this.scene, x, y, itemType);
         this.items.push(item);
         
@@ -76,12 +70,6 @@ export class ItemDropManager {
         
         // Устанавливаем высокую глубину, чтобы предмет был поверх всего
         item.setDepth(1000);
-        
-        // Проверяем, что предмет добавлен в сцену
-        console.log(`🎁 ItemDropManager.createItem: предмет ${itemType} создан, всего предметов: ${this.items.length}`);
-        console.log(`🎁 ItemDropManager.createItem: предмет в сцене? ${this.scene.children.list.includes(item)}`);
-        console.log(`🎁 ItemDropManager.createItem: позиция предмета: (${item.x}, ${item.y})`);
-        console.log(`🎁 ItemDropManager.createItem: видимый? ${item.visible}, активный? ${item.active}`);
         
         // Обработчик сбора предмета
         item.on('pointerdown', () => {
@@ -159,15 +147,13 @@ export class ItemDropManager {
             }
         );
         
-        this.scene.tweens.add({
-            targets: luckText,
-            y: luckText.y - 20,
-            alpha: 0,
+        // Используем AnimationLibrary для анимации текста удачи
+        AnimationLibrary.createTextDriftEffect(this.scene, luckText, {
+            driftDistance: 20,
             duration: 2000,
+            alpha: { to: 0 },
             ease: 'Power2',
-            onComplete: () => {
-                luckText.destroy();
-            }
+            onComplete: () => luckText.destroy()
         });
     }
     
@@ -203,15 +189,13 @@ export class ItemDropManager {
         
         effect.setOrigin(0.5);
         
-        this.scene.tweens.add({
-            targets: effect,
-            y: effect.y - 30,
-            alpha: 0,
+        // Используем AnimationLibrary для анимации эффекта предмета
+        AnimationLibrary.createTextDriftEffect(this.scene, effect, {
+            driftDistance: 30,
             duration: 1500,
+            alpha: { to: 0 },
             ease: 'Power2',
-            onComplete: () => {
-                effect.destroy();
-            }
+            onComplete: () => effect.destroy()
         });
     }
     

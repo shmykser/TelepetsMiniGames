@@ -1,12 +1,11 @@
-import { BaseUIComponent } from '../core/BaseUIComponent.js';
+import { BaseUIComponent } from './BaseUIComponent.js';
 import { AnimationLibrary } from '../animations/AnimationLibrary.js';
-import { PropertyUtils } from './PropertyUtils.js';
 
 /**
- * Утилитарный класс для создания кнопок
+ * Компонент кнопки
  * Следует принципу Single Responsibility Principle
  */
-export class UIButton extends BaseUIComponent {
+export class Button extends BaseUIComponent {
     constructor(scene, x, y, config = {}) {
         const defaultConfig = {
             width: 200,

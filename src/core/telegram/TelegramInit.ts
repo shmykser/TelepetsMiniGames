@@ -14,7 +14,6 @@ export function initTelegram(): void {
       try {
         WebApp.setHeaderColor('secondary_bg_color');
       } catch (error) {
-        console.warn('[Telegram.WebApp] Header color not supported in this version');
       }
     }
 
@@ -26,12 +25,10 @@ export function initTelegram(): void {
           WebApp.BackButton.show();
         }
       } catch (error) {
-        console.warn('[Telegram.WebApp] BackButton not supported in this version');
       }
     }
   } catch (error) {
     // В небраузерной среде/без Telegram SDK — мягкая деградация
-    console.warn('[Telegram.WebApp] Initialization failed:', error);
   }
 }
 

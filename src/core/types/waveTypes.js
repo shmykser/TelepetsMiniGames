@@ -19,13 +19,13 @@ export const enemyTypesByMinute = {
  * Чем больше вес, тем чаще появляется враг
  */
 export const enemyWeights = {
-    ant: 10,
-    beetle: 5,
-    mosquito: 3,
-    fly: 2,
-    spider: 1,
-    rhinoceros: 1,
-    bee: 4,
-    butterfly: 3,
-    dragonfly: 2
+    ant: 20,
+    beetle: 10,
+    mosquito: 6,
+    fly: 4,
+    spider: 2,
+    rhinoceros: 2,
+    bee: 8,
+    butterfly: 6,
+    dragonfly: 4
 };

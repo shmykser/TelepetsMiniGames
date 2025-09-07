@@ -1,3 +1,5 @@
+import { GeometryUtils } from '../../utils/GeometryUtils.js';
+
 /**
  * Общие стратегии движения для насекомых
  * Реализует паттерн Strategy для различных типов движения
@@ -9,7 +11,7 @@ export class MovementStrategies {
     static linear(x, y, targetX, targetY, deltaTime, context, params = {}) {
         const baseSpeed = context.enemyData?.speed || 5;
         const speed = baseSpeed * deltaTime * 0.01;
-        const direction = this.normalizeDirection(targetX - x, targetY - y);
+        const direction = GeometryUtils.normalize(targetX - x, targetY - y);
         
         return {
             x: x + direction.x * speed,
@@ -23,13 +25,13 @@ export class MovementStrategies {
     static wave(x, y, targetX, targetY, deltaTime, context, params = {}) {
         const baseSpeed = context.enemyData?.speed || 5;
         const speed = baseSpeed * deltaTime * 0.01;
-        const direction = this.normalizeDirection(targetX - x, targetY - y);
+        const direction = GeometryUtils.normalize(targetX - x, targetY - y);
         
         const amplitude = params.amplitude || 1.5;
         const frequency = params.frequency || 0.1;
         const offset = params.offset || 0.5;
         
-        const waveOffset = Math.sin(context.time * frequency) * amplitude;
+        const waveOffset = GeometryUtils.calculateWaveOffset(context.time, frequency, amplitude);
         
         return {
             x: x + (direction.x + waveOffset) * speed,
@@ -43,7 +45,7 @@ export class MovementStrategies {
     static burst(x, y, targetX, targetY, deltaTime, context, params = {}) {
         const baseSpeed = context.enemyData?.speed || 5;
         const speed = baseSpeed * deltaTime * 0.01;
-        const direction = this.normalizeDirection(targetX - x, targetY - y);
+        const direction = GeometryUtils.normalize(targetX - x, targetY - y);
         
         const intensity = params.intensity || 2.5;
         const duration = params.duration || 300;
@@ -63,12 +65,12 @@ export class MovementStrategies {
     static flutter(x, y, targetX, targetY, deltaTime, context, params = {}) {
         const baseSpeed = context.enemyData?.speed || 5;
         const speed = baseSpeed * deltaTime * 0.01;
-        const direction = this.normalizeDirection(targetX - x, targetY - y);
+        const direction = GeometryUtils.normalize(targetX - x, targetY - y);
         
         const intensity = params.intensity || 0.6;
         const influence = params.influence || 1.5;
         
-        const flutter = this.calculateFlutter(context.time, intensity);
+        const flutter = GeometryUtils.calculateFlutter(context.time, intensity);
         
         return {
             x: x + (direction.x + flutter.x * influence) * speed,
@@ -82,12 +84,12 @@ export class MovementStrategies {
     static zigzag(x, y, targetX, targetY, deltaTime, context, params = {}) {
         const baseSpeed = context.enemyData?.speed || 5;
         const speed = baseSpeed * deltaTime * 0.01;
-        const direction = this.normalizeDirection(targetX - x, targetY - y);
+        const direction = GeometryUtils.normalize(targetX - x, targetY - y);
         
         const amplitude = params.amplitude || 1.2;
         const influence = params.influence || 0.8;
         
-        const zigzag = this.calculateZigzag(context.time, amplitude);
+        const zigzag = GeometryUtils.calculateZigzag(context.time, amplitude);
         
         return {
             x: x + (direction.x + zigzag.x * influence) * speed,
@@ -106,12 +108,13 @@ export class MovementStrategies {
         const targetInfluence = params.targetInfluence || 0.7;
         const period = params.period || 1500;
         
-        const chaosX = (Math.random() - 0.5) * intensity;
-        const chaosY = (Math.random() - 0.5) * intensity;
+        const chaosOffset = GeometryUtils.generateRandomOffset(intensity);
+        const chaosX = chaosOffset.x;
+        const chaosY = chaosOffset.y;
         
         const targetInfluenceFactor = context.time % period < period / 2 ? 
             targetInfluence : targetInfluence * 0.5;
-        const direction = this.normalizeDirection(targetX - x, targetY - y);
+        const direction = GeometryUtils.normalize(targetX - x, targetY - y);
         
         return {
             x: x + (chaosX + direction.x * targetInfluenceFactor) * speed,
@@ -148,25 +151,6 @@ export class MovementStrategies {
         };
     }
 
-    // Вспомогательные методы
-    static normalizeDirection(dx, dy) {
-        const length = Math.sqrt(dx * dx + dy * dy);
-        if (length === 0) return { x: 0, y: 0 };
-        return { x: dx / length, y: dy / length };
-    }
-
-    static calculateZigzag(time, intensity) {
-        return {
-            x: Math.sin(time * 0.01) * intensity * 0.5,
-            y: Math.cos(time * 0.007) * intensity * 0.3
-        };
-    }
-
-    static calculateFlutter(time, intensity) {
-        return {
-            x: Math.sin(time * 0.02) * intensity * 0.3,
-            y: Math.cos(time * 0.015) * intensity * 0.2
-        };
-    }
+    // Вспомогательные методы (перенесены в GeometryUtils)
 }
 

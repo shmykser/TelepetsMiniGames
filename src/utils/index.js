@@ -5,4 +5,5 @@
 
 export { GeometryUtils } from './GeometryUtils.js';
 export { PropertyUtils } from './PropertyUtils.js';
-export { UIButton } from './UIButton.js';
+export { UIUtils } from './UIUtils.js';
+export { UI_THEME, getColor, getFontSize, getSpacing, getComponentSize, getAnimationConfig, getComponentState } from './UITheme.js';

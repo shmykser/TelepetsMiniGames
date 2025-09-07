@@ -3,6 +3,8 @@
  * Следует принципу Single Responsibility Principle
  */
 export class GeometryUtils {
+    // Математические константы
+    static TWO_PI = Math.PI * 2;
     /**
      * Вычисляет расстояние между двумя точками
      * @param {number} x1 - X координата первой точки
@@ -56,34 +58,21 @@ export class GeometryUtils {
                y >= rectY && y <= rectY + rectHeight;
     }
 
-    /**
-     * Проверяет, находится ли точка внутри круга
-     * @param {number} x - X координата точки
-     * @param {number} y - Y координата точки
-     * @param {number} circleX - X координата центра круга
-     * @param {number} circleY - Y координата центра круга
-     * @param {number} radius - Радиус круга
-     * @returns {boolean} true если точка внутри круга
-     */
-    static pointInCircle(x, y, circleX, circleY, radius) {
-        const distance = this.distance(x, y, circleX, circleY);
-        return distance <= radius;
-    }
 
     /**
-     * Вычисляет точку на окружности по углу
+     * Проверяет, находится ли точка в радиусе от центра
+     * @param {number} x - X координата точки
+     * @param {number} y - Y координата точки
      * @param {number} centerX - X координата центра
      * @param {number} centerY - Y координата центра
      * @param {number} radius - Радиус
-     * @param {number} angle - Угол в радианах
-     * @returns {Object} Точка {x, y}
+     * @returns {boolean} true если точка в радиусе
      */
-    static pointOnCircle(centerX, centerY, radius, angle) {
-        return {
-            x: centerX + Math.cos(angle) * radius,
-            y: centerY + Math.sin(angle) * radius
-        };
+    static isInRadius(x, y, centerX, centerY, radius) {
+        const distance = this.distance(x, y, centerX, centerY);
+        return distance <= radius;
     }
+
 
     /**
      * Ограничивает значение в заданном диапазоне
@@ -93,7 +82,7 @@ export class GeometryUtils {
      * @returns {number} Ограниченное значение
      */
     static clamp(value, min, max) {
-        return Math.min(Math.max(value, min), max);
+        return this.min(this.max(value, min), max);
     }
 
     /**
@@ -105,5 +94,301 @@ export class GeometryUtils {
      */
     static lerp(a, b, t) {
         return a + (b - a) * t;
+    }
+
+    /**
+     * Генерирует случайное целое число между min и max (включительно)
+     * @param {number} min - Минимальное значение
+     * @param {number} max - Максимальное значение
+     * @returns {number} Случайное целое число
+     */
+    static randomBetween(min, max) {
+        return this.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    /**
+     * Генерирует случайное число с плавающей точкой между min и max
+     * @param {number} min - Минимальное значение
+     * @param {number} max - Максимальное значение
+     * @returns {number} Случайное число с плавающей точкой
+     */
+    static randomFloat(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+
+    /**
+     * Конвертирует градусы в радианы
+     * @param {number} degrees - Значение в градусах
+     * @returns {number} Значение в радианах
+     */
+    static degreesToRadians(degrees) {
+        return degrees * (Math.PI / 180);
+    }
+
+    /**
+     * Конвертирует радианы в градусы
+     * @param {number} radians - Значение в радианах
+     * @returns {number} Значение в градусах
+     */
+    static radiansToDegrees(radians) {
+        return radians * (180 / Math.PI);
+    }
+
+    /**
+     * Определяет направление по дельтам координат
+     * @param {number} deltaX - Изменение по X
+     * @param {number} deltaY - Изменение по Y
+     * @returns {string} Направление: 'left', 'right', 'up', 'down', 'unknown'
+     */
+    static directionFromDeltas(deltaX, deltaY) {
+        if (this.abs(deltaX) > this.abs(deltaY)) {
+            return deltaX > 0 ? 'right' : 'left';
+        } else {
+            return deltaY > 0 ? 'down' : 'up';
+        }
+    }
+
+    /**
+     * Проверяет, находится ли направление в указанном направлении
+     * @param {number} deltaX - Изменение по X
+     * @param {number} deltaY - Изменение по Y
+     * @param {string} direction - Направление для проверки
+     * @returns {boolean} true если направление совпадает
+     */
+    static isInDirection(deltaX, deltaY, direction) {
+        switch (direction) {
+            case 'left':
+                return deltaX < 0 && this.abs(deltaY) < this.abs(deltaX);
+            case 'right':
+                return deltaX > 0 && this.abs(deltaY) < this.abs(deltaX);
+            case 'up':
+                return deltaY < 0 && this.abs(deltaX) < this.abs(deltaY);
+            case 'down':
+                return deltaY > 0 && this.abs(deltaX) < this.abs(deltaY);
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Округляет число до указанного количества знаков после запятой
+     * @param {number} value - Значение для округления
+     * @param {number} decimals - Количество знаков после запятой
+     * @returns {number} Округленное значение
+     */
+    static roundToDecimal(value, decimals = 0) {
+        const factor = Math.pow(10, decimals);
+        return Math.round(value * factor) / factor;
+    }
+
+    /**
+     * Возвращает абсолютное значение числа
+     * @param {number} value - Значение
+     * @returns {number} Абсолютное значение
+     */
+    static abs(value) {
+        return Math.abs(value);
+    }
+
+    /**
+     * Округляет число вниз до ближайшего целого
+     * @param {number} value - Значение
+     * @returns {number} Округленное вниз значение
+     */
+    static floor(value) {
+        return Math.floor(value);
+    }
+
+    /**
+     * Округляет число вверх до ближайшего целого
+     * @param {number} value - Значение
+     * @returns {number} Округленное вверх значение
+     */
+    static ceil(value) {
+        return Math.ceil(value);
+    }
+
+    /**
+     * Возвращает минимальное значение из двух
+     * @param {number} a - Первое значение
+     * @param {number} b - Второе значение
+     * @returns {number} Минимальное значение
+     */
+    static min(a, b) {
+        return Math.min(a, b);
+    }
+
+    /**
+     * Возвращает максимальное значение из двух
+     * @param {number} a - Первое значение
+     * @param {number} b - Второе значение
+     * @returns {number} Максимальное значение
+     */
+    static max(a, b) {
+        return Math.max(a, b);
+    }
+
+    /**
+     * Вычисляет волновое смещение для синусоидальных движений
+     * @param {number} time - Время
+     * @param {number} frequency - Частота волны
+     * @param {number} amplitude - Амплитуда волны
+     * @returns {number} Смещение по волне
+     */
+    static calculateWaveOffset(time, frequency, amplitude) {
+        return Math.sin(time * frequency) * amplitude;
+    }
+
+    /**
+     * Вычисляет позицию на окружности
+     * @param {number} centerX - X координата центра
+     * @param {number} centerY - Y координата центра
+     * @param {number} radius - Радиус окружности
+     * @param {number} angle - Угол в радианах
+     * @returns {Object} Позиция {x, y}
+     */
+    static calculateCircularPosition(centerX, centerY, radius, angle) {
+        return {
+            x: centerX + Math.cos(angle) * radius,
+            y: centerY + Math.sin(angle) * radius
+        };
+    }
+
+    /**
+     * Генерирует случайное смещение
+     * @param {number} intensity - Интенсивность смещения
+     * @returns {Object} Случайное смещение {x, y}
+     */
+    static generateRandomOffset(intensity) {
+        return {
+            x: (Math.random() - 0.5) * intensity,
+            y: (Math.random() - 0.5) * intensity
+        };
+    }
+
+    /**
+     * Вычисляет зигзагообразное смещение
+     * @param {number} time - Время
+     * @param {number} intensity - Интенсивность зигзага
+     * @returns {Object} Зигзагообразное смещение {x, y}
+     */
+    static calculateZigzag(time, intensity) {
+        return {
+            x: Math.sin(time * 0.01) * intensity * 0.5,
+            y: Math.cos(time * 0.007) * intensity * 0.3
+        };
+    }
+
+    /**
+     * Вычисляет порхающее смещение
+     * @param {number} time - Время
+     * @param {number} intensity - Интенсивность порхания
+     * @returns {Object} Порхающее смещение {x, y}
+     */
+    static calculateFlutter(time, intensity) {
+        return {
+            x: Math.sin(time * 0.02) * intensity * 0.3,
+            y: Math.cos(time * 0.015) * intensity * 0.2
+        };
+    }
+
+    /**
+     * Находит объекты в радиусе от центра
+     * @param {Array} objects - Массив объектов для проверки
+     * @param {number} centerX - X координата центра
+     * @param {number} centerY - Y координата центра
+     * @param {number} radius - Радиус поиска
+     * @param {Function} filterFn - Функция фильтрации (опционально)
+     * @returns {Array} Массив объектов в радиусе
+     */
+    static findObjectsInRadius(objects, centerX, centerY, radius, filterFn = null) {
+        const objectsInRange = [];
+        for (const obj of objects) {
+            if (filterFn && !filterFn(obj)) continue;
+            
+            const distance = this.distance(centerX, centerY, obj.x, obj.y);
+            if (distance <= radius) {
+                objectsInRange.push(obj);
+            }
+        }
+        return objectsInRange;
+    }
+
+    /**
+     * Находит объекты в направлении от центра
+     * @param {Array} objects - Массив объектов для проверки
+     * @param {number} centerX - X координата центра
+     * @param {number} centerY - Y координата центра
+     * @param {string} direction - Направление ('left', 'right', 'up', 'down')
+     * @param {number} range - Дальность поиска
+     * @param {Function} filterFn - Функция фильтрации (опционально)
+     * @returns {Array} Массив объектов в направлении
+     */
+    static findObjectsInDirection(objects, centerX, centerY, direction, range, filterFn = null) {
+        const objectsInDirection = [];
+        for (const obj of objects) {
+            if (filterFn && !filterFn(obj)) continue;
+            
+            const deltaX = obj.x - centerX;
+            const deltaY = obj.y - centerY;
+            const distance = this.distance(centerX, centerY, obj.x, obj.y);
+            
+            if (distance <= range && this.isInDirection(deltaX, deltaY, direction)) {
+                objectsInDirection.push(obj);
+            }
+        }
+        return objectsInDirection;
+    }
+
+    /**
+     * Находит первый объект в радиусе от центра
+     * @param {Array} objects - Массив объектов для проверки
+     * @param {number} centerX - X координата центра
+     * @param {number} centerY - Y координата центра
+     * @param {number} radius - Радиус поиска
+     * @param {Function} filterFn - Функция фильтрации (опционально)
+     * @returns {Object|null} Первый найденный объект или null
+     */
+    static findFirstObjectInRadius(objects, centerX, centerY, radius, filterFn = null) {
+        for (const obj of objects) {
+            if (filterFn && !filterFn(obj)) continue;
+            
+            if (this.isInRadius(centerX, centerY, obj.x, obj.y, radius)) {
+                return obj;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Вычисляет динамический радиус попадания для объекта
+     * @param {Object} object - Игровой объект
+     * @param {string} objectType - Тип объекта ('enemy', 'egg', 'defence', 'item', 'field')
+     * @param {Object} targetSettings - Настройки целей из TARGET_SETTINGS
+     * @returns {number} Динамический радиус попадания
+     */
+    static calculateHitRadius(object, objectType, targetSettings) {
+        const settings = targetSettings[objectType];
+        if (!settings) return 0;
+        
+        let baseRadius = 0;
+        
+        // Для врагов и яйца используем _size (1, 2, 3) и конвертируем в пиксели
+        if ((objectType === 'enemy' || objectType === 'egg') && object._size) {
+            baseRadius = object._size * 10; // 1 = 10px, 2 = 20px, 3 = 30px
+        }
+        // Для других объектов используем стандартные width/height
+        else {
+            baseRadius = this.max(object.width || 0, object.height || 0) / 2;
+        }
+        
+        // Если размер не определен, используем минимальный размер
+        if (baseRadius === 0) {
+            baseRadius = 10; // Минимальный размер 10px
+        }
+        
+        // Общий радиус = размер объекта + толерантность промаха
+        const totalRadius = baseRadius + settings.missTolerance;
+        return totalRadius;
     }
 }

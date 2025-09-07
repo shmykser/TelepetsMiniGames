@@ -1,4 +1,6 @@
 import { InsectMovementPatterns } from '../systems/movement/InsectMovementPatterns.js';
+import { GeometryUtils } from '../utils/GeometryUtils.js';
+import { AnimationLibrary } from '../animations/AnimationLibrary.js';
 
 export class MovementTestScene extends Phaser.Scene {
     constructor() {
@@ -22,11 +24,9 @@ export class MovementTestScene extends Phaser.Scene {
         this.testObject = this.add.circle(400, 300, 20, 0xff0000);
         this.testObject.setInteractive();
         
-        // Добавляем эффект пульсации для привлечения внимания
-        this.tweens.add({
-            targets: this.testObject,
-            scaleX: 1.2,
-            scaleY: 1.2,
+        // Добавляем эффект пульсации для привлечения внимания через AnimationLibrary
+        AnimationLibrary.createPulseAnimation(this, this.testObject, {
+            scale: { from: 1, to: 1.2 },
             duration: 1000,
             yoyo: true,
             repeat: -1
@@ -60,7 +60,6 @@ export class MovementTestScene extends Phaser.Scene {
         }).setInteractive();
         
         switchButton.on('pointerdown', () => {
-            console.log('🔘 Switch button clicked');
             this.nextPattern();
         });
         
@@ -81,13 +80,11 @@ export class MovementTestScene extends Phaser.Scene {
         
         // Обработчик клика для смены паттерна
         this.input.on('pointerdown', (pointer) => {
-            console.log('🖱️ Mouse clicked');
             this.nextPattern();
         });
         
         // Обработчик клавиатуры
         this.input.keyboard.on('keydown-SPACE', () => {
-            console.log('⌨️ Space pressed');
             this.nextPattern();
         });
         
@@ -111,7 +108,7 @@ export class MovementTestScene extends Phaser.Scene {
         );
         
         // Отладочная информация (каждые 2 секунды)
-        if (Math.floor(time / 2000) !== Math.floor((time - delta) / 2000)) {
+        if (GeometryUtils.floor(time / 2000) !== GeometryUtils.floor((time - delta) / 2000)) {
         }
         
         // Применяем новую позицию

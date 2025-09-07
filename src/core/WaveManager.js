@@ -3,6 +3,7 @@ import { Enemy } from './objects/Enemy';
 import { enemyTypes } from './types/enemyTypes';
 import { enemyTypesByMinute, enemyWeights } from './types/waveTypes.js';
 import { EnhancementSystem } from './EnhancementSystem.js';
+import { GeometryUtils } from '../utils/GeometryUtils.js';
 
 /**
  * Менеджер волн в стиле Vampire Survivors
@@ -127,7 +128,7 @@ export class WaveManager {
         const finalRate = Math.max(minRate, currentRate);
         
         // Добавляем небольшую случайность
-        const randomFactor = Phaser.Math.FloatBetween(0.8, 1.2);
+        const randomFactor = GeometryUtils.randomFloat(0.8, 1.2);
         
         return finalRate * randomFactor;
     }
@@ -247,25 +248,25 @@ export class WaveManager {
         const margin = 50;
         
         // Спавним по краям экрана
-        const side = Phaser.Math.Between(0, 3); // 0-верх, 1-право, 2-низ, 3-лево
+        const side = GeometryUtils.randomBetween(0, 3); // 0-верх, 1-право, 2-низ, 3-лево
         
         let x, y;
         switch (side) {
             case 0: // Верх
-                x = Phaser.Math.Between(margin, width - margin);
+                x = GeometryUtils.randomBetween(margin, width - margin);
                 y = -margin;
                 break;
             case 1: // Право
                 x = width + margin;
-                y = Phaser.Math.Between(margin, height - margin);
+                y = GeometryUtils.randomBetween(margin, height - margin);
                 break;
             case 2: // Низ
-                x = Phaser.Math.Between(margin, width - margin);
+                x = GeometryUtils.randomBetween(margin, width - margin);
                 y = height + margin;
                 break;
             case 3: // Лево
                 x = -margin;
-                y = Phaser.Math.Between(margin, height - margin);
+                y = GeometryUtils.randomBetween(margin, height - margin);
                 break;
         }
         
@@ -285,9 +286,9 @@ export class WaveManager {
         const speedMultiplier = Math.pow(this.gameSettings.difficulty.speedMultiplier, gameProgress * 3);
         const damageMultiplier = Math.pow(this.gameSettings.difficulty.damageMultiplier, gameProgress * 4);
         
-        const modifiedHealth = Math.floor(enemyData.health * healthMultiplier);
-        const modifiedSpeed = Math.floor(enemyData.speed * speedMultiplier);
-        const modifiedDamage = Math.floor(enemyData.damage * damageMultiplier);
+        const modifiedHealth = GeometryUtils.floor(enemyData.health * healthMultiplier);
+        const modifiedSpeed = GeometryUtils.floor(enemyData.speed * speedMultiplier);
+        const modifiedDamage = GeometryUtils.floor(enemyData.damage * damageMultiplier);
         
         // Создаем врага
         const enemy = Enemy.CreateEnemy(this.scene, enemyType, x, y);
@@ -319,7 +320,6 @@ export class WaveManager {
      * Обработчик смерти врага
      */
     onEnemyKilled(enemy) {
-        console.log(`💀 WaveManager.onEnemyKilled: враг ${enemy.enemyType || 'неизвестный'} убит`);
         this.totalEnemiesKilled++;
         this.currentEnemiesOnScreen--;
         
@@ -327,11 +327,9 @@ export class WaveManager {
         const index = this.enemies.indexOf(enemy);
         if (index > -1) {
             this.enemies.splice(index, 1);
-            console.log(`💀 WaveManager.onEnemyKilled: враг удален из списка, осталось врагов: ${this.enemies.length}`);
         }
         
         // Эмитим событие смерти
-        console.log(`💀 WaveManager.onEnemyKilled: эмитим событие enemyKilled в сцену`);
         this.scene.events.emit('enemyKilled', {
             enemy: enemy,
             enemyType: enemy.enemyType,
@@ -353,7 +351,7 @@ export class WaveManager {
         }
         
         // Обновляем текущую минуту
-        const newMinute = Math.floor(gameTime / this.gameSettings.waveDuration) + 1;
+        const newMinute = GeometryUtils.floor(gameTime / this.gameSettings.waveDuration) + 1;
         if (newMinute !== this.currentMinute) {
             this.currentMinute = newMinute;
             this.onMinuteChanged();

@@ -6,6 +6,11 @@ export class TextureManager {
      * Создает все необходимые эмодзи-текстуры для игры
      */
     static createAllTextures(scene) {
+        // Проверяем, инициализированы ли уже текстуры
+        if (scene.textures.exists('egg')) {
+            return; // Текстуры уже созданы
+        }
+        
         TextureManager.createEmojiTexture(scene, '🥚', 'egg');
         // Создаем текстуры для врагов
         TextureManager.createEmojiTexture(scene, '🕷️', 'spider');
@@ -27,7 +32,6 @@ export class TextureManager {
         TextureManager.createEmojiTexture(scene, '🕳️', 'pit'); // Яма
         
         // Создаем текстуры для предметов
-        console.log(`🎨 Создаем текстуры для предметов`);
         TextureManager.createEmojiTexture(scene, '❤️', 'heart');
         TextureManager.createEmojiTexture(scene, '🍀', 'clover');
         
@@ -38,7 +42,11 @@ export class TextureManager {
      * Создает одну эмодзи-текстуру
      */
     static createEmojiTexture(scene, emoji, textureKey) {
-        console.log(`🎨 Создаем текстуру ${textureKey} с эмодзи ${emoji}`);
+        // Проверяем, существует ли уже текстура
+        if (scene.textures.exists(textureKey)) {
+            return; // Текстура уже существует, не создаем заново
+        }
+        
         // Создаем RenderTexture для рендеринга эмодзи
         const renderTexture = scene.add.renderTexture(0, 0, 64, 64);
         // Создаем текстовый объект с эмодзи
@@ -50,7 +58,6 @@ export class TextureManager {
         renderTexture.draw(text);
         // Сохраняем как текстуру
         renderTexture.saveTexture(textureKey);
-        console.log(`✅ Текстура ${textureKey} создана успешно`);
         // Очищаем
         text.destroy();
         renderTexture.destroy();

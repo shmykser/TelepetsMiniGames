@@ -34,7 +34,6 @@ export class ActionManager {
    * Обрабатывает клик/касание
    */
   private handleClick(x: number, y: number): void {
-    console.log(`Клик в позиции: (${x}, ${y})`);
     
     // Проверяем, попал ли клик по врагу
     const enemy = this.getEnemyAtPosition(x, y);
@@ -45,11 +44,8 @@ export class ActionManager {
     
     // Проверяем, попал ли клик по яйцу
     if (this.egg && this.isPointInEgg(x, y)) {
-      console.log('Клик по яйцу');
       return;
     }
-    
-    console.log('Клик по пустому месту');
   }
 
   /**
@@ -57,18 +53,15 @@ export class ActionManager {
    */
   private damageEnemy(enemy: Enemy): boolean {
     if (!enemy || !enemy.isAlive) {
-      console.log('Враг не найден или уже мертв');
       return false;
     }
     
     const damage = 10; // Базовый урон
     // Наносим урон
     enemy.takeDamage(damage);
-    console.log(`Нанесен урон ${damage} врагу ${(enemy as any)._enemyType || 'враг'}`);
     
     // Проверяем, не умер ли враг
     if (!enemy.isAlive) {
-      console.log(`Враг ${(enemy as any)._enemyType || 'враг'} убит!`);
       this.showDeathEffect(enemy);
     }
     return true;

@@ -1,25 +1,33 @@
 import Phaser from 'phaser';
+import { BaseUIComponent } from './BaseUIComponent.js';
+import { UIUtils } from '../utils/UIUtils.js';
+import { UI_THEME } from '../utils/UITheme.js';
+import { GeometryUtils } from '../utils/GeometryUtils.js';
 
 /**
  * Компонент таймера игры
  * Показывает оставшееся время до конца игры
  */
-export class GameTimer extends Phaser.GameObjects.Container {
+export class GameTimer extends BaseUIComponent {
     constructor(scene, x, y, options = {}) {
-        super(scene, x, y);
-        
-        // Настройки по умолчанию
-        this.options = {
-            fontSize: '24px',
-            fontFamily: 'Arial',
-            color: '#ffffff',
-            backgroundColor: '#000000',
+        const defaultConfig = {
+            fontSize: UI_THEME.fonts.sizes.large,
+            fontFamily: UI_THEME.fonts.family,
+            color: UI_THEME.colors.text,
+            backgroundColor: UI_THEME.colors.background,
             padding: { x: 15, y: 8 },
             showMilliseconds: false,
             warningTime: 60000, // 1 минута до конца
             criticalTime: 30000, // 30 секунд до конца
             ...options
         };
+        
+        super(scene, x, y, defaultConfig);
+        
+        // Сохраняем опции как свойства
+        this.showMilliseconds = defaultConfig.showMilliseconds;
+        this.warningTime = defaultConfig.warningTime;
+        this.criticalTime = defaultConfig.criticalTime;
         
         // Состояние
         this.totalTime = 0;
@@ -31,28 +39,35 @@ export class GameTimer extends Phaser.GameObjects.Container {
         // Создаем UI элементы
         this.createUI();
         
-        // Добавляем в сцену
-        scene.add.existing(this);
+        // Создаем контейнер с автоматическим добавлением в сцену
+        this.createContainer();
     }
     
     createUI() {
-        // Фон таймера (уменьшенный размер)
-        this.background = this.scene.add.rectangle(0, 0, 150, 45, 0x000000, 0.8);
-        this.background.setStrokeStyle(2, 0xffffff);
-        this.add(this.background);
+        // Создаем таймер через UIUtils
+        const timerElements = UIUtils.createTimer(
+            this.scene, 
+            0, 
+            0, 
+            '10:00', 
+            {
+                width: UI_THEME.sizes.timer.width,
+                height: UI_THEME.sizes.timer.height,
+                backgroundColor: this.backgroundColor,
+                textColor: this.color,
+                fontSize: this.fontSize,
+                fontFamily: this.fontFamily,
+                strokeColor: UI_THEME.colors.border,
+                strokeWidth: UI_THEME.spacing.border.width,
+                statusBarColor: UI_THEME.colors.success
+            }
+        );
         
-        // Текст таймера
-        this.timerText = this.scene.add.text(0, 0, '10:00', {
-            fontFamily: this.options.fontFamily,
-            fontSize: this.options.fontSize,
-            color: this.options.color,
-            align: 'center'
-        }).setOrigin(0.5);
-        this.add(this.timerText);
+        this.background = timerElements.background;
+        this.timerText = timerElements.text;
+        this.statusBar = timerElements.statusBar;
         
-        // Индикатор состояния (цветная полоска)
-        this.statusBar = this.scene.add.rectangle(0, 22, 150, 4, 0x00ff00);
-        this.add(this.statusBar);
+        this.add([this.background, this.timerText, this.statusBar]);
     }
     
     /**
@@ -125,8 +140,8 @@ export class GameTimer extends Phaser.GameObjects.Container {
         const wasWarning = this.isWarning;
         const wasCritical = this.isCritical;
         
-        this.isWarning = this.remainingTime <= this.options.warningTime;
-        this.isCritical = this.remainingTime <= this.options.criticalTime;
+        this.isWarning = this.remainingTime <= this.warningTime;
+        this.isCritical = this.remainingTime <= this.criticalTime;
         
         // Эмитим события при изменении состояния
         if (!wasWarning && this.isWarning) {
@@ -141,12 +156,12 @@ export class GameTimer extends Phaser.GameObjects.Container {
      * Обновляет отображение
      */
     updateDisplay() {
-        const minutes = Math.floor(this.remainingTime / 60000);
-        const seconds = Math.floor((this.remainingTime % 60000) / 1000);
-        const milliseconds = Math.floor((this.remainingTime % 1000) / 100);
+        const minutes = GeometryUtils.floor(this.remainingTime / 60000);
+        const seconds = GeometryUtils.floor((this.remainingTime % 60000) / 1000);
+        const milliseconds = GeometryUtils.floor((this.remainingTime % 1000) / 100);
         
         let timeString;
-        if (this.options.showMilliseconds) {
+        if (this.showMilliseconds) {
             timeString = `${minutes}:${seconds.toString().padStart(2, '0')}.${milliseconds}`;
         } else {
             timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -164,7 +179,7 @@ export class GameTimer extends Phaser.GameObjects.Container {
             this.statusBar.setFillStyle(0xffaa00);
             this.background.setStrokeStyle(2, 0xffaa00);
         } else {
-            this.timerText.setColor(this.options.color);
+            this.timerText.setColor(this.color);
             this.statusBar.setFillStyle(0x00ff00);
             this.background.setStrokeStyle(2, 0xffffff);
         }
@@ -196,12 +211,11 @@ export class GameTimer extends Phaser.GameObjects.Container {
     }
     
     /**
-     * Уничтожает таймер
+     * Переопределяем метод уничтожения
      */
-    destroy() {
+    onDestroy() {
         if (this.updateTimer) {
             this.updateTimer.destroy();
         }
-        super.destroy();
     }
 }

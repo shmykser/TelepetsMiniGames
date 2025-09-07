@@ -1,3 +1,5 @@
+import { GeometryUtils } from '../../utils/GeometryUtils.js';
+
 /**
  * Менеджер жестов на основе Phaser Input Events
  * Поддерживает: tap, doubleTap, longTap, swipe
@@ -94,7 +96,7 @@ export class GestureManager {
         this.gestureState.currentY = pointer.y;
         
         // Вычисляем общее расстояние движения
-        const distance = Phaser.Math.Distance.Between(
+        const distance = GeometryUtils.distance(
             this.gestureState.startX, 
             this.gestureState.startY, 
             pointer.x, 

@@ -1,5 +1,7 @@
 import { GameObject } from '../GameObject';
 import { defenceTypes } from '../types/defenceTypes';
+import { AnimationLibrary } from '../../animations/AnimationLibrary.js';
+import { GeometryUtils } from '../../utils/GeometryUtils.js';
 export class Defence extends GameObject {
     constructor(scene, config) {
         const defenceType = config.defenceType || 'sugar';
@@ -159,7 +161,6 @@ export class Defence extends GameObject {
         this.health = Math.min(this.health + this._repairRate, this._defenceMaxHealth);
         // Эффект ремонта
         this.playRepairEffect();
-        console.log(`Защитное сооружение восстановлено: ${oldHealth} → ${this.health}`);
         // Небольшая задержка перед следующим ремонтом
         this.scene.time.delayedCall(2000, () => {
             this._isRepairing = false;
@@ -193,7 +194,7 @@ export class Defence extends GameObject {
         const gameObjects = this.scene.children.list;
         for (const obj of gameObjects) {
             if (obj instanceof GameObject && obj.isAlive) {
-                const distance = Phaser.Math.Distance.Between(this.x, this.y, obj.x, obj.y);
+                const distance = GeometryUtils.distance(this.x, this.y, obj.x, obj.y);
                 if (distance <= this._protectionRadius) {
                     protectedObjects.push(obj);
                 }
@@ -231,16 +232,13 @@ export class Defence extends GameObject {
         const reducedDamage = damage * 0.7; // 30% снижение урона
         this.health -= reducedDamage;
         this.emit('damage', reducedDamage, this.health);
-        // Эффект получения урона
-        this.scene.tweens.add({
-            targets: this,
+        // Эффект получения урона через AnimationLibrary
+        AnimationLibrary.createDamageEffect(this.scene, this, {
             tint: 0xff0000,
             duration: 200,
             yoyo: true,
             repeat: 1,
-            onComplete: () => {
-                this.clearTint();
-            }
+            onComplete: () => this.clearTint()
         });
         // Если здоровье критично, показываем предупреждение
         if (this.health < this._defenceMaxHealth * 0.3) {
@@ -251,7 +249,6 @@ export class Defence extends GameObject {
         if (!this.scene)
             return;
         // Простое предупреждение
-        console.log(`Защитное сооружение ${this._defenceType} в критическом состоянии!`);
     }
     // Геттеры
     get defenceType() { return this._defenceType; }

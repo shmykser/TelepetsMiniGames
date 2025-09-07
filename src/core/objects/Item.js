@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { ITEMS } from '../types/itemTypes';
+import { GeometryUtils } from '../../utils/GeometryUtils.js';
+import { AnimationLibrary } from '../../animations/AnimationLibrary.js';
 
 /**
  * Класс предмета для сбора
@@ -8,15 +10,12 @@ export class Item extends Phaser.GameObjects.Sprite {
     constructor(scene, x, y, itemType) {
         // Сначала получаем данные предмета
         const itemData = ITEMS[itemType];
-        console.log(`🎁 Item: создаем предмет ${itemType}, текстура: ${itemData.texture}`);
         
         // Проверяем, что текстура существует
         if (!scene.textures.exists(itemData.texture)) {
-            console.warn(`⚠️ Item: текстура ${itemData.texture} не найдена! Используем fallback`);
             // Используем fallback текстуру
             super(scene, x, y, 'egg');
         } else {
-            console.log(`✅ Item: текстура ${itemData.texture} найдена, создаем предмет`);
             super(scene, x, y, itemData.texture);
         }
         
@@ -36,22 +35,18 @@ export class Item extends Phaser.GameObjects.Sprite {
         this.body.setSize(this.width * 0.8, this.height * 0.8);
         this.body.setImmovable(true);
         
-        // Анимация появления
+        // Анимация появления через AnimationLibrary
         this.setAlpha(0);
-        this.scene.tweens.add({
-            targets: this,
-            alpha: 1,
-            scaleX: 0.6,
-            scaleY: 0.6,
+        AnimationLibrary.createItemAppearEffect(this.scene, this, {
+            alpha: { to: 1 },
+            scale: { to: 0.6 },
             duration: 300,
             ease: 'Back.easeOut'
         });
         
-        // Анимация пульсации
-        this.scene.tweens.add({
-            targets: this,
-            scaleX: 0.7,
-            scaleY: 0.7,
+        // Анимация пульсации через AnimationLibrary
+        AnimationLibrary.createItemPulseEffect(this.scene, this, {
+            scale: { to: 0.7 },
             duration: 1000,
             yoyo: true,
             repeat: -1,
@@ -86,17 +81,13 @@ export class Item extends Phaser.GameObjects.Sprite {
         
         this.isCollected = true;
         
-        // Анимация сбора
-        this.scene.tweens.add({
-            targets: this,
-            scaleX: 1.2,
-            scaleY: 1.2,
-            alpha: 0,
+        // Анимация сбора через AnimationLibrary
+        AnimationLibrary.createItemCollectEffect(this.scene, this, {
+            scale: { to: 1.2 },
+            alpha: { to: 0 },
             duration: 200,
             ease: 'Power2',
-            onComplete: () => {
-                this.destroy();
-            }
+            onComplete: () => this.destroy()
         });
         
         // Эффект частиц при сборе
@@ -112,24 +103,17 @@ export class Item extends Phaser.GameObjects.Sprite {
         // Создаем частицы
         for (let i = 0; i < 8; i++) {
             const particle = this.scene.add.circle(
-                this.x + Phaser.Math.Between(-20, 20),
-                this.y + Phaser.Math.Between(-20, 20),
+                this.x + GeometryUtils.randomBetween(-20, 20),
+                this.y + GeometryUtils.randomBetween(-20, 20),
                 3,
                 this.getItemTint()
             );
             
-            this.scene.tweens.add({
-                targets: particle,
-                x: particle.x + Phaser.Math.Between(-50, 50),
-                y: particle.y + Phaser.Math.Between(-50, 50),
-                alpha: 0,
-                scaleX: 0,
-                scaleY: 0,
+            // Используем AnimationLibrary для анимации частиц
+            AnimationLibrary.createDisappearEffect(this.scene, particle, {
                 duration: 500,
                 ease: 'Power2',
-                onComplete: () => {
-                    particle.destroy();
-                }
+                onComplete: () => particle.destroy()
             });
         }
     }
@@ -145,8 +129,8 @@ export class Item extends Phaser.GameObjects.Sprite {
      * Уничтожение предмета
      */
     destroy() {
-        // Очищаем твины
-        this.scene.tweens.killTweensOf(this);
+        // Очищаем твины через AnimationLibrary
+        AnimationLibrary.stopAllAnimations(this.scene, this);
         super.destroy();
     }
 }

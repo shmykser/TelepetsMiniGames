@@ -1,4 +1,5 @@
 import { GameObject } from '../GameObject';
+import { AnimationLibrary } from '../../animations/AnimationLibrary.js';
 export class Egg extends GameObject {
     // Яйцо - статичный объект без вылупления
     constructor(scene, config) {
@@ -129,23 +130,18 @@ export class Egg extends GameObject {
             strokeThickness: 2
         });
         
-        // Анимация подъема и исчезновения
-        this.scene.tweens.add({
-            targets: healText,
-            y: healText.y - 30,
-            alpha: 0,
+        // Анимация подъема и исчезновения через AnimationLibrary
+        AnimationLibrary.createTextDriftEffect(this.scene, healText, {
+            driftDistance: 30,
             duration: 1000,
+            alpha: { to: 0 },
             ease: 'Power2',
-            onComplete: () => {
-                healText.destroy();
-            }
+            onComplete: () => healText.destroy()
         });
         
-        // Эффект свечения
-        this.scene.tweens.add({
-            targets: this,
-            scaleX: 1.1,
-            scaleY: 1.1,
+        // Эффект свечения через AnimationLibrary
+        AnimationLibrary.createGlowEffect(this.scene, this, {
+            scale: { to: 1.1 },
             duration: 200,
             yoyo: true,
             ease: 'Power2'

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { BaseUIComponent } from '../core/BaseUIComponent.js';
+import { BaseUIComponent } from './BaseUIComponent.js';
 import { PropertyUtils } from '../utils/PropertyUtils.js';
 /**
  * Универсальный компонент полосы здоровья
@@ -85,9 +85,6 @@ export class HealthBar extends BaseUIComponent {
      */
     updateHealth() {
         const healthPercent = this.targetObject.health / this.targetObject.maxHealth;
-        
-        // Отладочная информация
-        console.log(`💚 HealthBar: ${this.targetObject._enemyData?.name || 'Unknown'} - Health: ${this.targetObject.health}/${this.targetObject.maxHealth} (${(healthPercent * 100).toFixed(1)}%)`);
         
         // Определяем, нужно ли показывать полосу
         const shouldShow = this.shouldShowBar(healthPercent);

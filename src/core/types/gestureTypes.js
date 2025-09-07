@@ -125,23 +125,23 @@ export const GESTURE_ACTIONS = {
 // Настройки целей
 export const TARGET_SETTINGS = {
     enemy: {
-        hitRadius: 50,
+        missTolerance: 10,           // Максимальный промах в пикселях
         priority: 1
     },
     egg: {
-        hitRadius: 30,
+        missTolerance: 10,           // Максимальный промах в пикселях
         priority: 2
     },
     field: {
-        hitRadius: 0,
+        missTolerance: 0,            // Нет толерантности для поля
         priority: 0
     },
     defence: {
-        hitRadius: 40,
+        missTolerance: 10,           // Максимальный промах в пикселях
         priority: 1
     },
     item: {
-        hitRadius: 25,
+        missTolerance: 25,           // Максимальный промах в пикселях
         priority: 3
     }
 };

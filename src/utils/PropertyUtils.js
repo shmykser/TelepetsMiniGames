@@ -42,7 +42,6 @@ export class PropertyUtils {
             get: () => value,
             set: (newValue) => {
                 if (validator && !validator(newValue)) {
-                    console.warn(`Invalid value for ${prop}:`, newValue);
                     return;
                 }
                 value = newValue;

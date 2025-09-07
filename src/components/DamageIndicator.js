@@ -1,40 +1,62 @@
 import Phaser from 'phaser';
+import { BaseUIComponent } from './BaseUIComponent.js';
+import { UIUtils } from '../utils/UIUtils.js';
+import { UI_THEME } from '../utils/UITheme.js';
+import { GeometryUtils } from '../utils/GeometryUtils.js';
+import { AnimationLibrary } from '../animations/AnimationLibrary.js';
 
 /**
  * Компонент для отображения цифрового урона
  * Показывает анимированный текст с уроном над объектом
  */
-export class DamageIndicator extends Phaser.GameObjects.Container {
+export class DamageIndicator extends BaseUIComponent {
     constructor(scene, x, y, damage, options = {}) {
-        super(scene, x, y);
-        
-        // Настройки по умолчанию
-        this.damage = damage;
-        this.duration = options.duration || 1000; // Время показа в миллисекундах
-        this.driftDistance = options.driftDistance || 50; // Расстояние дрейфа вверх
-        this.fontSize = options.fontSize || 24;
-        this.color = options.color || 0xff0000; // Красный цвет по умолчанию
-        this.strokeColor = options.strokeColor || 0x000000; // Черная обводка
-        this.strokeThickness = options.strokeThickness || 2;
-        
-        // Создаем текст с уроном
-        this.damageText = scene.add.text(0, 0, `-${damage}`, {
-            fontSize: `${this.fontSize}px`,
-            fill: `#${this.color.toString(16).padStart(6, '0')}`,
-            stroke: `#${this.strokeColor.toString(16).padStart(6, '0')}`,
-            strokeThickness: this.strokeThickness,
-            fontFamily: 'Arial, sans-serif',
+        const defaultConfig = {
+            duration: 1000,
+            driftDistance: 50,
+            fontSize: UI_THEME.sizes.damageIndicator.fontSize,
+            color: UI_THEME.colors.error,
+            strokeColor: UI_THEME.colors.secondary,
+            strokeThickness: 2,
+            fontFamily: UI_THEME.fonts.family,
             fontStyle: 'bold'
-        });
+        };
         
-        // Центрируем текст
-        this.damageText.setOrigin(0.5, 0.5);
+        super(scene, x, y, { ...defaultConfig, ...options });
+        
+        this.damage = damage;
+        
+        // Создаем текст с уроном через UIUtils
+        this.damageText = UIUtils.createDamageIndicator(
+            scene, 
+            0, 
+            0, 
+            `-${damage}`, 
+            {
+                fontSize: this.fontSize,
+                color: this.color,
+                strokeColor: this.strokeColor,
+                strokeThickness: this.strokeThickness,
+                fontFamily: this.fontFamily,
+                fontStyle: this.fontStyle
+            }
+        );
+
+        // Если не удалось создать текст, создаем простой fallback
+        if (!this.damageText) {
+            this.damageText = scene.add.text(0, 0, `-${damage}`, {
+                fontSize: this.fontSize,
+                fill: this.color,
+                fontFamily: this.fontFamily
+            });
+            this.damageText.setOrigin(0.5, 0.5);
+        }
         
         // Добавляем текст в контейнер
         this.add(this.damageText);
         
-        // Добавляем в сцену
-        scene.add.existing(this);
+        // Создаем контейнер с автоматическим добавлением в сцену
+        this.createContainer();
         
         // Запускаем анимацию
         this.startAnimation();
@@ -44,37 +66,13 @@ export class DamageIndicator extends Phaser.GameObjects.Container {
      * Запускает анимацию появления и исчезновения
      */
     startAnimation() {
-        // Анимация дрейфа вверх и исчезновения
-        this.scene.tweens.add({
-            targets: this,
-            y: this.y - this.driftDistance,
-            alpha: 0,
-            duration: this.duration,
-            ease: 'Power2',
-            onComplete: () => {
-                this.destroy();
-            }
-        });
-        
-        // Анимация масштабирования (появление)
-        this.scene.tweens.add({
-            targets: this,
-            scaleX: 1.2,
-            scaleY: 1.2,
-            duration: 200,
-            yoyo: true,
-            ease: 'Back.easeOut'
-        });
-        
-        // Анимация пульсации
-        this.scene.tweens.add({
-            targets: this.damageText,
-            scaleX: 1.1,
-            scaleY: 1.1,
-            duration: 150,
-            yoyo: true,
-            repeat: 2,
-            ease: 'Power2'
+        // Используем AnimationLibrary для создания полного эффекта индикатора урона
+        AnimationLibrary.createDamageIndicatorEffect(this.scene, this, {
+            driftDistance: this.driftDistance,
+            driftDuration: this.duration,
+            appearDuration: 200,
+            pulseDuration: 150,
+            pulseRepeat: 2
         });
     }
     
@@ -94,22 +92,31 @@ export class DamageIndicator extends Phaser.GameObjects.Container {
      * Статический метод для показа урона с случайным смещением
      */
     static showDamageWithOffset(scene, target, damage, options = {}) {
+        // Проверяем, что сцена и цель доступны
+        if (!scene || !target) {
+            return null;
+        }
+
         // Случайное смещение по X для избежания наложения
-        const offsetX = Phaser.Math.Between(-20, 20);
+        const offsetX = GeometryUtils.randomBetween(-20, 20);
         const x = target.x + offsetX;
         const y = target.y - (target.displayHeight / 2) - 20;
         
-        // Создаем индикатор
-        return new DamageIndicator(scene, x, y, damage, options);
+        try {
+            // Создаем индикатор
+            return new DamageIndicator(scene, x, y, damage, options);
+        } catch (error) {
+            // Если не удалось создать индикатор, возвращаем null
+            return null;
+        }
     }
     
     /**
-     * Уничтожение компонента
+     * Переопределяем метод уничтожения
      */
-    destroy() {
+    onDestroy() {
         if (this.damageText) {
             this.damageText.destroy();
         }
-        super.destroy();
     }
 }

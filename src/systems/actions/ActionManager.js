@@ -1,6 +1,8 @@
 import { GESTURE_ACTIONS, TARGET_TYPES, TARGET_SETTINGS } from '../../core/types/gestureTypes';
 import { ITEM_TYPES } from '../../core/types/itemTypes';
 import { DAMAGE_CONSTANTS, EFFECT_CONSTANTS } from '../../core/constants/index.js';
+import { GeometryUtils } from '../../utils/GeometryUtils.js';
+import { AnimationLibrary } from '../../animations/AnimationLibrary.js';
 
 /**
  * Менеджер действий по жестам
@@ -61,7 +63,6 @@ export class ActionManager {
             return false;
         }
         
-        console.log(`✅ Выполняется действие: ${action.name}`);
         
         // Выполняем действие
         return this.executeAction(action, gesture, target);
@@ -72,7 +73,19 @@ export class ActionManager {
      */
     detectTarget(x, y) {
         // Проверяем врагов (приоритет 1)
-        const enemy = this.getEnemyAtPosition(x, y);
+        let foundEnemy = null;
+        for (const enemy of this.enemies) {
+            if (!enemy.isAlive) {
+                continue;
+            }
+            const hitRadius = GeometryUtils.calculateHitRadius(enemy, 'enemy', TARGET_SETTINGS);
+            const isInRange = GeometryUtils.isInRadius(x, y, enemy.x, enemy.y, hitRadius);
+            if (isInRange) {
+                foundEnemy = enemy;
+                break; // Найден первый враг в радиусе
+            }
+        }
+        const enemy = foundEnemy;
         if (enemy) {
             return {
                 type: TARGET_TYPES.ENEMY,
@@ -83,28 +96,50 @@ export class ActionManager {
         }
         
         // Проверяем яйцо (приоритет 2)
-        if (this.egg && this.isPointInEgg(x, y)) {
-            return {
-                type: TARGET_TYPES.EGG,
-                object: this.egg,
-                x: x,
-                y: y
-            };
+        if (this.egg && this.egg.isAlive) {
+            const eggHitRadius = GeometryUtils.calculateHitRadius(this.egg, 'egg', TARGET_SETTINGS);
+            const isEggInRange = GeometryUtils.isInRadius(x, y, this.egg.x, this.egg.y, eggHitRadius);
+            if (isEggInRange) {
+                return {
+                    type: TARGET_TYPES.EGG,
+                    object: this.egg,
+                    x: x,
+                    y: y
+                };
+            }
         }
         
-        // Проверяем предметы (приоритет 1)
-        const item = this.getItemAtPosition(x, y);
-        if (item) {
-            return {
-                type: TARGET_TYPES.ITEM,
-                object: item,
-                x: x,
-                y: y
-            };
+        // Проверяем предметы (приоритет 3)
+        if (this.itemDropManager) {
+            const item = GeometryUtils.findFirstObjectInRadius(
+                this.itemDropManager.items, 
+                x, y, 
+                0, // радиус будет определен в фильтре
+                (item) => {
+                    if (!item || item.isCollected || !item.body) return false;
+                    const itemHitRadius = GeometryUtils.calculateHitRadius(item, 'item', TARGET_SETTINGS);
+                    return GeometryUtils.isInRadius(x, y, item.x, item.y, itemHitRadius);
+                }
+            );
+            if (item) {
+                return {
+                    type: TARGET_TYPES.ITEM,
+                    object: item,
+                    x: x,
+                    y: y
+                };
+            }
         }
         
-        // Проверяем защиту (приоритет 2)
-        const defence = this.getDefenceAtPosition(x, y);
+        // Проверяем защиту (приоритет 1)
+        const defence = GeometryUtils.findFirstObjectInRadius(
+            this.defences, x, y, 
+            0, // радиус будет определен в фильтре
+            (defence) => {
+                const defenceHitRadius = GeometryUtils.calculateHitRadius(defence, 'defence', TARGET_SETTINGS);
+                return GeometryUtils.isInRadius(x, y, defence.x, defence.y, defenceHitRadius);
+            }
+        );
         if (defence) {
             return {
                 type: TARGET_TYPES.DEFENCE,
@@ -179,20 +214,13 @@ export class ActionManager {
      * Наносит урон врагу
      */
     damageEnemy(enemy, damage = DAMAGE_CONSTANTS.TAP_DAMAGE) {
-        console.log(`⚔️ ActionManager.damageEnemy: атака по врагу ${enemy.enemyType || 'неизвестный'}, урон ${damage}`);
-        console.log(`⚔️ ActionManager.damageEnemy: враг жив? ${enemy.isAlive}, здоровье: ${enemy.health}`);
-        
         if (!enemy || !enemy.isAlive) {
-            console.log(`⚔️ ActionManager.damageEnemy: враг мертв или не найден, выходим`);
             return false;
         }
         
-        console.log(`⚔️ ActionManager.damageEnemy: вызываем enemy.takeDamage(${damage})`);
         enemy.takeDamage(damage);
         
-        console.log(`⚔️ ActionManager.damageEnemy: после takeDamage враг жив? ${enemy.isAlive}, здоровье: ${enemy.health}`);
         if (!enemy.isAlive) {
-            console.log(`⚔️ ActionManager.damageEnemy: враг мертв, показываем эффект смерти`);
             this.showDeathEffect(enemy);
         }
         return true;
@@ -302,7 +330,7 @@ export class ActionManager {
     explosion(x, y, radius = EFFECT_CONSTANTS.EXPLOSION_RADIUS, damage = DAMAGE_CONSTANTS.EXPLOSION_DAMAGE) {
         
         // Находим врагов в радиусе взрыва
-        const enemiesInRange = this.getEnemiesInRadius(x, y, radius);
+        const enemiesInRange = GeometryUtils.findObjectsInRadius(this.enemies, x, y, radius, (enemy) => enemy.isAlive);
         enemiesInRange.forEach(enemy => {
             this.damageEnemy(enemy, damage);
         });
@@ -319,7 +347,7 @@ export class ActionManager {
     damageWave(x, y, direction, damage = DAMAGE_CONSTANTS.WAVE_DAMAGE, range = EFFECT_CONSTANTS.WAVE_RANGE) {
         
         // Находим врагов в направлении волны
-        const enemiesInWave = this.getEnemiesInDirection(x, y, direction, range);
+        const enemiesInWave = GeometryUtils.findObjectsInDirection(this.enemies, x, y, direction, range, (enemy) => enemy.isAlive);
         enemiesInWave.forEach(enemy => {
             this.damageEnemy(enemy, damage);
         });
@@ -336,7 +364,7 @@ export class ActionManager {
     liftEffect(x, y, force = EFFECT_CONSTANTS.LIFT_FORCE) {
         
         // Находим врагов в области
-        const enemiesInArea = this.getEnemiesInRadius(x, y, EFFECT_CONSTANTS.EXPLOSION_RADIUS);
+        const enemiesInArea = GeometryUtils.findObjectsInRadius(this.enemies, x, y, EFFECT_CONSTANTS.EXPLOSION_RADIUS, (enemy) => enemy.isAlive);
         enemiesInArea.forEach(enemy => {
             if (enemy.body) {
                 enemy.body.setVelocityY(-force);
@@ -352,7 +380,7 @@ export class ActionManager {
     crushEffect(x, y, damage = DAMAGE_CONSTANTS.CRUSH_DAMAGE, slow = EFFECT_CONSTANTS.CRUSH_SLOW) {
         
         // Находим врагов в области
-        const enemiesInArea = this.getEnemiesInRadius(x, y, EFFECT_CONSTANTS.EXPLOSION_RADIUS);
+        const enemiesInArea = GeometryUtils.findObjectsInRadius(this.enemies, x, y, EFFECT_CONSTANTS.EXPLOSION_RADIUS, (enemy) => enemy.isAlive);
         enemiesInArea.forEach(enemy => {
             this.damageEnemy(enemy, damage);
             // Замедляем врага
@@ -363,113 +391,16 @@ export class ActionManager {
         
         return true;
     }
-    /**
-     * Проверяет, находится ли точка в яйце
-     */
-    isPointInEgg(x, y) {
-        if (!this.egg || !this.egg.isAlive) {
-            return false;
-        }
-        const distance = Phaser.Math.Distance.Between(x, y, this.egg.x, this.egg.y);
-        const hitRadius = TARGET_SETTINGS.egg.hitRadius;
-        return distance <= hitRadius;
-    }
-    /**
-     * Находит врага в указанной позиции
-     */
-    getEnemyAtPosition(x, y) {
-        for (const enemy of this.enemies) {
-            if (!enemy.isAlive)
-                continue;
-            const distance = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
-            const hitRadius = TARGET_SETTINGS.enemy.hitRadius;
-            if (distance <= hitRadius) {
-                return enemy;
-            }
-        }
-        return null;
-    }
-    /**
-     * Находит защиту в указанной позиции
-     */
-    getDefenceAtPosition(x, y) {
-        for (const defence of this.defences) {
-            const distance = Phaser.Math.Distance.Between(x, y, defence.x, defence.y);
-            const hitRadius = TARGET_SETTINGS.defence.hitRadius;
-            if (distance <= hitRadius) {
-                return defence;
-            }
-        }
-        return null;
-    }
-    /**
-     * Находит врагов в радиусе
-     */
-    getEnemiesInRadius(x, y, radius) {
-        const enemiesInRange = [];
-        for (const enemy of this.enemies) {
-            if (!enemy.isAlive) continue;
-            const distance = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
-            if (distance <= radius) {
-                enemiesInRange.push(enemy);
-            }
-        }
-        return enemiesInRange;
-    }
-    
-    /**
-     * Находит врагов в направлении
-     */
-    getEnemiesInDirection(x, y, direction, range) {
-        const enemiesInDirection = [];
-        for (const enemy of this.enemies) {
-            if (!enemy.isAlive) continue;
-            
-            const deltaX = enemy.x - x;
-            const deltaY = enemy.y - y;
-            const distance = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
-            
-            if (distance <= range) {
-                // Проверяем направление
-                let inDirection = false;
-                switch (direction) {
-                    case 'left':
-                        inDirection = deltaX < 0 && Math.abs(deltaY) < Math.abs(deltaX);
-                        break;
-                    case 'right':
-                        inDirection = deltaX > 0 && Math.abs(deltaY) < Math.abs(deltaX);
-                        break;
-                    case 'up':
-                        inDirection = deltaY < 0 && Math.abs(deltaX) < Math.abs(deltaY);
-                        break;
-                    case 'down':
-                        inDirection = deltaY > 0 && Math.abs(deltaX) < Math.abs(deltaY);
-                        break;
-                }
-                
-                if (inDirection) {
-                    enemiesInDirection.push(enemy);
-                }
-            }
-        }
-        return enemiesInDirection;
-    }
     
     /**
      * Показывает эффект смерти
      */
     showDeathEffect(enemy) {
-        // Эффект исчезновения
-        this.scene.tweens.add({
-            targets: enemy,
-            alpha: 0,
-            scaleX: 0,
-            scaleY: 0,
+        // Эффект исчезновения через AnimationLibrary
+        AnimationLibrary.createDisappearEffect(this.scene, enemy, {
             duration: 500,
             ease: 'Power2',
-            onComplete: () => {
-                enemy.destroy();
-            }
+            onComplete: () => enemy.destroy()
         });
     }
     
@@ -477,21 +408,18 @@ export class ActionManager {
      * Показывает эффект критического урона
      */
     showCriticalEffect(enemy) {
-        // Эффект вспышки
-        this.scene.tweens.add({
-            targets: enemy,
-            scaleX: 1.2,
-            scaleY: 1.2,
+        // Эффект вспышки через AnimationLibrary
+        AnimationLibrary.createFlashEffect(this.scene, enemy, {
+            scale: { to: 1.2 },
             duration: 100,
             yoyo: true,
             repeat: 2,
             ease: 'Power2'
         });
         
-        // Эффект тряски
-        this.scene.tweens.add({
-            targets: enemy,
-            x: enemy.x + 5,
+        // Эффект тряски через AnimationLibrary
+        AnimationLibrary.createShakeEffect(this.scene, enemy, {
+            intensity: 5,
             duration: 50,
             yoyo: true,
             repeat: 3,
@@ -503,19 +431,51 @@ export class ActionManager {
      * Показывает эффект взрыва
      */
     showExplosionEffect(x, y, radius) {
-        // Создаем круг взрыва
-        const explosion = this.scene.add.circle(x, y, 0, 0xff0000, 0.5);
+        // Создаем основной круг взрыва с начальным радиусом 5
+        const explosion = this.scene.add.circle(x, y, 5, 0xff0000, 0.8);
         
-        this.scene.tweens.add({
-            targets: explosion,
-            radius: radius,
-            alpha: 0,
+        // Создаем внешний круг для эффекта волны
+        const wave = this.scene.add.circle(x, y, 5, 0xffaa00, 0.6);
+        
+        // Анимация основного взрыва - масштабируем до точного радиуса
+        AnimationLibrary.createExplosionEffect(this.scene, explosion, {
+            scale: { to: radius / 5 }, // 5 - начальный радиус, radius - конечный
             duration: 300,
             ease: 'Power2',
-            onComplete: () => {
-                explosion.destroy();
-            }
+            onComplete: () => explosion.destroy()
         });
+        
+        // Анимация волны - тоже до точного радиуса
+        this.scene.time.delayedCall(50, () => {
+            AnimationLibrary.createExplosionEffect(this.scene, wave, {
+                scale: { to: radius / 5 }, // Исправлено: было radius / 3
+                duration: 400,
+                ease: 'Power2',
+                onComplete: () => wave.destroy()
+            });
+        });
+        
+        // Создаем частицы взрыва - разлетаются точно до края радиуса
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * GeometryUtils.TWO_PI;
+            const particlePos = GeometryUtils.calculateCircularPosition(x, y, 10, angle);
+            const particleX = particlePos.x;
+            const particleY = particlePos.y;
+            
+            const particle = this.scene.add.circle(particleX, particleY, 2, 0xffff00, 0.9);
+            
+            this.scene.tweens.add({
+                targets: particle,
+                x: particleX + (particlePos.x - x) * (radius - 10) / 10, // Исправлено: было radius * 0.8
+                y: particleY + (particlePos.y - y) * (radius - 10) / 10, // Исправлено: было radius * 0.8
+                alpha: 0,
+                scaleX: 0,
+                scaleY: 0,
+                duration: 300,
+                ease: 'Power2',
+                onComplete: () => particle.destroy()
+            });
+        }
     }
     
     /**
@@ -553,37 +513,14 @@ export class ActionManager {
                 break;
         }
         
-        this.scene.tweens.add({
-            targets: wave,
+        // Используем AnimationLibrary для эффекта волны
+        AnimationLibrary.createWaveEffect(this.scene, wave, {
             x: targetX,
             y: targetY,
-            width: targetWidth,
-            height: targetHeight,
-            alpha: 0,
             duration: 200,
             ease: 'Power2',
-            onComplete: () => {
-                wave.destroy();
-            }
+            onComplete: () => wave.destroy()
         });
-    }
-    /**
-     * Находит предмет в позиции
-     */
-    getItemAtPosition(x, y) {
-        if (!this.itemDropManager) {
-            return null;
-        }
-        
-        for (const item of this.itemDropManager.items) {
-            if (item && !item.isCollected && item.body) {
-                const distance = Phaser.Math.Distance.Between(x, y, item.x, item.y);
-                if (distance <= item.width / 2) {
-                    return item;
-                }
-            }
-        }
-        return null;
     }
     
     /**

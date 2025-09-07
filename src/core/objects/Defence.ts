@@ -139,7 +139,6 @@ export class Defence extends GameObject {
     // Эффект ремонта
     this.playRepairEffect();
     
-    console.log(`Защитное сооружение восстановлено: ${oldHealth} → ${this.health}`);
     
     // Небольшая задержка перед следующим ремонтом
     this.scene.time.delayedCall(2000, () => {
@@ -253,7 +252,6 @@ export class Defence extends GameObject {
     if (!this.scene) return;
 
     // Простое предупреждение
-    console.log(`Защитное сооружение ${this._defenceType} в критическом состоянии!`);
   }
 
   // Геттеры

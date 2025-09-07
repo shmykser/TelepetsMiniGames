@@ -159,4 +159,111 @@ export class BaseUIComponent extends Phaser.GameObjects.Container {
     onScaleChanged(scale) {
         // Переопределяется в наследниках
     }
+
+    /**
+     * Создает фон для UI элемента
+     * @param {number} width - Ширина
+     * @param {number} height - Высота
+     * @param {number} color - Цвет
+     * @param {number} alpha - Прозрачность
+     * @param {number} strokeColor - Цвет рамки
+     * @param {number} strokeWidth - Толщина рамки
+     */
+    createBackground(width, height, color = 0x000000, alpha = 0.8, strokeColor = 0xffffff, strokeWidth = 2) {
+        const background = this.scene.add.rectangle(0, 0, width, height, color, alpha);
+        if (strokeColor && strokeWidth > 0) {
+            background.setStrokeStyle(strokeWidth, strokeColor);
+        }
+        this.add(background);
+        return background;
+    }
+
+    /**
+     * Создает текст для UI элемента
+     * @param {string} text - Текст
+     * @param {Object} options - Опции текста
+     */
+    createText(text, options = {}) {
+        const defaultOptions = {
+            fontFamily: 'Arial',
+            fontSize: '18px',
+            color: '#ffffff',
+            align: 'center'
+        };
+        
+        const textObject = this.scene.add.text(0, 0, text, { ...defaultOptions, ...options });
+        textObject.setOrigin(0.5);
+        this.add(textObject);
+        return textObject;
+    }
+
+    /**
+     * Создает прогресс-бар
+     * @param {number} width - Ширина
+     * @param {number} height - Высота
+     * @param {number} progress - Прогресс (0-1)
+     * @param {number} color - Цвет
+     */
+    createProgressBar(width, height, progress = 1, color = 0x00ff00) {
+        const progressBar = this.scene.add.rectangle(0, 0, width * progress, height, color);
+        this.add(progressBar);
+        return progressBar;
+    }
+
+    /**
+     * Создает контейнер с автоматическим добавлением в сцену
+     */
+    createContainer() {
+        this.scene.add.existing(this);
+        return this;
+    }
+
+    /**
+     * Устанавливает интерактивность
+     * @param {boolean} interactive - Интерактивность
+     */
+    setInteractive(interactive = true) {
+        if (interactive) {
+            this.setInteractive();
+        } else {
+            this.disableInteractive();
+        }
+    }
+
+    /**
+     * Устанавливает размеры компонента
+     * @param {number} width - Ширина
+     * @param {number} height - Высота
+     */
+    setSize(width, height) {
+        this.width = width;
+        this.height = height;
+        this.onSizeChanged(width, height);
+    }
+
+    /**
+     * Переопределяемый метод изменения размера
+     * @param {number} width - Ширина
+     * @param {number} height - Высота
+     */
+    onSizeChanged(width, height) {
+        // Переопределяется в наследниках
+    }
+
+    /**
+     * Устанавливает видимость компонента
+     * @param {boolean} visible - Видимость
+     */
+    setVisible(visible) {
+        this.visible = visible;
+        this.onVisibilityChanged(visible);
+    }
+
+    /**
+     * Переопределяемый метод изменения видимости
+     * @param {boolean} visible - Видимость
+     */
+    onVisibilityChanged(visible) {
+        // Переопределяется в наследниках
+    }
 }

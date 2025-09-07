@@ -1,4 +1,5 @@
 import { InsectMovementPatterns } from './InsectMovementPatterns.js';
+import { GeometryUtils } from '../../utils/GeometryUtils.js';
 
 /**
  * Система управления движением врагов
@@ -10,7 +11,6 @@ export class MovementSystem {
         this.patterns = new Map(); // Кэш паттернов для каждого врага
         this.context = {
             otherEnemies: [],
-            pheromones: [],
             obstacles: []
         };
     }
@@ -56,7 +56,7 @@ export class MovementSystem {
         );
         
         // Применяем движение через Phaser Physics
-        const direction = this.normalizeDirection(newPosition.x - enemy.x, newPosition.y - enemy.y);
+        const direction = GeometryUtils.normalize(newPosition.x - enemy.x, newPosition.y - enemy.y);
         const baseSpeed = 10; // Базовая скорость
         const actualSpeed = baseSpeed * enemy.speed;
         
@@ -84,8 +84,6 @@ export class MovementSystem {
         // Обновляем информацию о препятствиях (можно добавить позже)
         this.context.obstacles = [];
         
-        // Обновляем феромоны (можно добавить позже)
-        this.context.pheromones = [];
     }
 
     /**
@@ -114,15 +112,5 @@ export class MovementSystem {
         };
     }
     
-    /**
-     * Нормализует направление
-     * @param {number} dx - Изменение по X
-     * @param {number} dy - Изменение по Y
-     * @returns {Object} Нормализованное направление
-     */
-    normalizeDirection(dx, dy) {
-        const length = Math.sqrt(dx * dx + dy * dy);
-        if (length === 0) return { x: 0, y: 0 };
-        return { x: dx / length, y: dy / length };
-    }
+    // normalizeDirection перенесен в GeometryUtils
 }

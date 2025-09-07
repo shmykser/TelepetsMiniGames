@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { HealthBar } from '../components/HealthBar';
 import { DamageIndicator } from '../components/DamageIndicator';
 import { PropertyUtils } from '../utils/PropertyUtils.js';
+import { GeometryUtils } from '../utils/GeometryUtils.js';
 export class GameObject extends Phaser.GameObjects.Sprite {
     constructor(scene, config) {
         super(scene, config.x || 0, config.y || 0, config.texture || '');
@@ -122,7 +123,7 @@ export class GameObject extends Phaser.GameObjects.Sprite {
             return false;
         }
         // Проверяем расстояние до цели через Phaser.Math.Distance
-        const distance = Phaser.Math.Distance.Between(this.x, this.y, attackTarget.x, attackTarget.y);
+        const distance = GeometryUtils.distance(this.x, this.y, attackTarget.x, attackTarget.y);
         if (distance > this._attackRange) {
             return false; // Цель слишком далеко
         }
@@ -137,13 +138,11 @@ export class GameObject extends Phaser.GameObjects.Sprite {
         if (!this._isAlive || !this.scene)
             return;
         
-        console.log(`💥 GameObject.takeDamage: получен урон ${damage}, здоровье было ${this.health}`);
         this.health -= damage;
-        console.log(`💥 GameObject.takeDamage: здоровье стало ${this.health}`);
         this.emit('damage', damage, this._health);
         
-        // Показываем цифровой урон
-        DamageIndicator.showDamageWithOffset(this.scene, this, damage, {
+        // Показываем цифровой урон (если возможно)
+        const damageIndicator = DamageIndicator.showDamageWithOffset(this.scene, this, damage, {
             duration: 1500,
             driftDistance: 60,
             fontSize: 28,
@@ -151,6 +150,8 @@ export class GameObject extends Phaser.GameObjects.Sprite {
             strokeColor: 0xffffff, // Белая обводка
             strokeThickness: 3
         });
+        
+        // Если индикатор не создался, это не критично - просто продолжаем
         
         // Эффект получения урона через Phaser Tween
         this._tweenManager.add({
@@ -182,7 +183,7 @@ export class GameObject extends Phaser.GameObjects.Sprite {
         for (const target of targets) {
             if (!target._isAlive)
                 continue;
-            const distance = Phaser.Math.Distance.Between(this.x, this.y, target.x, target.y);
+            const distance = GeometryUtils.distance(this.x, this.y, target.x, target.y);
             if (distance < nearestDistance) {
                 nearestDistance = distance;
                 nearestTarget = target;
@@ -201,7 +202,6 @@ export class GameObject extends Phaser.GameObjects.Sprite {
     }
     // Анимация смерти через Phaser Tweens
     die() {
-        console.log(`💀 GameObject.die: вызывается die() для объекта`);
         this._isAlive = false;
         this._target = null;
         this.stopMovement();
@@ -219,11 +219,9 @@ export class GameObject extends Phaser.GameObjects.Sprite {
                 duration: 500,
                 ease: 'Power2',
                 onComplete: () => {
-                    console.log(`💀 GameObject.die: анимация смерти завершена, эмитим событие death`);
                     this.emit('death', this);
                     // Если это враг, эмитим событие enemyKilled
                     if (this.enemyType) {
-                        console.log(`💀 GameObject.die: эмитим событие enemyKilled для врага ${this.enemyType}`);
                         this.emit('enemyKilled', this);
                     }
                     this.destroy();
@@ -235,7 +233,6 @@ export class GameObject extends Phaser.GameObjects.Sprite {
             this.emit('death', this);
             // Если это враг, эмитим событие enemyKilled
             if (this.enemyType) {
-                console.log(`💀 GameObject.die: эмитим событие enemyKilled для врага ${this.enemyType}`);
                 this.emit('enemyKilled', this);
             }
             this.destroy();
@@ -272,8 +269,8 @@ export class GameObject extends Phaser.GameObjects.Sprite {
             return;
         this._tweenManager.add({
             targets: this,
-            x: this.x + Phaser.Math.Between(-intensity, intensity),
-            y: this.y + Phaser.Math.Between(-intensity, intensity),
+            x: this.x + GeometryUtils.randomBetween(-intensity, intensity),
+            y: this.y + GeometryUtils.randomBetween(-intensity, intensity),
             duration: duration,
             yoyo: true,
             repeat: 3,
@@ -307,7 +304,7 @@ export class GameObject extends Phaser.GameObjects.Sprite {
     isInRange(target, range) {
         if (!target || !target.isAlive)
             return false;
-        const distance = Phaser.Math.Distance.Between(this.x, this.y, target.x, target.y);
+        const distance = GeometryUtils.distance(this.x, this.y, target.x, target.y);
         return distance <= range;
     }
     /**

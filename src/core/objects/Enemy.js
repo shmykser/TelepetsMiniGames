@@ -4,6 +4,7 @@ import { settings } from '../../../config/settings.js';
 import { MovementSystem } from '../../systems/movement/MovementSystem.js';
 import { PropertyUtils } from '../../utils/PropertyUtils.js';
 import { GeometryUtils } from '../../utils/GeometryUtils.js';
+import { AnimationLibrary } from '../../animations/AnimationLibrary.js';
 export class Enemy extends GameObject {
     constructor(scene, config) {
         const enemyType = config.enemyType || 'ant';
@@ -83,10 +84,17 @@ export class Enemy extends GameObject {
         if (!this._isAlive || !this.scene)
             return;
         
-        // Обновляем позицию частиц усиления
-        if (this.enhancementParticles) {
-            this.enhancementParticles.setPosition(this.x, this.y);
-        }
+                // Обновляем позицию частиц усиления
+                if (this.enhancementParticles) {
+                    AnimationLibrary.updateParticlesPosition(this.enhancementParticles, this.x, this.y);
+                    // Отладочная информация (только для первых нескольких обновлений)
+                    if (this._particleUpdateCount === undefined) {
+                        this._particleUpdateCount = 0;
+                    }
+                    if (this._particleUpdateCount < 3) {
+                        this._particleUpdateCount++;
+                    }
+                }
         
         // Если есть цель (яйцо), движемся к ней
         if (this._target && this._target._isAlive) {
@@ -310,11 +318,11 @@ export class Enemy extends GameObject {
             this._movementSystem.removePattern(this._id);
         }
         
-        // Очищаем эффекты усиления
-        if (this.enhancementParticles) {
-            this.enhancementParticles.destroy();
-            this.enhancementParticles = null;
-        }
+            // Очищаем эффекты усиления
+            if (this.enhancementParticles) {
+                AnimationLibrary.destroyParticles(this.enhancementParticles);
+                this.enhancementParticles = null;
+            }
         
         super.destroy();
     }

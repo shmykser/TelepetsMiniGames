@@ -5,7 +5,7 @@ import { ItemDropManager } from '../systems/ItemDropManager';
 import { MovementSystem } from '../systems/movement/MovementSystem';
 import { TextureManager } from '../core/TextureManager';
 import { WaveManager } from '../core/WaveManager';
-import { GameTimer, WaveIndicator } from '../components';
+// import { GameTimer, WaveIndicator } from '../components';
 import { Egg } from '../core/objects/Egg';
 import { settings } from '../../config/settings';
 /**
@@ -76,13 +76,31 @@ export class GestureTestScene extends Phaser.Scene {
     createUI() {
         const { width, height } = this.scale;
         
-        // Создаем индикатор волны (вверху слева)
-        this.waveIndicator = new WaveIndicator(this, 125, 60, settings.game.ui.waveIndicator);
+        // Создаем простой индикатор волны (вверху слева)
+        this.waveText = this.add.text(10, 10, 'Волна 1', {
+            fontSize: '14px',
+            fill: '#ffffff',
+            backgroundColor: '#000000',
+            padding: { x: 8, y: 4 }
+        }).setOrigin(0, 0);
         
-        // Создаем таймер игры (вверху справа)
-        this.gameTimer = new GameTimer(this, width - 75, 60, settings.game.ui.timer);
+        // Создаем счетчик врагов под волной
+        this.enemyCountText = this.add.text(10, 35, 'Враги: 0', {
+            fontSize: '12px',
+            fill: '#ffffff',
+            backgroundColor: '#000000',
+            padding: { x: 8, y: 4 }
+        }).setOrigin(0, 0);
         
-        // Создаем кнопку возврата в меню
+        // Создаем простой таймер игры (вверху справа, под кнопкой Menu)
+        this.timerText = this.add.text(width - 10, 35, '10:00', {
+            fontSize: '14px',
+            fill: '#ffffff',
+            backgroundColor: '#000000',
+            padding: { x: 8, y: 4 }
+        }).setOrigin(1, 0);
+        
+        // Создаем кнопку возврата в меню (вверху справа)
         const menuButton = this.add.text(width - 10, 10, 'Menu', {
             fontSize: '16px',
             fill: '#ffffff',
@@ -94,22 +112,11 @@ export class GestureTestScene extends Phaser.Scene {
             this.scene.start('MenuScene');
         });
         
-        // Создаем кнопку переключения уникального движения
-        this.uniqueMovementButton = this.add.text(width - 10, 50, 'Уникальное движение: ВКЛ', {
-            fontSize: '14px',
-            fill: '#ffffff',
-            backgroundColor: '#27ae60',
-            padding: { x: 8, y: 4 }
-        }).setOrigin(1, 0).setInteractive();
-        
+        // Уникальное движение включено по умолчанию
         this.uniqueMovementEnabled = true;
-        this.uniqueMovementButton.on('pointerdown', () => {
-            this.toggleUniqueMovement();
-        });
         
         // Добавляем обработчик для усиленных врагов
         this.events.on('enhancedEnemySpawned', (data) => {
-            console.log(`🌟 Усиленный враг появился: ${data.level.name} ${data.enemy._enemyData.name}`);
         });
         
     }
@@ -130,14 +137,14 @@ export class GestureTestScene extends Phaser.Scene {
         this.events.on('gameStarted', (gameData) => {
             
             // Запускаем таймер
-            this.gameTimer.start(gameData.duration);
+            this.startTimer(gameData.duration);
         });
         
         // Обработчик смены минуты
         this.events.on('minuteChanged', (minuteData) => {
             
             // Обновляем индикатор волны
-            this.waveIndicator.updateWave({
+            this.updateWaveIndicator({
                 waveNumber: minuteData.minute,
                 waveName: `Минута ${minuteData.minute}`,
                 maxWaves: settings.game.maxWaves
@@ -161,20 +168,10 @@ export class GestureTestScene extends Phaser.Scene {
         this.events.on('gameEnded', (endData) => {
             
             // Останавливаем таймер
-            this.gameTimer.stop();
+            this.stopTimer();
         });
         
-        // Обработчики таймера
-        this.gameTimer.on('warningTime', () => {
-            this.waveIndicator.showDifficultyWarning();
-        });
-        
-        this.gameTimer.on('criticalTime', () => {
-            this.waveIndicator.showDifficultyWarning();
-        });
-        
-        this.gameTimer.on('timeUp', () => {
-        });
+        // Простые методы для таймера и индикатора волны
     }
 
     initializeManagers() {
@@ -187,19 +184,15 @@ export class GestureTestScene extends Phaser.Scene {
         // Создаем GestureManager с обработчиками жестов
         this.gestureManager = new GestureManager(this, {
             onTap: (gesture) => {
-                console.log(`👆 Тап в позиции: (${gesture.x}, ${gesture.y})`);
                 this.actionManager.handleGesture(gesture);
             },
             onDoubleTap: (gesture) => {
-                console.log(`👆👆 Двойной тап в позиции: (${gesture.x}, ${gesture.y})`);
                 this.actionManager.handleGesture(gesture);
             },
             onLongTap: (gesture) => {
-                console.log(`👆⏰ Долгий тап в позиции: (${gesture.x}, ${gesture.y})`);
                 this.actionManager.handleGesture(gesture);
             },
             onSwipe: (gesture) => {
-                console.log(`👆➡️ Свайп ${gesture.direction} в позиции: (${gesture.x}, ${gesture.y})`);
                 this.actionManager.handleGesture(gesture);
             }
         });
@@ -216,8 +209,10 @@ export class GestureTestScene extends Phaser.Scene {
     }
 
     updateEnemyCount() {
-        if (this.waveIndicator && this.waveManager) {
-            this.waveIndicator.updateEnemyCount(this.waveManager.currentEnemiesOnScreen);
+        // Обновляем счетчик врагов
+        if (this.enemyCountText && this.waveManager) {
+            const enemyCount = this.waveManager.currentEnemiesOnScreen || 0;
+            this.enemyCountText.setText(`Враги: ${enemyCount}`);
         }
     }
     
@@ -227,13 +222,6 @@ export class GestureTestScene extends Phaser.Scene {
     toggleUniqueMovement() {
         this.uniqueMovementEnabled = !this.uniqueMovementEnabled;
         
-        // Обновляем текст кнопки
-        const buttonText = this.uniqueMovementEnabled ? 'Уникальное движение: ВКЛ' : 'Уникальное движение: ВЫКЛ';
-        const buttonColor = this.uniqueMovementEnabled ? '#27ae60' : '#e74c3c';
-        
-        this.uniqueMovementButton.setText(buttonText);
-        this.uniqueMovementButton.setBackgroundColor(buttonColor);
-        
         // Применяем настройку ко всем существующим врагам
         if (this.waveManager && this.waveManager.enemies) {
             this.waveManager.enemies.forEach(enemy => {
@@ -242,10 +230,49 @@ export class GestureTestScene extends Phaser.Scene {
                 }
             });
         }
-        
+    }
+    
+    /**
+     * Запускает простой таймер
+     */
+    startTimer(duration) {
+        this.gameStartTime = this.time.now;
+        this.gameDuration = duration;
+        this.timerRunning = true;
+    }
+    
+    /**
+     * Останавливает таймер
+     */
+    stopTimer() {
+        this.timerRunning = false;
+    }
+    
+    /**
+     * Обновляет индикатор волны
+     */
+    updateWaveIndicator(data) {
+        if (this.waveText) {
+            this.waveText.setText(`Волна ${data.waveNumber}`);
+        }
     }
     
     update() {
+        // Обновляем таймер
+        if (this.timerRunning && this.timerText) {
+            const elapsed = this.time.now - this.gameStartTime;
+            const remaining = Math.max(0, this.gameDuration - elapsed);
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            this.timerText.setText(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+            
+            // Проверяем окончание времени
+            if (remaining <= 0) {
+                this.timerRunning = false;
+                this.events.emit('gameEnded', { reason: 'timeUp' });
+            }
+        }
+        
         // Обновляем менеджер волн
         if (this.waveManager) {
             this.waveManager.update();

@@ -2,6 +2,9 @@
  * Система усиления врагов
  * Следует принципу Single Responsibility Principle
  */
+import { GeometryUtils } from '../utils/GeometryUtils.js';
+import { AnimationLibrary } from '../animations/AnimationLibrary.js';
+
 export class EnhancementSystem {
     /**
      * Уровни усиления врагов
@@ -15,33 +18,21 @@ export class EnhancementSystem {
             tint: 0xffffff,
             particleConfig: null
         },
-        ELITE: { 
-            multiplier: 2, 
-            weight: 25, 
-            name: 'Элитный', 
+        ELITE: {
+            multiplier: 2,
+            weight: 25,
+            name: 'Элитный',
             suffix: '_elite',
             tint: 0xffffaa,
-            particleConfig: {
-                scale: { start: 0.1, end: 0 },
-                speed: { min: 10, max: 20 },
-                lifespan: 1000,
-                quantity: 1,
-                frequency: 2000
-            }
+            particleLevel: 'elite'
         },
-        CHAMPION: { 
-            multiplier: 3, 
-            weight: 5, 
-            name: 'Чемпион', 
+        CHAMPION: {
+            multiplier: 3,
+            weight: 5,
+            name: 'Чемпион',
             suffix: '_champion',
             tint: 0xffaa00,
-            particleConfig: {
-                scale: { start: 0.2, end: 0 },
-                speed: { min: 20, max: 40 },
-                lifespan: 1500,
-                quantity: 2,
-                frequency: 1000
-            }
+            particleLevel: 'champion'
         }
     };
 
@@ -89,14 +80,15 @@ export class EnhancementSystem {
      * @returns {Object} Веса для каждого уровня
      */
     static getEnhancementWeights(gameTime) {
-        const minutes = Math.floor(gameTime / 60000);
+        const minutes = GeometryUtils.floor(gameTime / 60000);
         
         if (minutes < 2) {
-            return { normal: 0, elite: 50, champion: 50 };
+            return { normal: 95, elite: 5, champion: 0 };
+            //return { normal: 0, elite: 0, champion: 100 };
         } else if (minutes < 5) {
-            return { normal: 80, elite: 20, champion: 0 };
+            return { normal: 80, elite: 15, champion: 5 };
         } else {
-            return { normal: 70, elite: 25, champion: 5 };
+            return { normal: 70, elite: 20, champion: 10 };
         }
     }
 
@@ -120,11 +112,6 @@ export class EnhancementSystem {
         enemy.damage *= enhancementLevel.multiplier;
         enemy.size *= enhancementLevel.multiplier;
         
-        // Отладочная информация
-        console.log(`🔧 EnhancementSystem: Усиливаем ${enemy._enemyData.name} до ${enhancementLevel.name}`);
-        console.log(`🔧 Health: ${enemy._originalHealth} -> ${enemy.health}`);
-        console.log(`🔧 MaxHealth: ${enemy._originalMaxHealth} -> ${enemy._maxHealth}`);
-        console.log(`🔧 HealthPercent: ${(enemy.health / enemy._maxHealth * 100).toFixed(1)}%`);
         
         // Обновляем визуальные характеристики
         const newScale = enemy.scaleX * enhancementLevel.multiplier;
@@ -159,32 +146,31 @@ export class EnhancementSystem {
         // Применяем оттенок
         enemy.setTint(enhancementLevel.tint);
         
-        // Добавляем частицы если есть конфигурация
-        if (enhancementLevel.particleConfig) {
-            this.addParticleEffects(enemy, enhancementLevel.particleConfig);
+        // Добавляем частицы если есть уровень
+        if (enhancementLevel.particleLevel) {
+            this.addParticleEffects(enemy, enhancementLevel.particleLevel);
         }
         
         // Добавляем анимацию для чемпионов
-        if (enhancementLevel === this.ENHANCEMENT_LEVELS.CHAMPION) {
-            this.addChampionAnimation(enemy);
-        }
+        // if (enhancementLevel === this.ENHANCEMENT_LEVELS.CHAMPION) {
+        //     this.addChampionAnimation(enemy);
+        // }
     }
 
     /**
      * Добавляет эффекты частиц
      * @param {Enemy} enemy - Враг
-     * @param {Object} particleConfig - Конфигурация частиц
+     * @param {string} particleLevel - Уровень частиц ('elite' или 'champion')
      */
-    static addParticleEffects(enemy, particleConfig) {
-        // Создаем частицы вокруг врага
-        const particles = enemy.scene.add.particles(enemy.x, enemy.y, 'sparkle', {
-            ...particleConfig,
-            follow: enemy,
-            followOffset: { x: 0, y: 0 }
-        });
+    static addParticleEffects(enemy, particleLevel) {
+        // Создаем частицы через AnimationLibrary
+        const particles = AnimationLibrary.createEnhancementParticles(enemy.scene, enemy, particleLevel);
         
-        // Привязываем частицы к врагу
-        enemy.enhancementParticles = particles;
+        if (particles) {
+            // Привязываем частицы к врагу
+            enemy.enhancementParticles = particles;
+
+        }
     }
 
     /**
@@ -192,11 +178,9 @@ export class EnhancementSystem {
      * @param {Enemy} enemy - Враг
      */
     static addChampionAnimation(enemy) {
-        // Пульсация
-        enemy.scene.tweens.add({
-            targets: enemy,
-            scaleX: enemy.scaleX * 1.1,
-            scaleY: enemy.scaleY * 1.1,
+        // Используем AnimationLibrary для пульсации
+        AnimationLibrary.createPulseAnimation(enemy.scene, enemy, {
+            scale: { from: 1, to: 1.1 },
             duration: 1000,
             yoyo: true,
             repeat: -1,
@@ -229,9 +213,9 @@ export class EnhancementSystem {
             enemy.enhancementParticles = null;
         }
         
-        // Останавливаем анимации
-        if (enemy.scene && enemy.scene.tweens) {
-            enemy.scene.tweens.killTweensOf(enemy);
+        // Останавливаем анимации через AnimationLibrary
+        if (enemy.scene) {
+            AnimationLibrary.stopAllAnimations(enemy.scene, enemy);
         }
     }
 }

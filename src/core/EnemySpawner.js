@@ -9,7 +9,6 @@ export class EnemySpawner {
         this.scene = scene;
         this.enemies = [];
         
-        console.log('⚠️ EnemySpawner устарел. Используйте WaveManager для новой системы волн.');
     }
 
     /**
@@ -32,7 +31,6 @@ export class EnemySpawner {
      * @deprecated Используйте new EnemySpawner(scene).startFirstWave()
      */
     static createAllEnemies(scene) {
-        console.warn('EnemySpawner.createAllEnemies() устарел. Используйте new EnemySpawner(scene).startFirstWave()');
         const { width, height } = scene.scale;
         const enemies = [];
         // Конфигурация врагов
