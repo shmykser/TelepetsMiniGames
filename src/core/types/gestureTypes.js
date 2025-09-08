@@ -1,7 +1,7 @@
 /**
  * Типы жестов и действий
  */
-import { DAMAGE_CONSTANTS, EFFECT_CONSTANTS } from '../constants/index.js';
+import { DAMAGE_CONSTANTS, EFFECT_CONSTANTS } from '../constants/GameConstants.js';
 
 // Типы целей
 export const TARGET_TYPES = {

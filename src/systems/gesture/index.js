@@ -1,1 +1,0 @@
-export { GestureManager } from './GestureManager';

@@ -6,18 +6,14 @@
   "homepage": "https://shmykser.github.io/TelepetsMiniGames/",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "preview": "vite preview --host"
   },
   "devDependencies": {
-    "@types/node": "^24.3.0",
-    "@typescript-eslint/eslint-plugin": "^8.41.0",
-    "@typescript-eslint/parser": "^8.41.0",
     "eslint": "^9.34.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
-    "prettier": "^3.6.2",
-    "typescript": "~5.8.3"
+    "prettier": "^3.6.2"
   },
   "dependencies": {
     "@twa-dev/sdk": "^8.0.2",

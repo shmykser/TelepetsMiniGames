@@ -3,6 +3,7 @@ import { settings } from '@config/settings';
 import { MenuScene } from '@/scenes/MenuScene';
 import { GestureTestScene } from '@/scenes/GestureTestScene';
 import { MovementTestScene } from '@/scenes/MovementTestScene';
+import { initTelegram } from './core/telegram/TelegramInit';
 const config = {
     type: Phaser.AUTO,
     backgroundColor: settings.backgroundColor,
@@ -28,5 +29,9 @@ const config = {
         antialias: true
     }
 };
+
+// Инициализируем Telegram WebApp SDK (мягко в вебе)
+initTelegram();
+
 // eslint-disable-next-line no-new
 new Phaser.Game(config);

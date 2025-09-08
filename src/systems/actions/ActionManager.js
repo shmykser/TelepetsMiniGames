@@ -1,6 +1,6 @@
 import { GESTURE_ACTIONS, TARGET_TYPES, TARGET_SETTINGS } from '../../core/types/gestureTypes';
 import { ITEM_TYPES } from '../../core/types/itemTypes';
-import { DAMAGE_CONSTANTS, EFFECT_CONSTANTS } from '../../core/constants/index.js';
+import { DAMAGE_CONSTANTS, EFFECT_CONSTANTS } from '../../core/constants/GameConstants.js';
 import { GeometryUtils } from '../../utils/GeometryUtils.js';
 import { AnimationLibrary } from '../../animations/AnimationLibrary.js';
 
