@@ -1,14 +1,14 @@
 /**
- * Сцена тестирования рисования с распознаванием жестов
- * Позволяет рисовать фигуры и распознавать их с помощью $Q
+ * Сцена тестирования рисования с распознаванием жестов через $P
+ * Позволяет рисовать фигуры и распознавать их с помощью $P Recognizer
  */
-import { QDollarRecognizer, Point } from '@/utils/qdollar.js';
+import { PDollarRecognizer, Point } from '@/utils/pdollar.js';
 
-export class TestGestures extends Phaser.Scene {
+export class TestGestureP extends Phaser.Scene {
     constructor() {
-        super({ key: 'TestGestures' });
+        super({ key: 'TestGestureP' });
         
-        // Инициализация $Q распознавателя
+        // Инициализация $P распознавателя
         this.recognizer = null;
         
         // Состояние рисования
@@ -28,7 +28,7 @@ export class TestGestures extends Phaser.Scene {
         // Создаем фон
         this.createBackground();
         
-        // Инициализируем $Q распознаватель
+        // Инициализируем $P распознаватель
         this.initializeRecognizer();
         
         // Создаем UI элементы
@@ -44,7 +44,7 @@ export class TestGestures extends Phaser.Scene {
     createBackground() {
         // Создаем градиентный фон
         const graphics = this.add.graphics();
-        graphics.fillGradientStyle(0x1a1a2e, 0x16213e, 0x0f3460, 0x2c3e50, 1);
+        graphics.fillGradientStyle(0x2c3e50, 0x34495e, 0x3498db, 0x2980b9, 1);
         graphics.fillRect(0, 0, this.scale.width, this.scale.height);
         
         // Добавляем статичную траву
@@ -54,13 +54,13 @@ export class TestGestures extends Phaser.Scene {
     }
 
     initializeRecognizer() {
-        // Создаем экземпляр $Q распознавателя
-        this.recognizer = new QDollarRecognizer();
+        // Создаем экземпляр $P распознавателя
+        this.recognizer = new PDollarRecognizer();
         
-        // Добавляем кастомный жест круга
+        // Добавляем кастомные жесты
         this.addCustomGestures();
         
-        console.log('$Q Recognizer initialized with', this.recognizer.PointClouds.length, 'gestures');
+        console.log('$P Recognizer initialized with', this.recognizer.PointClouds.length, 'gestures');
         
         // Выводим список доступных жестов
         const gestureNames = this.recognizer.PointClouds.map(cloud => cloud.Name);
@@ -83,11 +83,11 @@ export class TestGestures extends Phaser.Scene {
     }
 
     createCircleTemplate() {
-        // Создаем круг по образцу встроенного жеста "null", но без точки внутри
+        // Создаем круг для $P
         const centerX = 50;
         const centerY = 50;
         const radius = 25;
-        const numPoints = 40; // Много точек для плавного круга
+        const numPoints = 40;
         
         const points = [];
         
@@ -103,7 +103,7 @@ export class TestGestures extends Phaser.Scene {
     }
 
     createTriangleTemplate() {
-        // Создаем равносторонний треугольник из 3 отдельных штрихов
+        // Создаем равносторонний треугольник для $P
         const centerX = 50;
         const centerY = 50;
         const radius = 30;
@@ -118,15 +118,15 @@ export class TestGestures extends Phaser.Scene {
         const rightX = centerX + radius * Math.cos(Math.PI/6);
         const rightY = centerY + radius * Math.sin(Math.PI/6);
         
-        // Штрих 1: левая сторона (от верхней вершины к левой нижней)
+        // Штрих 1: левая сторона
         points.push(new Point(topX, topY, 1));
         points.push(new Point(leftX, leftY, 1));
         
-        // Штрих 2: правая сторона (от левой нижней к правой нижней)
+        // Штрих 2: правая сторона
         points.push(new Point(leftX, leftY, 2));
         points.push(new Point(rightX, rightY, 2));
         
-        // Штрих 3: верхняя сторона (от правой нижней к верхней вершине)
+        // Штрих 3: верхняя сторона
         points.push(new Point(rightX, rightY, 3));
         points.push(new Point(topX, topY, 3));
         
@@ -167,7 +167,7 @@ export class TestGestures extends Phaser.Scene {
         const { width, height } = this.scale;
         
         // Заголовок
-        this.add.text(width / 2, 50, '🎨 Тест Рисования с $Q', {
+        this.add.text(width / 2, 50, '🎨 Тест Рисования с $P', {
             fontSize: '28px',
             fontFamily: 'Arial',
             fill: '#ffffff',
@@ -200,71 +200,36 @@ export class TestGestures extends Phaser.Scene {
             .on('pointerdown', () => this.clearCanvas())
             .on('pointerover', () => this.clearButton.setAlpha(0.8))
             .on('pointerout', () => this.clearButton.setAlpha(1));
-        
+            
         this.add.text(width - 100, height - 80, 'Очистить', {
-            fontSize: '18px',
+            fontSize: '16px',
             fontFamily: 'Arial',
-            fill: '#ffffff',
-            align: 'center'
-        }).setOrigin(0.5, 0.5);
-        
-        // Кнопка возврата в меню
-        const menuButton = this.add.rectangle(100, height - 80, 150, 50, 0x2d5a27)
-            .setInteractive()
-            .on('pointerdown', () => this.scene.start('MenuScene'))
-            .on('pointerover', () => menuButton.setAlpha(0.8))
-            .on('pointerout', () => menuButton.setAlpha(1));
-        
-        this.add.text(100, height - 80, '🏠 В меню', {
-            fontSize: '18px',
-            fontFamily: 'Arial',
-            fill: '#ffffff',
-            align: 'center'
+            fill: '#ffffff'
         }).setOrigin(0.5, 0.5);
     }
 
     createDrawingArea() {
         const { width, height } = this.scale;
         
-        // Создаем область для рисования (центр экрана)
-        const canvasX = width / 2;
-        const canvasY = height / 2 + 50;
-        const canvasWidth = Math.min(width - 100, 500);
-        const canvasHeight = Math.min(height - 300, 400);
-        
-        // Фон области рисования
-        this.canvasArea = this.add.rectangle(canvasX, canvasY, canvasWidth, canvasHeight, 0x2c3e50)
-            .setStrokeStyle(3, 0xffffff)
-            .setInteractive();
-        
-        // Графика для отрисовки жестов
+        // Область для рисования
+        this.canvasArea = this.add.rectangle(width / 2, height / 2 + 50, width - 100, height - 300, 0xffffff)
+            .setInteractive()
+            .setStrokeStyle(3, 0x000000);
+            
+        // Графический объект для рисования
         this.strokeGraphics = this.add.graphics();
-        this.strokeGraphics.setDepth(10);
         
-        // Текст "Нарисуйте здесь"
-        this.add.text(canvasX, canvasY, 'Нарисуйте здесь', {
-            fontSize: '24px',
-            fontFamily: 'Arial',
-            fill: '#7f8c8d',
-            align: 'center'
-        }).setOrigin(0.5, 0.5);
-        
-        // Сохраняем границы области рисования
+        // Границы области рисования
         this.canvasBounds = {
-            x: canvasX - canvasWidth / 2,
-            y: canvasY - canvasHeight / 2,
-            width: canvasWidth,
-            height: canvasHeight
+            x: this.canvasArea.x - this.canvasArea.width / 2,
+            y: this.canvasArea.y - this.canvasArea.height / 2,
+            width: this.canvasArea.width,
+            height: this.canvasArea.height
         };
     }
 
     setupInputHandlers() {
-        // Обработчики для мыши
-        this.canvasArea.on('pointerdown', this.startDrawing, this);
-        this.canvasArea.on('pointermove', this.draw, this);
-        this.canvasArea.on('pointerup', this.stopDrawing, this);
-        
-        // Обработчики для тач-событий
+        // Настраиваем обработчики для рисования
         this.canvasArea.on('pointerdown', this.startDrawing, this);
         this.canvasArea.on('pointermove', this.draw, this);
         this.canvasArea.on('pointerup', this.stopDrawing, this);
@@ -292,7 +257,7 @@ export class TestGestures extends Phaser.Scene {
         
         // Рисуем линию от предыдущей точки
         if (this.lastPoint) {
-            this.strokeGraphics.lineStyle(3, 0xffffff, 1);
+            this.strokeGraphics.lineStyle(3, 0x2c3e50, 1);
             this.strokeGraphics.beginPath();
             this.strokeGraphics.moveTo(this.lastPoint.x, this.lastPoint.y);
             this.strokeGraphics.lineTo(pointer.x, pointer.y);
@@ -337,10 +302,10 @@ export class TestGestures extends Phaser.Scene {
                 return;
             }
             
-            // Распознаем жест с помощью $Q
+            // Распознаем жест с помощью $P
             const result = this.recognizer.Recognize(this.drawingPoints);
             
-            console.log('Результат распознавания:', result);
+            console.log('Результат распознавания $P:', result);
             
             // Проверяем результат
             if (result.Name === 'No match.') {
@@ -387,18 +352,6 @@ export class TestGestures extends Phaser.Scene {
         return aspectRatio > 3;
     }
 
-    playSuccessAnimation() {
-        // Простая анимация успеха
-        this.tweens.add({
-            targets: this.resultText,
-            scaleX: 1.1,
-            scaleY: 1.1,
-            duration: 200,
-            yoyo: true,
-            ease: 'Power2.easeInOut'
-        });
-    }
-
     translateGestureName(englishName) {
         const translations = {
             'circle': 'Круг',
@@ -424,6 +377,18 @@ export class TestGestures extends Phaser.Scene {
         return translations[englishName] || englishName;
     }
 
+    playSuccessAnimation() {
+        // Простая анимация успеха
+        this.tweens.add({
+            targets: this.resultText,
+            scaleX: 1.1,
+            scaleY: 1.1,
+            duration: 200,
+            yoyo: true,
+            ease: 'Power2.easeInOut'
+        });
+    }
+
     clearCanvas() {
         // Очищаем графику
         this.strokeGraphics.clear();
@@ -445,16 +410,5 @@ export class TestGestures extends Phaser.Scene {
                x <= this.canvasBounds.x + this.canvasBounds.width &&
                y >= this.canvasBounds.y && 
                y <= this.canvasBounds.y + this.canvasBounds.height;
-    }
-
-    update() {
-        // Обновление сцены (если необходимо)
-    }
-
-    destroy() {
-        // Очистка ресурсов
-        if (this.strokeGraphics) {
-            this.strokeGraphics.destroy();
-        }
     }
 }

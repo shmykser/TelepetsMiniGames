@@ -118,7 +118,22 @@ export class MenuScene extends Phaser.Scene {
                 this.scene.start('TestGestures');
             });
         
-        this.add.text(width / 2, gesturesButtonY, 'ТЕСТ ЖЕСТОВ', {
+        this.add.text(width / 2, gesturesButtonY, 'ТЕСТ ЖЕСТОВ $Q', {
+            fontSize: buttonFontSize,
+            fill: '#ffffff',
+            fontStyle: 'bold',
+            align: 'center'
+        }).setOrigin(0.5);
+        
+        // Кнопка тестирования жестов $P
+        const gesturesPButtonY = gesturesButtonY + 80;
+        const gesturesPButton = this.add.rectangle(width / 2, gesturesPButtonY, 250, 60, 0x9b59b6)
+            .setInteractive()
+            .on('pointerdown', () => {
+                this.scene.start('TestGestureP');
+            });
+        
+        this.add.text(width / 2, gesturesPButtonY, 'ТЕСТ ЖЕСТОВ $P', {
             fontSize: buttonFontSize,
             fill: '#ffffff',
             fontStyle: 'bold',
@@ -126,7 +141,7 @@ export class MenuScene extends Phaser.Scene {
         }).setOrigin(0.5);
         
         // Кнопка перезагрузки ассетов
-        const reloadButtonY = gesturesButtonY + 80;
+        const reloadButtonY = gesturesPButtonY + 80;
         const reloadButton = this.add.rectangle(width / 2, reloadButtonY, 250, 60, 0xe67e22)
             .setInteractive()
             .on('pointerdown', () => {
