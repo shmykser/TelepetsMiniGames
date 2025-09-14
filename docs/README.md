@@ -10,8 +10,8 @@
 
 - **Vite + TS**: быстрая разработка и HMR
 - **Phaser 3**: сцены `Boot`, `Preload`, `MainMenu`, `Game`, `UI`
-- **Жесты**: `src/systems/gesture/GestureManager.ts` (Hammer.js)
-- **Telegram**: `src/core/telegram/TelegramInit.ts`
+- **Жесты**: `src/systems/GestureSystem.js`
+- **Telegram**: `src/telegram/TelegramInit.js`
 - **Глобальные настройки**: `config/settings.ts` (все настройки игры)
 - **Секреты**: `.env` (только токены и пароли)
 

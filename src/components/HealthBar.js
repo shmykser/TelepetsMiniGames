@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BaseUIComponent } from './BaseUIComponent.js';
 import { PropertyUtils } from '../utils/PropertyUtils.js';
+import { COLORS } from '../constants/GameConstants.js';
 /**
  * Универсальный компонент полосы здоровья
  * Может использоваться для врагов, яйца, защиты и любых других объектов
@@ -31,9 +32,9 @@ export class HealthBar extends BaseUIComponent {
         this.showWhenEmpty = options.showWhenEmpty || true;
         // Цвета по умолчанию
         const colors = {
-            background: 0x000000,
-            health: 0x00ff00,
-            border: 0xffffff,
+            background: COLORS.BLACK,
+            health: COLORS.GREEN,
+            border: COLORS.WHITE,
             ...options.colors
         };
         // Создаем графические элементы
@@ -112,9 +113,9 @@ export class HealthBar extends BaseUIComponent {
         this.barWidth = this.calculateBarWidth();
         // Перерисовываем полосу с новыми размерами
         this.setColors({
-            background: 0x000000,
-            health: 0x00ff00,
-            border: 0xffffff
+            background: COLORS.BLACK,
+            health: COLORS.GREEN,
+            border: COLORS.WHITE
         });
         // Обновляем отображение здоровья
         this.updateHealth();
@@ -134,10 +135,10 @@ export class HealthBar extends BaseUIComponent {
      */
     getHealthColor(healthPercent) {
         if (healthPercent > 0.6)
-            return 0x00ff00; // Зеленый
+            return COLORS.GREEN; // Зеленый
         if (healthPercent > 0.3)
-            return 0xffff00; // Желтый
-        return 0xff0000; // Красный
+            return COLORS.YELLOW; // Желтый
+        return COLORS.RED; // Красный
     }
     /**
      * Устанавливает новый целевой объект

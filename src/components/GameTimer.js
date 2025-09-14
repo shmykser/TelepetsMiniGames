@@ -3,6 +3,7 @@ import { BaseUIComponent } from './BaseUIComponent.js';
 import { UIUtils } from '../utils/UIUtils.js';
 import { UI_THEME } from '../utils/UITheme.js';
 import { GeometryUtils } from '../utils/GeometryUtils.js';
+import { UI_CONSTANTS } from '../constants/GameConstants.js';
 
 /**
  * Компонент таймера игры
@@ -15,10 +16,10 @@ export class GameTimer extends BaseUIComponent {
             fontFamily: UI_THEME.fonts.family,
             color: UI_THEME.colors.text,
             backgroundColor: UI_THEME.colors.background,
-            padding: { x: 15, y: 8 },
+            padding: { x: UI_CONSTANTS.GAME_TIMER.DEFAULT_PADDING_X, y: UI_CONSTANTS.GAME_TIMER.DEFAULT_PADDING_Y },
             showMilliseconds: false,
-            warningTime: 60000, // 1 минута до конца
-            criticalTime: 30000, // 30 секунд до конца
+            warningTime: UI_CONSTANTS.GAME_TIMER.DEFAULT_WARNING_TIME,
+            criticalTime: UI_CONSTANTS.GAME_TIMER.DEFAULT_CRITICAL_TIME,
             ...options
         };
         
@@ -104,7 +105,7 @@ export class GameTimer extends BaseUIComponent {
      */
     startUpdateLoop() {
         this.updateTimer = this.scene.time.addEvent({
-            delay: 100, // Обновляем каждые 100мс
+            delay: UI_CONSTANTS.GAME_TIMER.DEFAULT_UPDATE_INTERVAL,
             callback: this.update,
             callbackScope: this,
             loop: true
@@ -117,7 +118,7 @@ export class GameTimer extends BaseUIComponent {
     update() {
         if (!this.isRunning) return;
         
-        this.remainingTime -= 100;
+        this.remainingTime -= UI_CONSTANTS.GAME_TIMER.DEFAULT_UPDATE_INTERVAL;
         
         // Проверяем предупреждения
         this.checkWarnings();

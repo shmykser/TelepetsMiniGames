@@ -1,4 +1,5 @@
 import { settings } from '../../config/settings.js';
+import { BackgroundUtils } from '../utils/BackgroundUtils.js';
 
 export class MenuScene extends Phaser.Scene {
     constructor() {
@@ -22,8 +23,15 @@ export class MenuScene extends Phaser.Scene {
         const buttonPadding = isSmallMobile ? { x: 15, y: 10 } : (isMobile ? { x: 18, y: 12 } : { x: 20, y: 15 });
         const buttonSpacing = isSmallMobile ? 60 : (isMobile ? 70 : 80);
         
-        // Создаем фон
-        this.add.rectangle(width / 2, height / 2, width, height, 0x2c3e50);
+        // Создаем травяной фон
+        this.grassBackground = BackgroundUtils.createGrassBackground(this, {
+            tileSize: 64, // Размер тайла травы
+            animate: false // Без анимации в меню для лучшей производительности
+        });
+        this.grassBackground.setDepth(-100);
+        
+        // Добавляем темный оверлей для лучшей читаемости текста
+        this.add.rectangle(width / 2, height / 2, width, height, 0x2c3e50).setAlpha(0.3).setDepth(-50);
         
         // Заголовок (адаптивная позиция)
         const titleY = isSmallMobile ? height * 0.25 : (isMobile ? height * 0.28 : height / 3);
@@ -36,68 +44,167 @@ export class MenuScene extends Phaser.Scene {
         
         // Подзаголовок (адаптивная позиция)
         const subtitleY = titleY + (isSmallMobile ? 40 : (isMobile ? 50 : 60));
-        this.add.text(width / 2, subtitleY, 'Выберите сцену для тестирования', {
+        this.add.text(width / 2, subtitleY, 'Защитите яйцо от врагов!', {
             fontSize: subtitleFontSize,
             fill: '#bdc3c7',
             align: 'center'
         }).setOrigin(0.5);
         
-        // Кнопка основной игры (адаптивная позиция)
-        const buttonStartY = isSmallMobile ? height * 0.45 : (isMobile ? height * 0.47 : height / 2);
-        const gameButton = this.add.text(width / 2, buttonStartY, '🎮 Основная игра', {
+        // Кнопка запуска игры
+        const gameButtonY = subtitleY + (isSmallMobile ? 80 : (isMobile ? 100 : 120));
+        const gameButton = this.add.rectangle(width / 2, gameButtonY, 250, 60, 0x27ae60)
+            .setInteractive()
+            .on('pointerdown', () => {
+                this.scene.start('EggDefense');
+            });
+        
+        this.add.text(width / 2, gameButtonY, 'ИГРАТЬ', {
             fontSize: buttonFontSize,
             fill: '#ffffff',
-            backgroundColor: '#3498db',
-            padding: buttonPadding,
+            fontStyle: 'bold',
             align: 'center'
-        }).setOrigin(0.5).setInteractive();
+        }).setOrigin(0.5);
         
-        gameButton.on('pointerdown', () => {
-            this.scene.start('GestureTestScene');
-        });
+        // Кнопка тестирования эффектов
+        const testButtonY = gameButtonY + 80;
+        const testButton = this.add.rectangle(width / 2, testButtonY, 250, 60, 0x8e44ad)
+            .setInteractive()
+            .on('pointerdown', () => {
+                this.scene.start('TestEffects');
+            });
         
-        // Кнопка тестирования движения (адаптивная позиция)
-        const movementButton = this.add.text(width / 2, buttonStartY + buttonSpacing, '🏃 Тест паттернов движения', {
+        this.add.text(width / 2, testButtonY, 'ТЕСТ ЭФФЕКТОВ', {
             fontSize: buttonFontSize,
             fill: '#ffffff',
-            backgroundColor: '#e74c3c',
-            padding: buttonPadding,
+            fontStyle: 'bold',
             align: 'center'
-        }).setOrigin(0.5).setInteractive();
+        }).setOrigin(0.5);
         
-        movementButton.on('pointerdown', () => {
-            this.scene.start('MovementTestScene');
-        });
+        // Кнопка тестирования спрайтов
+        const spriteTestButtonY = testButtonY + 80;
+        const spriteTestButton = this.add.rectangle(width / 2, spriteTestButtonY, 250, 60, 0x16a085)
+            .setInteractive()
+            .on('pointerdown', () => {
+                this.scene.start('SpriteTestScene');
+            });
         
-        // Инструкции (адаптивная позиция)
-        const instructionY = isSmallMobile ? height - 30 : (isMobile ? height - 40 : height - 50);
-        this.add.text(width / 2, instructionY, 'Нажмите на кнопку для выбора сцены', {
+        this.add.text(width / 2, spriteTestButtonY, 'ТЕСТ СПРАЙТОВ', {
+            fontSize: buttonFontSize,
+            fill: '#ffffff',
+            fontStyle: 'bold',
+            align: 'center'
+        }).setOrigin(0.5);
+        
+        // Кнопка перезагрузки ассетов
+        const reloadButtonY = spriteTestButtonY + 80;
+        const reloadButton = this.add.rectangle(width / 2, reloadButtonY, 250, 60, 0xe67e22)
+            .setInteractive()
+            .on('pointerdown', () => {
+                this.scene.start('PreloadScene');
+            });
+        
+        this.add.text(width / 2, reloadButtonY, 'ОБНОВИТЬ СПРАЙТЫ', {
+            fontSize: buttonFontSize,
+            fill: '#ffffff',
+            fontStyle: 'bold',
+            align: 'center'
+        }).setOrigin(0.5);
+        
+        // Инструкции по управлению
+        const instructionY = reloadButtonY + 80;
+        this.add.text(width / 2, instructionY, 'Управление:', {
             fontSize: instructionFontSize,
-            fill: '#95a5a6',
+            fill: '#ffffff',
+            fontStyle: 'bold',
+            align: 'center'
+        }).setOrigin(0.5);
+        
+        this.add.text(width / 2, instructionY + 30, '• Тап - атака врагов', {
+            fontSize: instructionFontSize,
+            fill: '#bdc3c7',
+            align: 'center'
+        }).setOrigin(0.5);
+        
+        this.add.text(width / 2, instructionY + 55, '• Двойной тап - лечение яйца', {
+            fontSize: instructionFontSize,
+            fill: '#bdc3c7',
+            align: 'center'
+        }).setOrigin(0.5);
+        
+        this.add.text(width / 2, instructionY + 80, '• Долгий тап - защита яйца', {
+            fontSize: instructionFontSize,
+            fill: '#bdc3c7',
+            align: 'center'
+        }).setOrigin(0.5);
+        
+        this.add.text(width / 2, instructionY + 105, '• Свайп - волна урона', {
+            fontSize: instructionFontSize,
+            fill: '#bdc3c7',
             align: 'center'
         }).setOrigin(0.5);
         
         // Добавляем эффекты наведения (только для десктопа)
         if (!isMobile) {
-            [gameButton, movementButton].forEach(button => {
-                button.on('pointerover', () => {
-                    button.setScale(1.05);
-                });
-                
-                button.on('pointerout', () => {
-                    button.setScale(1);
-                });
+            gameButton.on('pointerover', () => {
+                gameButton.setScale(1.05);
+            });
+            
+            gameButton.on('pointerout', () => {
+                gameButton.setScale(1);
+            });
+            
+            testButton.on('pointerover', () => {
+                testButton.setScale(1.05);
+            });
+            
+            testButton.on('pointerout', () => {
+                testButton.setScale(1);
+            });
+            
+            spriteTestButton.on('pointerover', () => {
+                spriteTestButton.setScale(1.05);
+            });
+            
+            spriteTestButton.on('pointerout', () => {
+                spriteTestButton.setScale(1);
+            });
+            
+            reloadButton.on('pointerover', () => {
+                reloadButton.setScale(1.05);
+            });
+            
+            reloadButton.on('pointerout', () => {
+                reloadButton.setScale(1);
             });
         }
         
         // Добавляем тактильную обратную связь для мобильных устройств
         if (isMobile) {
-            [gameButton, movementButton].forEach(button => {
-                button.on('pointerdown', () => {
-                    button.setScale(0.95);
-                    this.time.delayedCall(100, () => {
-                        button.setScale(1);
-                    });
+            gameButton.on('pointerdown', () => {
+                gameButton.setScale(0.95);
+                this.time.delayedCall(100, () => {
+                    gameButton.setScale(1);
+                });
+            });
+            
+            testButton.on('pointerdown', () => {
+                testButton.setScale(0.95);
+                this.time.delayedCall(100, () => {
+                    testButton.setScale(1);
+                });
+            });
+            
+            spriteTestButton.on('pointerdown', () => {
+                spriteTestButton.setScale(0.95);
+                this.time.delayedCall(100, () => {
+                    spriteTestButton.setScale(1);
+                });
+            });
+            
+            reloadButton.on('pointerdown', () => {
+                reloadButton.setScale(0.95);
+                this.time.delayedCall(100, () => {
+                    reloadButton.setScale(1);
                 });
             });
         }

@@ -9,9 +9,6 @@
 ### Основные компоненты:
 - **Enemy.js/ts** - базовый класс врага
 - **enemyTypes.js/ts** - конфигурация типов врагов
-- **MovementPatternFactory.js** - фабрика паттернов движения
-- **InsectMovementPatterns.js** - система паттернов движения
-- **MovementStrategies.js** - стратегии движения
 
 ## Типы врагов
 
@@ -163,7 +160,7 @@ bee: {
 ```
 
 ### 3. Паттерны движения
-В `MovementPatternFactory.js` настраиваются паттерны:
+В системе движения настраиваются паттерны:
 ```javascript
 bee: {
     strategy: 'flutter',
@@ -188,7 +185,7 @@ bee: {
 ```
 
 ### 5. Система спавна
-В `WaveManager.js` все враги создаются одинаково через `Enemy.CreateEnemy()`:
+В `WaveSystem.js` все враги создаются одинаково через `Enemy.CreateEnemy()`:
 ```javascript
 const enemy = Enemy.CreateEnemy(this.scene, enemyType, x, y);
 ```
@@ -221,7 +218,7 @@ newEnemy: {
 }
 ```
 
-### 2. Добавить паттерн движения в MovementPatternFactory.js:
+### 2. Добавить паттерн движения в систему движения:
 ```javascript
 newEnemy: {
     strategy: 'wave',
@@ -246,7 +243,7 @@ enemyTypesByMinute[6].push('newEnemy');
 
 ## Тестирование
 
-Для тестирования новых врагов используйте `MovementTestScene`, которая поддерживает все типы врагов и позволяет переключаться между различными паттернами движения.
+Для тестирования новых врагов используйте новую игровую сцену `EggDefense`.
 
 ## Принципы SOLID
 

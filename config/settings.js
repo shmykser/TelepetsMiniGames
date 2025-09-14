@@ -58,13 +58,6 @@ export const settings = {
                 warningTime: 60000,      // 1 минута до конца
                 criticalTime: 30000      // 30 секунд до конца
             },
-            waveIndicator: {
-                fontSize: '18px',
-                fontFamily: 'Arial',
-                color: '#ffffff',
-                showEnemyCount: true,
-                showWaveProgress: true
-            }
         }
     }
 };

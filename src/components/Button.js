@@ -1,5 +1,5 @@
 import { BaseUIComponent } from './BaseUIComponent.js';
-import { AnimationLibrary } from '../animations/AnimationLibrary.js';
+import { UI_CONSTANTS } from '../constants/GameConstants.js';
 
 /**
  * Компонент кнопки
@@ -8,19 +8,16 @@ import { AnimationLibrary } from '../animations/AnimationLibrary.js';
 export class Button extends BaseUIComponent {
     constructor(scene, x, y, config = {}) {
         const defaultConfig = {
-            width: 200,
-            height: 50,
+            width: UI_CONSTANTS.BUTTON.DEFAULT_WIDTH,
+            height: UI_CONSTANTS.BUTTON.DEFAULT_HEIGHT,
             text: 'Button',
-            backgroundColor: 0x4a4a4a,
-            textColor: '#ffffff',
-            fontSize: '16px',
-            fontFamily: 'Arial',
-            borderRadius: 5,
-            padding: 10,
-            interactive: true,
-            hoverScale: 1.05,
-            clickScale: 0.95,
-            animations: true
+            backgroundColor: UI_CONSTANTS.BUTTON.DEFAULT_BACKGROUND_COLOR,
+            textColor: UI_CONSTANTS.BUTTON.DEFAULT_TEXT_COLOR,
+            fontSize: UI_CONSTANTS.BUTTON.DEFAULT_FONT_SIZE,
+            fontFamily: UI_CONSTANTS.BUTTON.DEFAULT_FONT_FAMILY,
+            borderRadius: UI_CONSTANTS.BUTTON.DEFAULT_BORDER_RADIUS,
+            padding: UI_CONSTANTS.BUTTON.DEFAULT_PADDING,
+            interactive: true
         };
 
         super(scene, x, y, { ...defaultConfig, ...config });
@@ -29,7 +26,6 @@ export class Button extends BaseUIComponent {
     init() {
         this.createButton();
         this.setupInteractions();
-        this.setupAnimations();
     }
 
     createButton() {
@@ -84,54 +80,17 @@ export class Button extends BaseUIComponent {
         this.hitArea.on('pointerup', () => this.onClickUp());
     }
 
-    setupAnimations() {
-        if (!this.animations) return;
-
-        this.hoverAnimation = null;
-        this.clickAnimation = null;
-    }
-
     onHover() {
-        if (this.hoverAnimation) {
-            this.hoverAnimation.stop();
-        }
-        
-        if (this.animations) {
-            this.hoverAnimation = AnimationLibrary.createScaleAnimation(
-                this.scene, 
-                this.background, 
-                { scale: { from: 1, to: this.hoverScale }, duration: 150 }
-            );
-        }
+        // Базовая логика при наведении
+        // Анимации можно добавить через EffectSystem при необходимости
     }
 
     onHoverOut() {
-        if (this.hoverAnimation) {
-            this.hoverAnimation.stop();
-        }
-        
-        if (this.animations) {
-            this.hoverAnimation = AnimationLibrary.createScaleAnimation(
-                this.scene, 
-                this.background, 
-                { scale: { from: this.hoverScale, to: 1 }, duration: 150 }
-            );
-        }
+        // Базовая логика при уходе курсора
+        // Анимации можно добавить через EffectSystem при необходимости
     }
 
     onClick() {
-        if (this.clickAnimation) {
-            this.clickAnimation.stop();
-        }
-        
-        if (this.animations) {
-            this.clickAnimation = AnimationLibrary.createScaleAnimation(
-                this.scene, 
-                this.background, 
-                { scale: { from: 1, to: this.clickScale }, duration: 100, yoyo: true }
-            );
-        }
-
         // Вызываем пользовательский обработчик
         if (this.onButtonClick) {
             this.onButtonClick();
@@ -229,14 +188,6 @@ export class Button extends BaseUIComponent {
         
         if (this.hitArea) {
             this.hitArea.destroy();
-        }
-        
-        if (this.hoverAnimation) {
-            this.hoverAnimation.stop();
-        }
-        
-        if (this.clickAnimation) {
-            this.clickAnimation.stop();
         }
         
         super.destroy();

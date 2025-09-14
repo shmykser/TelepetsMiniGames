@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
 import { settings } from '@config/settings';
+import { PreloadScene } from '@/scenes/PreloadScene';
 import { MenuScene } from '@/scenes/MenuScene';
-import { GestureTestScene } from '@/scenes/GestureTestScene';
-import { MovementTestScene } from '@/scenes/MovementTestScene';
-import { initTelegram } from './core/telegram/TelegramInit';
+import { EggDefense } from '@/scenes/EggDefense';
+import { TestEffects } from '@/scenes/TestEffects';
+import { SpriteTestScene } from '@/scenes/SpriteTestScene';
+import { initTelegram } from './telegram/TelegramInit';
 const config = {
     type: Phaser.AUTO,
     backgroundColor: settings.backgroundColor,
@@ -23,7 +25,7 @@ const config = {
         }
     },
     physics: settings.physics,
-    scene: [MenuScene, GestureTestScene, MovementTestScene],
+    scene: [PreloadScene, MenuScene, EggDefense, TestEffects, SpriteTestScene],
     render: {
         pixelArt: false,
         antialias: true

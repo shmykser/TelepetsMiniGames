@@ -3,23 +3,23 @@ import { BaseUIComponent } from './BaseUIComponent.js';
 import { UIUtils } from '../utils/UIUtils.js';
 import { UI_THEME } from '../utils/UITheme.js';
 import { GeometryUtils } from '../utils/GeometryUtils.js';
-import { AnimationLibrary } from '../animations/AnimationLibrary.js';
+import { UI_CONSTANTS } from '../constants/GameConstants.js';
 
 /**
  * Компонент для отображения цифрового урона
- * Показывает анимированный текст с уроном над объектом
+ * Показывает текст с уроном над объектом
  */
 export class DamageIndicator extends BaseUIComponent {
     constructor(scene, x, y, damage, options = {}) {
         const defaultConfig = {
-            duration: 1000,
-            driftDistance: 50,
+            duration: UI_CONSTANTS.DAMAGE_INDICATOR.DEFAULT_DURATION,
+            driftDistance: UI_CONSTANTS.DAMAGE_INDICATOR.DEFAULT_DRIFT_DISTANCE,
             fontSize: UI_THEME.sizes.damageIndicator.fontSize,
             color: UI_THEME.colors.error,
             strokeColor: UI_THEME.colors.secondary,
-            strokeThickness: 2,
+            strokeThickness: UI_THEME.spacing.border.width,
             fontFamily: UI_THEME.fonts.family,
-            fontStyle: 'bold'
+            fontStyle: UI_THEME.fonts.style.bold
         };
         
         super(scene, x, y, { ...defaultConfig, ...options });
@@ -58,21 +58,17 @@ export class DamageIndicator extends BaseUIComponent {
         // Создаем контейнер с автоматическим добавлением в сцену
         this.createContainer();
         
-        // Запускаем анимацию
-        this.startAnimation();
+        // Запускаем простой эффект без анимации
+        this.startEffect();
     }
     
     /**
-     * Запускает анимацию появления и исчезновения
+     * Запускает простой эффект без анимации
      */
-    startAnimation() {
-        // Используем AnimationLibrary для создания полного эффекта индикатора урона
-        AnimationLibrary.createDamageIndicatorEffect(this.scene, this, {
-            driftDistance: this.driftDistance,
-            driftDuration: this.duration,
-            appearDuration: 200,
-            pulseDuration: 150,
-            pulseRepeat: 2
+    startEffect() {
+        // Простой таймер для автоудаления
+        this.scene.time.delayedCall(this.duration, () => {
+            this.destroy();
         });
     }
     

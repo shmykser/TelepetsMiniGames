@@ -363,7 +363,7 @@ export class GeometryUtils {
     /**
      * Вычисляет динамический радиус попадания для объекта
      * @param {Object} object - Игровой объект
-     * @param {string} objectType - Тип объекта ('enemy', 'egg', 'defence', 'item', 'field')
+     * @param {string} objectType - Тип объекта ('enemy', 'egg', 'defense', 'item', 'field')
      * @param {Object} targetSettings - Настройки целей из TARGET_SETTINGS
      * @returns {number} Динамический радиус попадания
      */
@@ -389,6 +389,7 @@ export class GeometryUtils {
         
         // Общий радиус = размер объекта + толерантность промаха
         const totalRadius = baseRadius + settings.missTolerance;
+        
         return totalRadius;
     }
 }
