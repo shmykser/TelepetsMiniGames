@@ -97,6 +97,13 @@ export class EffectHandler {
     handleEnemyDeath(data) {
         const { enemy, position } = data;
         
+        // Эффект взрыва (круговая волна)
+        this.effectSystem.applyEffect('blast', enemy, 1.0, {
+            radius: 120,
+            duration: 600,
+            color: 0xff6600
+        });
+        
         // Эффект взрыва
         this.effectSystem.applyEffect('explosion', enemy, 1.0, {
             intensity: 1.2,
@@ -106,12 +113,6 @@ export class EffectHandler {
         // Эффект исчезновения
         this.effectSystem.applyEffect('fadeOut', enemy, 1.0, {
             duration: 600
-        });
-        
-        // Частицы смерти
-        this.effectSystem.applyEffect('particles', enemy, 1.0, {
-            count: 15,
-            speed: 200
         });
     }
 

@@ -149,6 +149,15 @@ export class EffectSystem {
                 alpha: { start: 1, end: 0 },
                 emitZone: { radius: 30, baseQuantity: 3 },
                 tint: 0xffffff
+            },
+
+            // ВЗРЫВЫ
+            blast: {
+                baseRadius: 100,
+                duration: 800,
+                color: 0xff6600,
+                thickness: 3,
+                alpha: 0.8
             }
         };
 
@@ -257,6 +266,9 @@ export class EffectSystem {
             case 'particles':
                 return this.createParticles(target, config);
 
+            // Взрыв
+            case 'blast':
+                return this.createBlastEffect(target, config);
 
             default:
                 console.warn(`Unknown effect type: ${effectType}`);
@@ -609,6 +621,35 @@ export class EffectSystem {
         return animations;
     }
 
+    /**
+     * Создает эффект взрыва (круговая волна)
+     */
+    createBlastEffect(target, config) {
+        const radius = config.baseRadius || config.radius || 100;
+        const duration = config.duration || 800;
+        const color = config.color || 0xff6600;
+        const thickness = config.thickness || 3;
+        const alpha = config.alpha || 0.8;
+        
+        // Создаем круг для волны взрыва
+        const blast = this.scene.add.circle(target.x, target.y, 5, color);
+        blast.setAlpha(alpha);
+        blast.setStrokeStyle(thickness, color);
+        blast.setFillStyle(0x000000, 0); // Прозрачная заливка
+        
+        // Анимация расширения круга
+        const tween = this.scene.tweens.add({
+            targets: blast,
+            radius: radius,
+            alpha: 0,
+            duration: duration,
+            ease: 'Power2.easeOut',
+            onComplete: () => blast.destroy()
+        });
+        
+        return tween;
+    }
+
 
     // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
 
@@ -669,7 +710,7 @@ export class EffectSystem {
         return [
             'shake', 'flash', 'pulse', 'rotation', 'fadeIn', 'fadeOut',
             'scale', 'move', 'damage', 'explosion', 'flicker', 'glow',
-            'wave', 'burstMovement', 'chaosMovement', 'particles'
+            'wave', 'burstMovement', 'chaosMovement', 'particles', 'blast'
         ];
     }
 

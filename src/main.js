@@ -5,6 +5,8 @@ import { MenuScene } from '@/scenes/MenuScene';
 import { EggDefense } from '@/scenes/EggDefense';
 import { TestEffects } from '@/scenes/TestEffects';
 import { SpriteTestScene } from '@/scenes/SpriteTestScene';
+import { DemoComponents } from '@/scenes/DemoComponents';
+import { TestGestures } from '@/scenes/TestGestures';
 import { initTelegram } from './telegram/TelegramInit';
 const config = {
     type: Phaser.AUTO,
@@ -25,7 +27,7 @@ const config = {
         }
     },
     physics: settings.physics,
-    scene: [PreloadScene, MenuScene, EggDefense, TestEffects, SpriteTestScene],
+    scene: [PreloadScene, MenuScene, EggDefense, TestEffects, SpriteTestScene, DemoComponents, TestGestures],
     render: {
         pixelArt: false,
         antialias: true

@@ -91,4 +91,18 @@ export class PropertyUtils {
     static isNonNegativeNumber(value) {
         return this.isNumber(value) && value >= 0;
     }
+
+    /**
+     * Ограничивает значение в заданном диапазоне
+     * @param {number} value - Значение для ограничения
+     * @param {number} min - Минимальное значение
+     * @param {number} max - Максимальное значение
+     * @returns {number} Ограниченное значение
+     */
+    static clamp(value, min, max) {
+        if (!this.isNumber(value)) {
+            return min;
+        }
+        return Math.min(Math.max(value, min), max);
+    }
 }

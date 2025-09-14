@@ -96,9 +96,9 @@ export class TestEffects extends Phaser.Scene {
                 name: 'enemyDeath',
                 description: 'Enemy.die() смерть врага',
                 components: [
+                    { effect: 'blast', params: { radius: 120, duration: 600, color: 0xff6600 } },
                     { effect: 'explosion', params: { intensity: 1.2, duration: 400 } },
-                    { effect: 'fadeOut', params: { duration: 600 } },
-                    { effect: 'particles', params: { count: 15, speed: 200 } }
+                    { effect: 'fadeOut', params: { duration: 600 } }
                 ],
                 category: 'Enemy'
             },

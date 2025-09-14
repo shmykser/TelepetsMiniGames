@@ -95,8 +95,38 @@ export class MenuScene extends Phaser.Scene {
             align: 'center'
         }).setOrigin(0.5);
         
+        // Кнопка демо компонентов
+        const demoButtonY = spriteTestButtonY + 80;
+        const demoButton = this.add.rectangle(width / 2, demoButtonY, 250, 60, 0x3498db)
+            .setInteractive()
+            .on('pointerdown', () => {
+                this.scene.start('DemoComponents');
+            });
+        
+        this.add.text(width / 2, demoButtonY, 'ДЕМО КОМПОНЕНТОВ', {
+            fontSize: buttonFontSize,
+            fill: '#ffffff',
+            fontStyle: 'bold',
+            align: 'center'
+        }).setOrigin(0.5);
+        
+        // Кнопка тестирования жестов
+        const gesturesButtonY = demoButtonY + 80;
+        const gesturesButton = this.add.rectangle(width / 2, gesturesButtonY, 250, 60, 0x8e44ad)
+            .setInteractive()
+            .on('pointerdown', () => {
+                this.scene.start('TestGestures');
+            });
+        
+        this.add.text(width / 2, gesturesButtonY, 'ТЕСТ ЖЕСТОВ', {
+            fontSize: buttonFontSize,
+            fill: '#ffffff',
+            fontStyle: 'bold',
+            align: 'center'
+        }).setOrigin(0.5);
+        
         // Кнопка перезагрузки ассетов
-        const reloadButtonY = spriteTestButtonY + 80;
+        const reloadButtonY = gesturesButtonY + 80;
         const reloadButton = this.add.rectangle(width / 2, reloadButtonY, 250, 60, 0xe67e22)
             .setInteractive()
             .on('pointerdown', () => {
@@ -169,6 +199,22 @@ export class MenuScene extends Phaser.Scene {
                 spriteTestButton.setScale(1);
             });
             
+            demoButton.on('pointerover', () => {
+                demoButton.setScale(1.05);
+            });
+            
+            demoButton.on('pointerout', () => {
+                demoButton.setScale(1);
+            });
+            
+            gesturesButton.on('pointerover', () => {
+                gesturesButton.setScale(1.05);
+            });
+            
+            gesturesButton.on('pointerout', () => {
+                gesturesButton.setScale(1);
+            });
+            
             reloadButton.on('pointerover', () => {
                 reloadButton.setScale(1.05);
             });
@@ -198,6 +244,20 @@ export class MenuScene extends Phaser.Scene {
                 spriteTestButton.setScale(0.95);
                 this.time.delayedCall(100, () => {
                     spriteTestButton.setScale(1);
+                });
+            });
+            
+            demoButton.on('pointerdown', () => {
+                demoButton.setScale(0.95);
+                this.time.delayedCall(100, () => {
+                    demoButton.setScale(1);
+                });
+            });
+            
+            gesturesButton.on('pointerdown', () => {
+                gesturesButton.setScale(0.95);
+                this.time.delayedCall(100, () => {
+                    gesturesButton.setScale(1);
                 });
             });
             
