@@ -184,14 +184,25 @@ export class TestGestures extends Phaser.Scene {
             align: 'center'
         }).setOrigin(0.5, 0.5);
         
-        // Результат распознавания
+        // Результат распознавания (оригинальный)
         this.resultText = this.add.text(width / 2, 120, 'Нарисуйте жест на поле ниже', {
-            fontSize: '18px',
+            fontSize: '16px',
             fontFamily: 'Arial',
             fill: '#ffffff',
             align: 'center',
             backgroundColor: '#2c3e50',
             padding: { x: 10, y: 5 }
+        }).setOrigin(0.5, 0.5);
+        
+        // Итоговое распознавание (фильтрованное)
+        this.filteredResultText = this.add.text(width / 2, 160, '', {
+            fontSize: '20px',
+            fontFamily: 'Arial',
+            fill: '#ffffff',
+            align: 'center',
+            backgroundColor: '#27ae60',
+            padding: { x: 15, y: 8 },
+            fontStyle: 'bold'
         }).setOrigin(0.5, 0.5);
         
         // Кнопка очистки
@@ -329,40 +340,47 @@ export class TestGestures extends Phaser.Scene {
 
     recognizeGesture() {
         try {
-            // Сначала проверяем, не является ли это линией
-            if (this.isLikelyLine()) {
-                this.resultText.setText('Распознано: Горизонтальная линия (100%)');
-                this.resultText.setStyle({ fill: '#27ae60' });
-                this.playSuccessAnimation();
-                return;
-            }
-            
             // Распознаем жест с помощью $Q
             const result = this.recognizer.Recognize(this.drawingPoints);
             
-            console.log('Результат распознавания:', result);
+            console.log('Оригинальный результат $Q:', result);
             
-            // Проверяем результат
+            // Показываем оригинальный результат
             if (result.Name === 'No match.') {
                 this.resultText.setText('Жест не распознан');
                 this.resultText.setStyle({ fill: '#e74c3c' });
-            } else if (result.Score > 0.6) { // Порог уверенности
-                const gestureName = this.translateGestureName(result.Name);
-                this.resultText.setText(`Распознано: ${gestureName} (${Math.round(result.Score * 100)}%)`);
-                this.resultText.setStyle({ fill: '#27ae60' });
-                
-                // Анимация успеха
-                this.playSuccessAnimation();
             } else {
                 const gestureName = this.translateGestureName(result.Name);
-                this.resultText.setText(`Возможно: ${gestureName} (${Math.round(result.Score * 100)}%)`);
+                this.resultText.setText(`$Q: ${gestureName} (${Math.round(result.Score * 100)}%)`);
                 this.resultText.setStyle({ fill: '#f39c12' });
             }
+            
+            // Фильтруем результат и показываем итоговое распознавание
+            const filteredResult = this.filterGestureResult(result);
+            this.displayFilteredResult(filteredResult);
+            
         } catch (error) {
             console.error('Ошибка распознавания:', error);
             this.resultText.setText('Ошибка распознавания');
             this.resultText.setStyle({ fill: '#e74c3c' });
+            this.filteredResultText.setText('ОШИБКА');
+            this.filteredResultText.setStyle({ backgroundColor: '#e74c3c' });
         }
+    }
+
+    displayFilteredResult(filteredResult) {
+        const { name, score, color } = filteredResult;
+        
+        // Обновляем фильтрованный лейбл
+        this.filteredResultText.setText(`${name} (${score}%)`);
+        this.filteredResultText.setStyle({ backgroundColor: color });
+        
+        // Анимация для успешного распознавания
+        if (name !== 'НЕ РАСПОЗНАНО') {
+            this.playSuccessAnimation();
+        }
+        
+        console.log('Итоговое распознавание:', name, score + '%');
     }
 
     isLikelyLine() {
@@ -387,10 +405,34 @@ export class TestGestures extends Phaser.Scene {
         return aspectRatio > 3;
     }
 
+    filterGestureResult(originalResult) {
+        // Фильтруем результат в 4 категории
+        const gestureName = originalResult.Name;
+        const score = originalResult.Score;
+        
+        // ЛИНИЯ: если $Q распознал как line, exclamation, I, H, или геометрия показывает линию
+        if (gestureName === 'line' || gestureName === 'exclamation' || gestureName === 'I' || gestureName === 'H' || this.isLikelyLine()) {
+            return { name: 'ЛИНИЯ', score: Math.round(score * 100), color: '#27ae60' };
+        }
+        
+        // КРУГ: распознался как circle, null (круг с точкой), или D
+        if (gestureName === 'circle' || gestureName === 'null' || gestureName === 'D') {
+            return { name: 'КРУГ', score: Math.round(score * 100), color: '#3498db' };
+        }
+        
+        // ТРЕУГОЛЬНИК: распознался как triangle или P
+        if (gestureName === 'triangle' || gestureName === 'P') {
+            return { name: 'ТРЕУГОЛЬНИК', score: Math.round(score * 100), color: '#e67e22' };
+        }
+        
+        // Остальные жесты считаем не распознанными
+        return { name: 'НЕ РАСПОЗНАНО', score: 0, color: '#e74c3c' };
+    }
+
     playSuccessAnimation() {
-        // Простая анимация успеха
+        // Анимация успеха для фильтрованного лейбла
         this.tweens.add({
-            targets: this.resultText,
+            targets: this.filteredResultText,
             scaleX: 1.1,
             scaleY: 1.1,
             duration: 200,
@@ -433,9 +475,12 @@ export class TestGestures extends Phaser.Scene {
         this.lastPoint = null;
         this.drawingPoints = [];
         
-        // Сбрасываем результат
+        // Сбрасываем результаты
         this.resultText.setText('Нарисуйте жест на поле ниже');
         this.resultText.setStyle({ fill: '#ffffff' });
+        
+        this.filteredResultText.setText('');
+        this.filteredResultText.setStyle({ backgroundColor: '#27ae60' });
         
         console.log('Холст очищен');
     }

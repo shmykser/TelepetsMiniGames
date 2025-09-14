@@ -57,7 +57,7 @@ export class PreloadScene extends Phaser.Scene {
         enemyTypes.forEach(enemyType => {
             sizes.forEach(size => {
                 const textureKey = `${enemyType}_${size}`;
-                const texturePath = `/TelepetsMiniGames/assets/graphics/sprites/enemy/${enemyType}_${size}.png`;
+                const texturePath = `./assets/graphics/sprites/enemy/${enemyType}_${size}.png`;
                 
                 this.load.image(textureKey, texturePath);
             });
@@ -83,7 +83,7 @@ export class PreloadScene extends Phaser.Scene {
         defenseTypes.forEach(defenseType => {
             sizes.forEach(size => {
                 const textureKey = `${defenseType}_${size}`;
-                const texturePath = `/TelepetsMiniGames/assets/graphics/sprites/defense/${defenseType}_${size}.png`;
+                const texturePath = `./assets/graphics/sprites/defense/${defenseType}_${size}.png`;
                 
                 // Пытаемся загрузить, но не критично если файла нет
                 try {
@@ -97,11 +97,11 @@ export class PreloadScene extends Phaser.Scene {
     
     loadBackgroundTextures() {
         // Загружаем текстуру травы для тайлинга
-        this.load.image('grass_texture', '/TelepetsMiniGames/assets/graphics/backgrounds/grass.png');
+        this.load.image('grass_texture', './assets/graphics/backgrounds/grass.png');
         
         // Можно добавить другие фоновые текстуры
-        // this.load.image('dirt_texture', '/TelepetsMiniGames/assets/graphics/backgrounds/dirt.png');
-        // this.load.image('stone_texture', '/TelepetsMiniGames/assets/graphics/backgrounds/stone.png');
+        // this.load.image('dirt_texture', './assets/graphics/backgrounds/dirt.png');
+        // this.load.image('stone_texture', './assets/graphics/backgrounds/stone.png');
     }
 
     updateProgress(progress) {

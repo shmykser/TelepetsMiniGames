@@ -730,21 +730,21 @@ export class TestEffects extends Phaser.Scene {
         
         // Специальные настройки для некоторых эффектов (только если нет customParams)
         if (Object.keys(customParams).length === 0) {
-            switch (effectName) {
-                case 'fadeIn':
-                    intensity = 0.8;
-                    break;
-                case 'fadeOut':
-                    intensity = 0.8;
-                    break;
-                case 'rotation':
-                    intensity = 0.5; // Медленнее вращение
-                    break;
-                case 'pulse':
-                    intensity = 0.7;
-                    break;
-                default:
-                    intensity = 1;
+        switch (effectName) {
+            case 'fadeIn':
+                intensity = 0.8;
+                break;
+            case 'fadeOut':
+                intensity = 0.8;
+                break;
+            case 'rotation':
+                intensity = 0.5; // Медленнее вращение
+                break;
+            case 'pulse':
+                intensity = 0.7;
+                break;
+            default:
+                intensity = 1;
             }
         }
         
