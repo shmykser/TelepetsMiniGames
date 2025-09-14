@@ -1,5 +1,5 @@
 /**
- * The $1 Unistroke Recognizer (JavaScript version)
+ * The $1 Unistroke Recognizer (JavaScript version) - ES6 Module
  *
  *  Jacob O. Wobbrock, Ph.D.
  *  The Information School
@@ -347,3 +347,6 @@ function Distance(p1, p2)
 	return Math.sqrt(dx * dx + dy * dy);
 }
 function Deg2Rad(d) { return (d * Math.PI / 180.0); }
+
+// Экспорт для ES6 модулей
+export { DollarRecognizer, Point, Unistroke, Result };

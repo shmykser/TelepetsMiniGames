@@ -2,6 +2,8 @@
  * Сцена тестирования жестов с $1 Recognizer
  * Позволяет рисовать фигуры и распознавать их с помощью алгоритма $1
  */
+import { DollarRecognizer, Point, Unistroke, Result } from '@/utils/dollar.js';
+
 export class TestGestures extends Phaser.Scene {
     constructor() {
         super({ key: 'TestGestures' });
