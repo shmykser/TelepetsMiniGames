@@ -63,8 +63,7 @@ export class EggDefense extends Phaser.Scene {
         this.gestureSystem = new GestureSystem(this, {
             onTap: (gesture) => this.handleGesture(gesture),
             onDoubleTap: (gesture) => this.handleGesture(gesture),
-            onLongTap: (gesture) => this.handleGesture(gesture),
-            onSwipe: (gesture) => this.handleGesture(gesture)
+            onLongTap: (gesture) => this.handleGesture(gesture)
         });
         
         // Система обработки жестов

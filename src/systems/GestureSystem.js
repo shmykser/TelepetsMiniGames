@@ -3,12 +3,19 @@ import { GESTURE_CONSTANTS } from '../constants/GameConstants.js';
 
 /**
  * Система жестов на основе Phaser Input Events
- * Поддерживает: tap, doubleTap, longTap, swipe
+ * Поддерживает: tap, doubleTap, longTap
  */
 export class GestureSystem {
     constructor(scene, callbacks = {}) {
         this.scene = scene;
         this.callbacks = callbacks;
+        
+        // Отслеживание активных жестов (по примеру EffectSystem)
+        this.activeGestures = new Map();
+        this.gestureStats = {
+            totalGestures: 0,
+            gesturesByType: {}
+        };
         
         // Настройки жестов из констант
         this.settings = {
@@ -23,11 +30,6 @@ export class GestureSystem {
             longTap: {
                 minDuration: GESTURE_CONSTANTS.LONG_TAP.MIN_DURATION,
                 maxDistance: GESTURE_CONSTANTS.LONG_TAP.MAX_DISTANCE
-            },
-            swipe: {
-                minDistance: GESTURE_CONSTANTS.SWIPE.MIN_DISTANCE,
-                maxDuration: GESTURE_CONSTANTS.SWIPE.MAX_DURATION,
-                minVelocity: GESTURE_CONSTANTS.SWIPE.MIN_VELOCITY
             }
         };
         
@@ -53,22 +55,26 @@ export class GestureSystem {
      */
     setupInputHandlers() {
         // Начало касания
-        this.scene.input.on('pointerdown', (pointer) => {
+        this.scene.input.on('pointerdown', (pointer, currentlyOver, event) => {
+            if (event && event.defaultPrevented) return;
             this.handlePointerDown(pointer);
         });
         
         // Движение пальца
-        this.scene.input.on('pointermove', (pointer) => {
+        this.scene.input.on('pointermove', (pointer, currentlyOver, event) => {
+            if (event && event.defaultPrevented) return;
             this.handlePointerMove(pointer);
         });
         
         // Конец касания
-        this.scene.input.on('pointerup', (pointer) => {
+        this.scene.input.on('pointerup', (pointer, currentlyOver, event) => {
+            if (event && event.defaultPrevented) return;
             this.handlePointerUp(pointer);
         });
         
         // Выход за пределы экрана
-        this.scene.input.on('pointerupoutside', (pointer) => {
+        this.scene.input.on('pointerupoutside', (pointer, event) => {
+            if (event && event.defaultPrevented) return;
             this.handlePointerUp(pointer);
         });
     }
@@ -84,7 +90,6 @@ export class GestureSystem {
         this.gestureState.currentX = pointer.x;
         this.gestureState.currentY = pointer.y;
         this.gestureState.moveDistance = 0;
-        
     }
     
     /**
@@ -134,16 +139,6 @@ export class GestureSystem {
     detectGesture(duration, distance, pointer) {
         const settings = this.settings;
         
-        // Проверяем свайп (приоритет над другими жестами)
-        if (distance >= settings.swipe.minDistance && 
-            duration <= settings.swipe.maxDuration) {
-            
-            const velocity = distance / duration;
-            if (velocity >= settings.swipe.minVelocity) {
-                return this.createSwipeGesture(pointer);
-            }
-        }
-        
         // Проверяем долгий тап
         if (duration >= settings.longTap.minDuration && 
             distance <= settings.longTap.maxDistance) {
@@ -171,7 +166,7 @@ export class GestureSystem {
     isDoubleTap(pointer) {
         const currentTime = this.scene.time.now;
         const timeSinceLastTap = currentTime - this.gestureState.lastTapTime;
-        const distanceFromLastTap = Phaser.Math.Distance.Between(
+        const distanceFromLastTap = GeometryUtils.distance(
             this.gestureState.lastTapX,
             this.gestureState.lastTapY,
             pointer.x,
@@ -219,36 +214,11 @@ export class GestureSystem {
     }
     
     /**
-     * Создание жеста свайпа
-     */
-    createSwipeGesture(pointer) {
-        const deltaX = pointer.x - this.gestureState.startX;
-        const deltaY = pointer.y - this.gestureState.startY;
-        
-        // Определяем направление свайпа
-        let direction = 'unknown';
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            direction = deltaX > 0 ? 'right' : 'left';
-        } else {
-            direction = deltaY > 0 ? 'down' : 'up';
-        }
-        
-        return {
-            type: 'swipe',
-            x: pointer.x,
-            y: pointer.y,
-            startX: this.gestureState.startX,
-            startY: this.gestureState.startY,
-            direction: direction,
-            distance: this.gestureState.moveDistance,
-            duration: this.scene.time.now - this.gestureState.startTime
-        };
-    }
-    
-    /**
      * Выполнение жеста
      */
     executeGesture(gesture, pointer) {
+        // Отслеживаем статистику жестов
+        this.trackGesture(gesture);
         
         // Обновляем время последнего тапа для двойного тапа
         if (gesture.type === 'tap' || gesture.type === 'doubleTap') {
@@ -264,8 +234,44 @@ export class GestureSystem {
         }
     }
     
-    
-    
+    /**
+     * Отслеживает выполненный жест (по примеру EffectSystem)
+     */
+    trackGesture(gesture) {
+        this.gestureStats.totalGestures++;
+        
+        if (!this.gestureStats.gesturesByType[gesture.type]) {
+            this.gestureStats.gesturesByType[gesture.type] = 0;
+        }
+        this.gestureStats.gesturesByType[gesture.type]++;
+        
+        // Сохраняем последний жест с временной меткой
+        this.activeGestures.set('last', {
+            gesture: gesture,
+            timestamp: this.scene.time.now
+        });
+    }
+
+    /**
+     * Получает статистику жестов (по примеру EffectSystem)
+     */
+    getStats() {
+        return {
+            totalGestures: this.gestureStats.totalGestures,
+            gesturesByType: { ...this.gestureStats.gesturesByType },
+            activeGestures: this.activeGestures.size
+        };
+    }
+
+    /**
+     * Очищает статистику жестов
+     */
+    clearStats() {
+        this.gestureStats.totalGestures = 0;
+        this.gestureStats.gesturesByType = {};
+        this.activeGestures.clear();
+    }
+
     /**
      * Уничтожение системы жестов
      */
@@ -275,5 +281,9 @@ export class GestureSystem {
         this.scene.input.off('pointermove');
         this.scene.input.off('pointerup');
         this.scene.input.off('pointerupoutside');
+        
+        // Очищаем отслеживание состояния
+        this.activeGestures.clear();
+        this.gestureStats = null;
     }
 }
