@@ -81,16 +81,13 @@ export const DAMAGE_CONSTANTS = {
     TAP_DAMAGE: 5,
     CRITICAL_DAMAGE: 25,
     EXPLOSION_DAMAGE: 15,
-    WAVE_DAMAGE: 8,
-    CRUSH_DAMAGE: 12
+    WAVE_DAMAGE: 8
 };
 
 // Настройки эффектов
 export const EFFECT_CONSTANTS = {
     EXPLOSION_RADIUS: 100,
     WAVE_RANGE: 150,
-    CRUSH_SLOW: 0.5,
-    LIFT_FORCE: 200,
     FREEZE_DURATION: 2000,
     SHIELD_DURATION: 5000,
     SHIELD_STRENGTH: 50
@@ -152,30 +149,6 @@ export const UI_CONSTANTS = {
     }
 };
 
-// Настройки таймера
-export const TIMER_CONSTANTS = {
-    UPDATE_INTERVAL: 100,
-    WARNING_TIME: 60000,
-    CRITICAL_TIME: 30000
-};
-
-// Настройки движения
-export const MOVEMENT_CONSTANTS = {
-    BASE_SPEED: 10,
-    ENERGY: 100,
-    AGGRESSION: 0,
-    SEASON_DURATION: 10000,
-    SEASONAL_INTENSITY: [0.2, 0.8, 0.5, 0.1] // весна, лето, осень, зима
-};
-
-// Настройки врагов
-export const ENEMY_CONSTANTS = {
-    RHINOCEROS: {
-        CHARGE_COOLDOWN: 4000,
-        CHARGE_SPEED: 15.0,
-        RAMMING_POWER: 2.0
-    }
-};
 
 // Настройки жестов
 export const GESTURE_CONSTANTS = {
@@ -183,18 +156,9 @@ export const GESTURE_CONSTANTS = {
         MAX_DURATION: 200,      // Максимальная длительность тапа (мс)
         MAX_DISTANCE: 10        // Максимальное расстояние для тапа (пиксели)
     },
-    DOUBLE_TAP: {
-        MAX_INTERVAL: 300,      // Максимальный интервал между тапами (мс)
-        MAX_DISTANCE: 20        // Максимальное расстояние между тапами (пиксели)
-    },
     LONG_TAP: {
         MIN_DURATION: 500,      // Минимальная длительность долгого тапа (мс)
         MAX_DISTANCE: 10        // Максимальное расстояние для долгого тапа (пиксели)
-    },
-    SWIPE: {
-        MIN_DISTANCE: 50,       // Минимальное расстояние для свайпа (пиксели)
-        MAX_DURATION: 300,      // Максимальная длительность свайпа (мс)
-        MIN_VELOCITY: 0.3       // Минимальная скорость для свайпа (пиксели/мс)
     },
     // Дополнительные константы для действий
     EGG_PROTECTION: {
@@ -205,32 +169,3 @@ export const GESTURE_CONSTANTS = {
     }
 };
 
-// Визуальные эффекты для игровых объектов
-export const VISUAL_EFFECTS = {
-    DAMAGE_INDICATOR: {
-        DURATION: 1500,
-        DRIFT_DISTANCE: 60,
-        FONT_SIZE: 28,
-        COLOR: 0xff0000,
-        STROKE_COLOR: 0xffffff,
-        STROKE_THICKNESS: 3
-    },
-    DEATH_ANIMATION: {
-        ALPHA: 0.3,
-        SCALE: 0.5,
-        TINT: 0x666666,
-        DURATION: 500
-    },
-    SHAKE: {
-        DURATION: 200,
-        INTENSITY: 5
-    },
-    PULSE: {
-        SCALE: 1.2,
-        DURATION: 300
-    },
-    DAMAGE_TINT: {
-        COLOR: 0xff0000,
-        DURATION: 100
-    }
-};

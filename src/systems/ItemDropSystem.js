@@ -15,27 +15,6 @@ export class ItemDropSystem {
         this.items = []; // Массив активных предметов
     }
     
-    /**
-     * Обработка дропа после убийства врага
-     */
-    onEnemyKilled(enemy) {
-        if (this.shouldDropItem(enemy.enemyType)) {
-            this.dropRandomItem(enemy.x, enemy.y);
-        }
-    }
-    
-    /**
-     * Проверка вероятности дропа предмета
-     */
-    shouldDropItem(enemyType = 'default') {
-        if (this.probabilitySystem) {
-            return this.probabilitySystem.rollItemDrop(enemyType);
-        }
-        
-        // Fallback к старой системе
-        const roll = Math.random() * 100;
-        return roll < this.luck;
-    }
     
     /**
      * Создание случайного предмета
@@ -77,10 +56,7 @@ export class ItemDropSystem {
         // Устанавливаем высокую глубину, чтобы предмет был поверх всего
         item.setDepth(ITEM_CONSTANTS.ITEM_DEPTH);
         
-        // Обработчик сбора предмета
-        item.on('pointerdown', () => {
-            this.collectItem(item);
-        });
+        // Предмет уже интерактивный (setInteractive в Item.js)
         
         // Автоматическое удаление через заданное время
         this.scene.time.delayedCall(ITEM_CONSTANTS.AUTO_REMOVE_DELAY, () => {
@@ -128,16 +104,8 @@ export class ItemDropSystem {
      * Увеличение везения
      */
     increaseLuck(amount) {
-        const oldLuck = this.luck;
         this.luck = Math.min(this.maxLuck, this.luck + amount);
-        const actualIncrease = this.luck - oldLuck;
-        
-        if (actualIncrease > 0) {
-            // Эффект увеличения удачи можно обработать здесь при необходимости
-        }
     }
-    
-    
     
     /**
      * Удаление предмета из списка
@@ -150,37 +118,17 @@ export class ItemDropSystem {
     }
     
     /**
-     * Получение информации о везении
-     */
-    getLuckInfo() {
-        return {
-            current: this.luck,
-            max: this.maxLuck,
-            percentage: Math.round(this.luck)
-        };
-    }
-    
-    /**
-     * Обновление менеджера
-     */
-    update(time, delta) {
-        // Обновляем все предметы
-        this.items.forEach(item => {
-            if (item && item.update) {
-                item.update(time, delta);
-            }
-        });
-    }
-    
-    /**
      * Очистка всех предметов
      */
     clearAllItems() {
+        // Уничтожаем все предметы
         this.items.forEach(item => {
-            if (item && !item.isCollected) {
+            if (item && item.destroy) {
                 item.destroy();
             }
         });
+        
+        // Очищаем массив
         this.items = [];
     }
     

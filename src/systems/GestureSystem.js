@@ -1,9 +1,10 @@
 import { GeometryUtils } from '../utils/GeometryUtils.js';
 import { GESTURE_CONSTANTS } from '../constants/GameConstants.js';
+import { QDollarRecognizer, Point } from '../utils/qdollar.js';
 
 /**
- * Система жестов на основе Phaser Input Events
- * Поддерживает: tap, doubleTap, longTap
+ * Объединенная система жестов на основе Phaser Input Events и $Q распознавателя
+ * Поддерживает: tap, longTap (через Phaser), line, circle, triangle (через $Q)
  */
 export class GestureSystem {
     constructor(scene, callbacks = {}) {
@@ -17,15 +18,21 @@ export class GestureSystem {
             gesturesByType: {}
         };
         
+        // $Q распознаватель для сложных жестов
+        this.qRecognizer = new QDollarRecognizer();
+        this.initializeQRecognizer();
+        
+        // Состояние рисования для $Q жестов
+        this.drawingState = {
+            isDrawing: false,
+            drawingPoints: []
+        };
+        
         // Настройки жестов из констант
         this.settings = {
             tap: {
                 maxDuration: GESTURE_CONSTANTS.TAP.MAX_DURATION,
                 maxDistance: GESTURE_CONSTANTS.TAP.MAX_DISTANCE
-            },
-            doubleTap: {
-                maxInterval: GESTURE_CONSTANTS.DOUBLE_TAP.MAX_INTERVAL,
-                maxDistance: GESTURE_CONSTANTS.DOUBLE_TAP.MAX_DISTANCE
             },
             longTap: {
                 minDuration: GESTURE_CONSTANTS.LONG_TAP.MIN_DURATION,
@@ -48,6 +55,108 @@ export class GestureSystem {
         };
         
         this.setupInputHandlers();
+    }
+    
+    /**
+     * Инициализация $Q распознавателя с шаблонами жестов
+     */
+    initializeQRecognizer() {
+        // Создаем шаблон круга
+        const circlePoints = this.createCircleTemplate();
+        this.qRecognizer.AddGesture("circle", circlePoints);
+        
+        // Создаем шаблон треугольника
+        const trianglePoints = this.createTriangleTemplate();
+        this.qRecognizer.AddGesture("triangle", trianglePoints);
+        
+        // Создаем шаблоны линий под разными углами
+        this.addLineTemplates();
+    }
+    
+    /**
+     * Создание шаблона круга для $Q
+     */
+    createCircleTemplate() {
+        const centerX = 50;
+        const centerY = 50;
+        const radius = 25;
+        const numPoints = 40;
+        
+        const points = [];
+        
+        for (let i = 0; i <= numPoints; i++) {
+            const angle = (2 * Math.PI * i) / numPoints;
+            const x = centerX + radius * Math.cos(angle);
+            const y = centerY + radius * Math.sin(angle);
+            points.push(new Point(x, y, 1));
+        }
+        
+        return points;
+    }
+    
+    /**
+     * Создание шаблона треугольника для $Q
+     */
+    createTriangleTemplate() {
+        const centerX = 50;
+        const centerY = 50;
+        const radius = 30;
+        
+        const points = [];
+        
+        // Вычисляем вершины треугольника
+        const topX = centerX;
+        const topY = centerY - radius;
+        const leftX = centerX - radius * Math.cos(Math.PI/6);
+        const leftY = centerY + radius * Math.sin(Math.PI/6);
+        const rightX = centerX + radius * Math.cos(Math.PI/6);
+        const rightY = centerY + radius * Math.sin(Math.PI/6);
+        
+        // Штрих 1: левая сторона
+        points.push(new Point(topX, topY, 1));
+        points.push(new Point(leftX, leftY, 1));
+        
+        // Штрих 2: правая сторона
+        points.push(new Point(leftX, leftY, 2));
+        points.push(new Point(rightX, rightY, 2));
+        
+        // Штрих 3: верхняя сторона
+        points.push(new Point(rightX, rightY, 3));
+        points.push(new Point(topX, topY, 3));
+        
+        return points;
+    }
+    
+    /**
+     * Добавление шаблонов линий под разными углами
+     */
+    addLineTemplates() {
+        for (let angle = 0; angle < 180; angle += 30) {
+            const linePoints = this.createLineTemplate(angle);
+            this.qRecognizer.AddGesture("line", linePoints);
+        }
+    }
+    
+    /**
+     * Создание шаблона линии для $Q
+     */
+    createLineTemplate(angleDegrees) {
+        const centerX = 50;
+        const centerY = 50;
+        const length = 40;
+        const numPoints = 20;
+        
+        const points = [];
+        const angleRad = (angleDegrees * Math.PI) / 180;
+        
+        for (let i = 0; i <= numPoints; i++) {
+            const t = (i / numPoints) - 0.5;
+            const x = centerX + t * length * Math.cos(angleRad);
+            const y = centerY + t * length * Math.sin(angleRad);
+            points.push(new Point(x, y, 1));
+        }
+        
+        return points;
     }
     
     /**
@@ -90,6 +199,11 @@ export class GestureSystem {
         this.gestureState.currentX = pointer.x;
         this.gestureState.currentY = pointer.y;
         this.gestureState.moveDistance = 0;
+        
+        // Начинаем отслеживание для $Q жестов
+        this.drawingState.isDrawing = true;
+        this.drawingState.drawingPoints = [];
+        this.drawingState.drawingPoints.push(new Point(pointer.x, pointer.y, 1));
     }
     
     /**
@@ -109,6 +223,11 @@ export class GestureSystem {
             pointer.y
         );
         this.gestureState.moveDistance = distance;
+        
+        // Добавляем точку для $Q распознавания
+        if (this.drawingState.isDrawing) {
+            this.drawingState.drawingPoints.push(new Point(pointer.x, pointer.y, 1));
+        }
     }
     
     /**
@@ -121,8 +240,12 @@ export class GestureSystem {
         const duration = currentTime - this.gestureState.startTime;
         const distance = this.gestureState.moveDistance;
         
+        // Добавляем последнюю точку для $Q
+        if (this.drawingState.isDrawing) {
+            this.drawingState.drawingPoints.push(new Point(pointer.x, pointer.y, 1));
+        }
         
-        // Определяем тип жеста
+        // Определяем тип жеста (Phaser или $Q)
         const gesture = this.detectGesture(duration, distance, pointer);
         
         if (gesture) {
@@ -131,6 +254,7 @@ export class GestureSystem {
         
         // Сбрасываем состояние
         this.gestureState.isPointerDown = false;
+        this.drawingState.isDrawing = false;
     }
     
     /**
@@ -138,6 +262,14 @@ export class GestureSystem {
      */
     detectGesture(duration, distance, pointer) {
         const settings = this.settings;
+        
+        // Сначала пробуем $Q распознавание для сложных жестов
+        if (this.drawingState.drawingPoints.length >= 5) {
+            const qGesture = this.tryQRecognition();
+            if (qGesture) {
+                return qGesture;
+            }
+        }
         
         // Проверяем долгий тап
         if (duration >= settings.longTap.minDuration && 
@@ -148,12 +280,6 @@ export class GestureSystem {
         // Проверяем обычный тап
         if (duration <= settings.tap.maxDuration && 
             distance <= settings.tap.maxDistance) {
-            
-            // Проверяем двойной тап
-            if (this.isDoubleTap(pointer)) {
-                return this.createDoubleTapGesture(pointer);
-            }
-            
             return this.createTapGesture(pointer);
         }
         
@@ -161,21 +287,101 @@ export class GestureSystem {
     }
     
     /**
-     * Проверка на двойной тап
+     * Попытка распознавания через $Q
      */
-    isDoubleTap(pointer) {
-        const currentTime = this.scene.time.now;
-        const timeSinceLastTap = currentTime - this.gestureState.lastTapTime;
-        const distanceFromLastTap = GeometryUtils.distance(
-            this.gestureState.lastTapX,
-            this.gestureState.lastTapY,
-            pointer.x,
-            pointer.y
-        );
+    tryQRecognition() {
+        try {
+            // Распознаем жест с помощью $Q
+            const result = this.qRecognizer.Recognize(this.drawingState.drawingPoints);
+            
+            if (result.Name === 'No match.') {
+                return null;
+            }
+            
+            // Фильтруем результат в наши категории
+            const filteredResult = this.filterQGestureResult(result);
+            
+            if (filteredResult.type !== 'unknown') {
+                return filteredResult;
+            }
+            
+        } catch (error) {
+            console.error('Ошибка $Q распознавания:', error);
+        }
         
-        return timeSinceLastTap <= this.settings.doubleTap.maxInterval &&
-               distanceFromLastTap <= this.settings.doubleTap.maxDistance;
+        return null;
     }
+    
+    /**
+     * Фильтрация результата $Q в наши категории
+     */
+    filterQGestureResult(originalResult) {
+        const gestureName = originalResult.Name;
+        const score = originalResult.Score;
+        
+        // ЛИНИЯ: если $Q распознал как line, exclamation, I, H, или геометрия показывает линию
+        if (gestureName === 'line' || gestureName === 'exclamation' || gestureName === 'I' || gestureName === 'H' || this.isLikelyLine()) {
+            return {
+                type: 'line',
+                x: this.gestureState.startX,
+                y: this.gestureState.startY,
+                endX: this.gestureState.currentX,
+                endY: this.gestureState.currentY,
+                score: Math.round(score * 100),
+                duration: this.scene.time.now - this.gestureState.startTime
+            };
+        }
+        
+        // КРУГ: распознался как circle, null (круг с точкой), или D
+        if (gestureName === 'circle' || gestureName === 'null' || gestureName === 'D') {
+            return {
+                type: 'circle',
+                x: this.gestureState.startX,
+                y: this.gestureState.startY,
+                score: Math.round(score * 100),
+                duration: this.scene.time.now - this.gestureState.startTime
+            };
+        }
+        
+        // ТРЕУГОЛЬНИК: распознался как triangle или P
+        if (gestureName === 'triangle' || gestureName === 'P') {
+            return {
+                type: 'triangle',
+                x: this.gestureState.startX,
+                y: this.gestureState.startY,
+                score: Math.round(score * 100),
+                duration: this.scene.time.now - this.gestureState.startTime
+            };
+        }
+        
+        return { type: 'unknown' };
+    }
+    
+    /**
+     * Проверка, является ли жест линией по геометрии
+     */
+    isLikelyLine() {
+        if (this.drawingState.drawingPoints.length < 3) return false;
+        
+        // Находим крайние точки
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (const point of this.drawingState.drawingPoints) {
+            minX = Math.min(minX, point.X);
+            maxX = Math.max(maxX, point.X);
+            minY = Math.min(minY, point.Y);
+            maxY = Math.max(maxY, point.Y);
+        }
+        
+        const width = maxX - minX;
+        const height = maxY - minY;
+        
+        // Проверяем соотношение сторон
+        const aspectRatio = Math.max(width, height) / Math.min(width, height);
+        
+        // Если одна сторона намного больше другой, это скорее всего линия
+        return aspectRatio > 3;
+    }
+    
     
     /**
      * Создание жеста тапа
@@ -189,17 +395,6 @@ export class GestureSystem {
         };
     }
     
-    /**
-     * Создание жеста двойного тапа
-     */
-    createDoubleTapGesture(pointer) {
-        return {
-            type: 'doubleTap',
-            x: pointer.x,
-            y: pointer.y,
-            duration: this.scene.time.now - this.gestureState.startTime
-        };
-    }
     
     /**
      * Создание жеста долгого тапа
@@ -220,12 +415,6 @@ export class GestureSystem {
         // Отслеживаем статистику жестов
         this.trackGesture(gesture);
         
-        // Обновляем время последнего тапа для двойного тапа
-        if (gesture.type === 'tap' || gesture.type === 'doubleTap') {
-            this.gestureState.lastTapTime = this.scene.time.now;
-            this.gestureState.lastTapX = gesture.x;
-            this.gestureState.lastTapY = gesture.y;
-        }
         
         // Вызываем соответствующий callback
         const callback = this.callbacks[`on${gesture.type.charAt(0).toUpperCase() + gesture.type.slice(1)}`];

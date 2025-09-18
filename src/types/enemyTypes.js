@@ -23,10 +23,10 @@ export const enemyTypes = {
     },
     ant: {
         name: 'Муравей',
-        health: 10,
-        damage: 5,
+        health: 5,
+        damage: 3,
         cooldown: 5000, // 5 секунд в миллисекундах
-        speed: 70, // скорость в пикселях в секунду
+        speed: 60, // скорость в пикселях в секунду
         attackRange: 30,
         canFly: false,
         size: 1,
@@ -133,7 +133,7 @@ export const enemyTypes = {
     },
     fly: {
         name: 'Муха',
-        health: 20,
+        health: 5,
         damage: 3,
         cooldown: 5000, // 5 секунд в миллисекундах
         speed: 80, // скорость в пикселях в секунду
@@ -199,10 +199,10 @@ export const enemyTypes = {
     },
     dragonfly: {
         name: 'Стрекоза',
-        health: 25,
-        damage: 6,
+        health: 10,
+        damage: 5,
         cooldown: 3000, // 3 секунды в миллисекундах
-        speed: 120, // скорость в пикселях в секунду
+        speed: 140, // скорость в пикселях в секунду
         attackRange: 40,
         canFly: true,
         size: 2,

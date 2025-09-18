@@ -7,35 +7,12 @@ import { GeometryUtils } from '../utils/GeometryUtils.js';
  * Следует принципу Single Responsibility Principle
  */
 export class GestureActionSystem {
-    constructor(scene, enemies, defenses, egg = null) {
-        Object.defineProperty(this, "scene", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "enemies", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "defenses", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "egg", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+    constructor(scene, enemies, defenses, egg = null, itemDropSystem = null) {
         this.scene = scene;
         this.enemies = enemies;
         this.defenses = defenses;
         this.egg = egg;
+        this.itemDropSystem = itemDropSystem;
     }
     
     /**
@@ -48,13 +25,18 @@ export class GestureActionSystem {
         const target = this.detectTarget(gesture.x, gesture.y);
         gesture.target = target;
         
+        console.log(`🎯 Жест ${gesture.type} в точке (${gesture.x}, ${gesture.y}) → цель: ${target.type}`);
+        
         // Формируем ключ действия
         const actionKey = `${gesture.type}_${target.type}`;
         const action = GESTURE_ACTIONS[actionKey];
         
         if (!action) {
+            console.log(`❌ Действие ${actionKey} не найдено`);
             return false;
         }
+        
+        console.log(`✅ Найдено действие: ${actionKey} → ${action.name}`);
         
         // Выполняем действие
         return this.executeAction(action, gesture, target);
@@ -67,7 +49,33 @@ export class GestureActionSystem {
      * @returns {Object} Объект с типом цели и самим объектом
      */
     detectTarget(x, y) {
-        // Проверяем врагов (приоритет 1)
+        // Проверяем предметы (приоритет 1 - самый высокий для точного клика)
+        if (this.itemDropSystem && this.itemDropSystem.items) {
+            console.log(`🔍 Проверяем ${this.itemDropSystem.items.length} предметов на экране`);
+            
+            const item = GeometryUtils.findFirstObjectInRadius(
+                this.itemDropSystem.items, x, y,
+                TARGET_SETTINGS.item.missTolerance,
+                (item) => {
+                    const itemHitRadius = GeometryUtils.calculateHitRadius(item, 'item', TARGET_SETTINGS);
+                    const inRadius = GeometryUtils.isInRadius(x, y, item.x, item.y, itemHitRadius);
+                    console.log(`📦 Предмет в (${item.x}, ${item.y}), радиус: ${itemHitRadius}, попадание: ${inRadius}, собран: ${item.isCollected}`);
+                    return inRadius && !item.isCollected;
+                }
+            );
+            
+            if (item) {
+                console.log(`✅ Найден предмет для сбора:`, item.itemType);
+                return {
+                    type: TARGET_TYPES.ITEM,
+                    object: item,
+                    x: x,
+                    y: y
+                };
+            }
+        }
+        
+        // Проверяем врагов (приоритет 2)
         let foundEnemy = null;
         for (const enemy of this.enemies) {
             if (!enemy.isAlive) {
@@ -90,7 +98,7 @@ export class GestureActionSystem {
             };
         }
         
-        // Проверяем яйцо (приоритет 2)
+        // Проверяем яйцо (приоритет 3)
         if (this.egg && this.egg.isAlive) {
             const eggHitRadius = GeometryUtils.calculateHitRadius(this.egg, 'egg', TARGET_SETTINGS);
             const isEggInRange = GeometryUtils.isInRadius(x, y, this.egg.x, this.egg.y, eggHitRadius);
@@ -103,8 +111,6 @@ export class GestureActionSystem {
                 };
             }
         }
-        
-        // Предметы больше не обрабатываются здесь - они обрабатываются в Enemy
         
         // Проверяем защиту (приоритет 4)
         const defense = GeometryUtils.findFirstObjectInRadius(
@@ -147,43 +153,49 @@ export class GestureActionSystem {
                     return this.damageEnemy(target.object, action.damage);
                     
                 case 'critical_damage':
-                    return this.criticalDamageEnemy(target.object, action.damage);
-                    
-                case 'freeze_enemy':
-                    return this.freezeEnemy(target.object, action.freezeDuration);
+                    return this.damageEnemy(target.object, DAMAGE_CONSTANTS.TAP_DAMAGE);
                     
                 case 'protect_egg':
-                    return this.protectEgg(action.shield);
-                    
-                case 'heal_egg':
-                    return this.healEgg(action.heal);
-                    
-                case 'shield_egg':
-                    return this.shieldEgg(action.shieldDuration, action.shieldStrength);
-                    
-                case 'place_defense':
-                    return this.placeDefense(target.x, target.y, action.defenseType);
-                    
-                case 'create_wall':
-                    return this.createWall(target.x, target.y, action.wallType);
-                    
-                case 'explosion':
-                    return this.explosion(target.x, target.y, action.radius, action.damage);
-                    
-                case 'damage_wave':
-                    return this.damageWave(target.x, target.y, action.direction, action.damage, action.range);
-                    
-                case 'lift_effect':
-                    return this.liftEffect(target.x, target.y, action.force);
-                    
-                case 'crush_effect':
-                    return this.crushEffect(target.x, target.y, action.damage, action.slow);
+                    console.log(`🛡️ ${gesture.type} → Защитить яйцо (щит: ${action.shield})`);
+                    return true;
                     
                 case 'collect_item':
-                    // Сбор предметов больше не обрабатывается здесь
+                    console.log(`💎 Распознан жест: ${gesture.type} → Собираем предмет`);
+                    if (this.itemDropSystem) {
+                        return this.itemDropSystem.collectItem(target.object);
+                    }
                     return false;
                     
+                case 'place_defense':
+                    console.log(`🏗️ ${gesture.type} → Установить защиту (тип: ${action.defenseType})`);
+                    return true;
+                    
+                case 'heal_egg':
+                    console.log(`❤️ ${gesture.type} → Лечить яйцо (лечение: ${action.heal})`);
+                    return true;
+                    
+                case 'explosion':
+                    console.log(`💣 ${gesture.type} → Взрыв (радиус: ${action.radius}, урон: ${action.damage})`);
+                    return true;
+                    
+                case 'freeze_enemy':
+                    console.log(`🧊 ${gesture.type} → Заморозить врага (длительность: ${action.freezeDuration}мс)`);
+                    return true;
+                    
+                case 'shield_egg':
+                    console.log(`🛡️ ${gesture.type} → Щит для яйца (длительность: ${action.shieldDuration}мс, сила: ${action.shieldStrength})`);
+                    return true;
+                    
+                case 'create_wall':
+                    console.log(`🧱 ${gesture.type} → Создать стену (тип: ${action.wallType})`);
+                    return true;
+                    
+                case 'damage_wave':
+                    console.log(`🌊 ${gesture.type} → Волна урона (урон: ${action.damage}, дальность: ${action.range})`);
+                    return true;
+                    
                 default:
+                    console.log(`❓ Неизвестное действие: ${action.name} для жеста ${gesture.type}`);
                     return false;
             }
         } catch (error) {
@@ -207,116 +219,6 @@ export class GestureActionSystem {
         return true;
     }
     
-    /**
-     * Наносит критический урон врагу
-     * @param {Object} enemy - Объект врага
-     * @param {number} damage - Количество урона
-     * @returns {boolean} Успешность атаки
-     */
-    criticalDamageEnemy(enemy, damage = DAMAGE_CONSTANTS.CRITICAL_DAMAGE) {
-        if (!enemy || !enemy.isAlive) {
-            return false;
-        }
-        
-        enemy.takeDamage(damage);
-        return true;
-    }
-    
-    /**
-     * Замораживает врага
-     * @param {Object} enemy - Объект врага
-     * @param {number} duration - Длительность заморозки в миллисекундах
-     * @returns {boolean} Успешность заморозки
-     */
-    freezeEnemy(enemy, duration = EFFECT_CONSTANTS.FREEZE_DURATION) {
-        if (!enemy || !enemy.isAlive) {
-            return false;
-        }
-        
-        // Останавливаем движение
-        if (enemy.body) {
-            enemy.body.setVelocity(0, 0);
-        }
-        
-        // Визуальный эффект заморозки
-        enemy.setTint(0x00ffff);
-        
-        // Таймер разморозки
-        this.scene.time.delayedCall(duration, () => {
-            if (enemy && enemy.isAlive) {
-                enemy.clearTint();
-            }
-        });
-        
-        return true;
-    }
-    
-    /**
-     * Защищает яйцо
-     * @param {number} shield - Количество защиты
-     * @returns {boolean} Успешность защиты
-     */
-    protectEgg(shield = 5) {
-        if (!this.egg || !this.egg.isAlive) {
-            return false;
-        }
-        
-        // Базовая логика защиты яйца
-        return true;
-    }
-    
-    /**
-     * Лечит яйцо
-     * @param {number} heal - Количество лечения
-     * @returns {boolean} Успешность лечения
-     */
-    healEgg(heal = 20) {
-        if (!this.egg || !this.egg.isAlive) {
-            return false;
-        }
-        
-        // Базовая логика лечения яйца
-        return true;
-    }
-    
-    /**
-     * Создает щит для яйца
-     * @param {number} duration - Длительность щита в миллисекундах
-     * @param {number} strength - Сила щита
-     * @returns {boolean} Успешность создания щита
-     */
-    shieldEgg(duration = EFFECT_CONSTANTS.SHIELD_DURATION, strength = EFFECT_CONSTANTS.SHIELD_STRENGTH) {
-        if (!this.egg || !this.egg.isAlive) {
-            return false;
-        }
-        
-        // Базовая логика щита
-        return true;
-    }
-    
-    /**
-     * Устанавливает защиту
-     * @param {number} x - X координата
-     * @param {number} y - Y координата
-     * @param {string} defenseType - Тип защиты
-     * @returns {boolean} Успешность установки
-     */
-    placeDefense(x, y, defenseType = 'barrier') {
-        // Базовая логика установки защиты
-        return true;
-    }
-    
-    /**
-     * Создает стену
-     * @param {number} x - X координата
-     * @param {number} y - Y координата
-     * @param {string} wallType - Тип стены
-     * @returns {boolean} Успешность создания
-     */
-    createWall(x, y, wallType = 'barrier') {
-        // Базовая логика создания стены
-        return true;
-    }
     
     /**
      * Взрыв в области
@@ -337,15 +239,30 @@ export class GestureActionSystem {
     }
     
     /**
-     * Волна урона
+     * Волна урона для линейных жестов
      * @param {number} x - X координата волны
      * @param {number} y - Y координата волны
-     * @param {string} direction - Направление волны
+     * @param {Object} gesture - Объект жеста с координатами линии
      * @param {number} damage - Урон от волны
      * @param {number} range - Дальность волны
      * @returns {boolean} Успешность волны
      */
-    damageWave(x, y, direction, damage = DAMAGE_CONSTANTS.WAVE_DAMAGE, range = EFFECT_CONSTANTS.WAVE_RANGE) {
+    damageWave(x, y, gesture, damage = DAMAGE_CONSTANTS.WAVE_DAMAGE, range = EFFECT_CONSTANTS.WAVE_RANGE) {
+        // Для линейных жестов используем направление линии
+        let direction = 'right'; // По умолчанию
+        
+        if (gesture.type === 'line' && gesture.endX && gesture.endY) {
+            const deltaX = gesture.endX - gesture.x;
+            const deltaY = gesture.endY - gesture.y;
+            
+            // Определяем основное направление
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                direction = deltaX > 0 ? 'right' : 'left';
+            } else {
+                direction = deltaY > 0 ? 'down' : 'up';
+            }
+        }
+        
         // Находим врагов в направлении волны
         const enemiesInWave = GeometryUtils.findObjectsInDirection(this.enemies, x, y, direction, range, (enemy) => enemy.isAlive);
         enemiesInWave.forEach(enemy => {
@@ -354,48 +271,6 @@ export class GestureActionSystem {
         
         return true;
     }
-    
-    /**
-     * Эффект подъема
-     * @param {number} x - X координата
-     * @param {number} y - Y координата
-     * @param {number} force - Сила подъема
-     * @returns {boolean} Успешность эффекта
-     */
-    liftEffect(x, y, force = EFFECT_CONSTANTS.LIFT_FORCE) {
-        // Находим врагов в области
-        const enemiesInArea = GeometryUtils.findObjectsInRadius(this.enemies, x, y, EFFECT_CONSTANTS.EXPLOSION_RADIUS, (enemy) => enemy.isAlive);
-        enemiesInArea.forEach(enemy => {
-            if (enemy.body) {
-                enemy.body.setVelocityY(-force);
-            }
-        });
-        
-        return true;
-    }
-    
-    /**
-     * Эффект придавливания
-     * @param {number} x - X координата
-     * @param {number} y - Y координата
-     * @param {number} damage - Урон
-     * @param {number} slow - Замедление
-     * @returns {boolean} Успешность эффекта
-     */
-    crushEffect(x, y, damage = DAMAGE_CONSTANTS.CRUSH_DAMAGE, slow = EFFECT_CONSTANTS.CRUSH_SLOW) {
-        // Находим врагов в области
-        const enemiesInArea = GeometryUtils.findObjectsInRadius(this.enemies, x, y, EFFECT_CONSTANTS.EXPLOSION_RADIUS, (enemy) => enemy.isAlive);
-        enemiesInArea.forEach(enemy => {
-            this.damageEnemy(enemy, damage);
-            // Замедляем врага
-            if (enemy.body) {
-                enemy.body.setDrag(slow);
-            }
-        });
-        
-        return true;
-    }
-    
     
     /**
      * Обновляет списки объектов

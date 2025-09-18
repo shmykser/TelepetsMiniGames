@@ -19,6 +19,7 @@ import { BackgroundUtils } from '../utils/BackgroundUtils.js';
 export class EggDefense extends Phaser.Scene {
     constructor() {
         super({ key: 'EggDefense' });
+        this.isGameEnded = false;
     }
 
     create() {
@@ -62,8 +63,10 @@ export class EggDefense extends Phaser.Scene {
         // Система жестов
         this.gestureSystem = new GestureSystem(this, {
             onTap: (gesture) => this.handleGesture(gesture),
-            onDoubleTap: (gesture) => this.handleGesture(gesture),
-            onLongTap: (gesture) => this.handleGesture(gesture)
+            onLongTap: (gesture) => this.handleGesture(gesture),
+            onLine: (gesture) => this.handleGesture(gesture),
+            onCircle: (gesture) => this.handleGesture(gesture),
+            onTriangle: (gesture) => this.handleGesture(gesture)
         });
         
         // Система обработки жестов
@@ -71,7 +74,8 @@ export class EggDefense extends Phaser.Scene {
             this, 
             this.waveSystem.enemies, 
             [], // defenses - пока пустой
-            this.egg
+            this.egg,
+            Enemy.itemDropSystem // Передаем ItemDropSystem для обработки предметов
         );
         
         // Устанавливаем яйцо как цель для волновой системы
@@ -83,15 +87,7 @@ export class EggDefense extends Phaser.Scene {
      */
     createGameObjects() {
         // Создание травяного фона
-        this.grassBackground = BackgroundUtils.createAnimatedGrassBackground(this, {
-            tileSize: 64, // Размер тайла травы
-            animate: true, // Включаем анимацию ветра
-            animation: {
-                speedX: 8,   // Легкое горизонтальное движение
-                speedY: 4,   // Легкое вертикальное движение
-                duration: 20000 // 20 секунд на цикл
-            }
-        });
+        this.grassBackground = BackgroundUtils.createAnimatedGrassBackground(this, settings.game.background);
         
         // Устанавливаем фон на самый нижний слой
         this.grassBackground.setDepth(-100);
@@ -101,16 +97,9 @@ export class EggDefense extends Phaser.Scene {
             this, 
             this.scale.width / 2, 
             this.scale.height / 2,
-            {
-                health: 100,
-                texture: '🥚'
-            }
+            settings.game.egg
         );
         
-        console.log('Травяной фон создан:', this.grassBackground);
-        console.log('Яйцо создано:', this.egg);
-        console.log('Позиция яйца:', this.egg.x, this.egg.y);
-        console.log('Размер экрана Phaser:', this.scale.width, this.scale.height);
     }
 
     /**
@@ -148,32 +137,189 @@ export class EggDefense extends Phaser.Scene {
         
         if (success) {
             // Можно добавить визуальную обратную связь через EffectSystem
-            console.log(`Жест ${gesture.type} выполнен успешно`);
         }
     }
 
     /**
-     * Окончание игры
+     * Проверка окончания игры
      */
-    endGame() {
+    checkGameEnd() {
+        if (this.isGameEnded) return;
+        
+        const timeUp = this.waveSystem.getRemainingTime() <= 0;
+        const eggDestroyed = !this.egg || this.egg.health <= 0;
+        
+        if (timeUp || eggDestroyed) {
+            this.gameOver(timeUp && !eggDestroyed);
+        }
+    }
+    
+    /**
+     * Окончание игры с результатом
+     */
+    gameOver(won = false) {
+        this.isGameEnded = true;
+        
         // Отправляем событие окончания игры
-        const won = this.egg && this.egg.health > 0;
         this.eventSystem.emit(EVENT_TYPES.GAME_END, {
             scene: this,
-            won: won
+            won: won,
+            stats: this.getGameStats()
         });
         
         // Останавливаем все системы
-        this.waveSystem.endGame();
+        this.waveSystem.stopGame();
+        
+        // Очищаем все предметы с экрана
+        if (Enemy.itemDropSystem) {
+            Enemy.itemDropSystem.clearAllItems();
+        }
         
         // Показываем результат
-        console.log('Игра окончена!');
-        console.log(`Убито врагов: ${this.waveSystem.totalEnemiesKilled}`);
+        this.showGameResult(won);
         
-        // Возвращаемся в меню через 3 секунды
-        this.time.delayedCall(3000, () => {
+        // Возвращаемся в меню через заданное время
+        // this.time.delayedCall(settings.game.endGameDelay, () => {
+        //     this.scene.start('MenuScene');
+        // });
+    }
+    
+    /**
+     * Отображение результата игры
+     */
+    showGameResult(won) {
+        const stats = this.getGameStats();
+        const resultText = won ? 'ПОБЕДА!' : 'ПОРАЖЕНИЕ!';
+        const resultColor = won ? '#00ff00' : '#ff0000';
+        
+        // Создаем результирующий экран
+        const resultBg = this.add.rectangle(
+            this.scale.width / 2, 
+            this.scale.height / 2, 
+            this.scale.width - 40, 
+            250, 
+            0x000000, 
+            0.8
+        );
+        
+        const titleText = this.add.text(
+            this.scale.width / 2, 
+            this.scale.height / 2 - 70, 
+            resultText, 
+            {
+                fontSize: '32px',
+                fill: resultColor,
+                fontStyle: 'bold'
+            }
+        ).setOrigin(0.5);
+        
+        const statsText = this.add.text(
+            this.scale.width / 2, 
+            this.scale.height / 2 - 20, 
+            `Убито врагов: ${stats.enemiesKilled}\nВремя: ${stats.gameTimeText}`, 
+            {
+                fontSize: '18px',
+                fill: '#ffffff',
+                align: 'center'
+            }
+        ).setOrigin(0.5);
+        
+        // Кнопка рестарта
+        const restartButton = this.add.rectangle(
+            this.scale.width / 2 - 80, 
+            this.scale.height / 2 + 50, 
+            140, 
+            40, 
+            0x27ae60
+        )
+        .setInteractive()
+        .on('pointerdown', () => {
+            this.restartGame();
+        })
+        .on('pointerover', () => restartButton.setAlpha(0.8))
+        .on('pointerout', () => restartButton.setAlpha(1));
+        
+        this.add.text(
+            this.scale.width / 2 - 80, 
+            this.scale.height / 2 + 50, 
+            'РЕСТАРТ', 
+            {
+                fontSize: '16px',
+                fill: '#ffffff',
+                fontStyle: 'bold'
+            }
+        ).setOrigin(0.5);
+        
+        // Кнопка возврата в меню
+        const menuButton = this.add.rectangle(
+            this.scale.width / 2 + 80, 
+            this.scale.height / 2 + 50, 
+            140, 
+            40, 
+            0xe74c3c
+        )
+        .setInteractive()
+        .on('pointerdown', () => {
             this.scene.start('MenuScene');
-        });
+        })
+        .on('pointerover', () => menuButton.setAlpha(0.8))
+        .on('pointerout', () => menuButton.setAlpha(1));
+        
+        this.add.text(
+            this.scale.width / 2 + 80, 
+            this.scale.height / 2 + 50, 
+            'В МЕНЮ', 
+            {
+                fontSize: '16px',
+                fill: '#ffffff',
+                fontStyle: 'bold'
+            }
+        ).setOrigin(0.5);
+    }
+    
+    /**
+     * Получение статистики игры
+     */
+    getGameStats() {
+        const gameTime = this.time.now - (this.waveSystem?.gameStartTime || 0);
+        const minutes = Math.floor(gameTime / 60000);
+        const seconds = Math.floor((gameTime % 60000) / 1000);
+        
+        return {
+            enemiesKilled: this.waveSystem?.totalEnemiesKilled || 0,
+            gameTime: gameTime,
+            gameTimeText: `${minutes}:${seconds.toString().padStart(2, '0')}`,
+            survived: this.egg && this.egg.health > 0
+        };
+    }
+    
+    /**
+     * Пауза игры
+     */
+    pauseGame() {
+        this.scene.pause();
+    }
+    
+    /**
+     * Возобновление игры
+     */
+    resumeGame() {
+        this.scene.resume();
+    }
+    
+    /**
+     * Перезапуск игры
+     */
+    restartGame() {
+        // Очищаем текущую сцену
+        this.scene.restart();
+    }
+    
+    /**
+     * Окончание игры (устаревший метод для совместимости)
+     */
+    endGame() {
+        this.gameOver(false);
     }
 
     /**
@@ -190,14 +336,13 @@ export class EggDefense extends Phaser.Scene {
             this.waveSystem.update(time, delta);
         }
         
-        // Обновляем всех врагов (для движения к цели)
-        if (this.waveSystem && this.waveSystem.enemies) {
-            this.waveSystem.enemies.forEach(enemy => {
-                if (enemy && enemy.isAlive && enemy.update) {
-                    enemy.update(time, delta);
-                }
-            });
+        // Обновляем всех врагов через WaveSystem
+        if (this.waveSystem) {
+            this.waveSystem.updateEnemies(time, delta);
         }
+        
+        // Проверяем условия окончания игры
+        this.checkGameEnd();
     }
 
     /**

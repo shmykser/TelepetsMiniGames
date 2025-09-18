@@ -37,6 +37,7 @@ export class WaveSystem {
         // Привязываем методы
         this.update = this.update.bind(this);
         this.spawnEnemy = this.spawnEnemy.bind(this);
+        this.spawnEnemyBatch = this.spawnEnemyBatch.bind(this);
     }
     
     /**
@@ -109,7 +110,7 @@ export class WaveSystem {
         const delay = this.calculateSpawnDelay();
         
         this.spawnTimer = this.scene.time.delayedCall(delay, () => {
-            this.spawnEnemy();
+            this.spawnEnemyBatch();
             this.scheduleNextSpawn();
         });
     }
@@ -127,7 +128,10 @@ export class WaveSystem {
         const finalRate = Math.max(minRate, currentRate);
         
         // Добавляем небольшую случайность
-        const randomFactor = GeometryUtils.randomFloat(0.8, 1.2);
+        const randomFactor = GeometryUtils.randomFloat(
+            this.gameSettings.spawn.randomFactor.min,
+            this.gameSettings.spawn.randomFactor.max
+        );
         
         return finalRate * randomFactor;
     }
@@ -178,6 +182,38 @@ export class WaveSystem {
         this.scene.events.emit('enemySpawned', {
             enemyType: enemyType,
             position: position,
+            totalSpawned: this.totalEnemiesSpawned
+        });
+    }
+    
+    /**
+     * Создает группу врагов (batch spawn)
+     */
+    spawnEnemyBatch(count = null) {
+        if (!this.isGameActive) {
+            return;
+        }
+        
+        // Определяем количество врагов для спавна
+        const enemiesToSpawn = count !== null ? count : this.gameSettings.spawn.enemiesPerSpawn;
+        
+        // Проверяем лимит врагов на экране для всей группы
+        const availableSlots = this.gameSettings.spawn.maxEnemiesOnScreen - this.currentEnemiesOnScreen;
+        const actualSpawnCount = Math.min(enemiesToSpawn, availableSlots);
+        
+        if (actualSpawnCount <= 0) {
+            return;
+        }
+        
+        // Создаем указанное количество врагов
+        for (let i = 0; i < actualSpawnCount; i++) {
+            this.spawnEnemy();
+        }
+        
+        // Эмитим событие группового спавна
+        this.scene.events.emit('enemyBatchSpawned', {
+            spawnedCount: actualSpawnCount,
+            requestedCount: enemiesToSpawn,
             totalSpawned: this.totalEnemiesSpawned
         });
     }
@@ -277,7 +313,6 @@ export class WaveSystem {
         return { x, y };
     }
     
-    // createEnemy удален - теперь используется Enemy.CreateEnemy() напрямую
     
     /**
      * Обработчик смерти врага
@@ -374,21 +409,16 @@ export class WaveSystem {
     }
 
     /**
-     * Получает информацию о текущем состоянии
+     * Обновляет всех врагов (вынесено из EggDefense)
      */
-    getGameInfo() {
-        return {
-            isActive: this.isGameActive,
-            isEnded: this.isGameEnded,
-            currentMinute: this.currentMinute,
-            gameProgress: this.getGameProgress(),
-            remainingTime: this.getRemainingTime(),
-            totalEnemiesSpawned: this.totalEnemiesSpawned,
-            totalEnemiesKilled: this.totalEnemiesKilled,
-            currentEnemiesOnScreen: this.currentEnemiesOnScreen,
-            availableEnemyTypes: this.getAvailableEnemyTypes()
-        };
+    updateEnemies(time, delta) {
+        this.enemies.forEach(enemy => {
+            if (enemy && enemy.isAlive && enemy.update) {
+                enemy.update(time, delta);
+            }
+        });
     }
+    
     
     /**
      * Уничтожает менеджер

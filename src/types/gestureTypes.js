@@ -41,28 +41,8 @@ export const GESTURE_ACTIONS = {
         defenseType: 'barrier'
     },
     
-    // Двойной тап по врагу - критический урон
-    'doubleTap_enemy': {
-        name: 'critical_damage',
-        description: 'Критический урон врагу',
-        damage: DAMAGE_CONSTANTS.CRITICAL_DAMAGE,
-        critical: true
-    },
     
-    // Двойной тап по яйцу - лечение
-    'doubleTap_egg': {
-        name: 'heal_egg',
-        description: 'Лечить яйцо',
-        heal: GESTURE_CONSTANTS.EGG_HEALING.HEAL_AMOUNT
-    },
     
-    // Двойной тап по полю - взрыв
-    'doubleTap_field': {
-        name: 'explosion',
-        description: 'Взрыв в области',
-        radius: EFFECT_CONSTANTS.EXPLOSION_RADIUS,
-        damage: DAMAGE_CONSTANTS.EXPLOSION_DAMAGE
-    },
     
     // Долгий тап по врагу - заморозка
     'longTap_enemy': {
@@ -86,39 +66,35 @@ export const GESTURE_ACTIONS = {
         wallType: 'barrier'
     },
     
-    // Свайп влево - волна урона
-    'swipe_left': {
+    // Линия по полю - волна урона
+    'line_field': {
         name: 'damage_wave',
-        description: 'Волна урона влево',
-        direction: 'left',
+        description: 'Волна урона по линии',
         damage: DAMAGE_CONSTANTS.WAVE_DAMAGE,
         range: EFFECT_CONSTANTS.WAVE_RANGE
     },
     
-    // Свайп вправо - волна урона
-    'swipe_right': {
-        name: 'damage_wave',
-        description: 'Волна урона вправо',
-        direction: 'right',
-        damage: DAMAGE_CONSTANTS.WAVE_DAMAGE,
-        range: EFFECT_CONSTANTS.WAVE_RANGE
+    // Круг по полю - взрыв
+    'circle_field': {
+        name: 'explosion',
+        description: 'Взрыв в области',
+        radius: EFFECT_CONSTANTS.EXPLOSION_RADIUS,
+        damage: DAMAGE_CONSTANTS.EXPLOSION_DAMAGE
     },
     
-    // Свайп вверх - подъем
-    'swipe_up': {
-        name: 'lift_effect',
-        description: 'Поднять врагов',
-        direction: 'up',
-        force: EFFECT_CONSTANTS.LIFT_FORCE
+    // Треугольник по врагу - критический урон
+    'triangle_enemy': {
+        name: 'critical_damage',
+        description: 'Критический урон врагу',
+        damage: DAMAGE_CONSTANTS.CRITICAL_DAMAGE
     },
     
-    // Свайп вниз - придавить
-    'swipe_down': {
-        name: 'crush_effect',
-        description: 'Придавить врагов',
-        direction: 'down',
-        damage: DAMAGE_CONSTANTS.CRUSH_DAMAGE,
-        slow: EFFECT_CONSTANTS.CRUSH_SLOW
+    // Треугольник по полю - взрыв
+    'triangle_field': {
+        name: 'explosion',
+        description: 'Взрыв треугольником',
+        radius: EFFECT_CONSTANTS.EXPLOSION_RADIUS,
+        damage: DAMAGE_CONSTANTS.EXPLOSION_DAMAGE
     }
 };
 
