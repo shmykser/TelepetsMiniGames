@@ -306,8 +306,8 @@ export class TestEffects extends Phaser.Scene {
         // Создаем базовые эффекты в верхней части
         this.createBasicEffectsSection(width, 120, 180, basicCols);
         
-        // Создаем композитные эффекты ниже с прокруткой
-        this.createCompositeEffectsSection(width, 320, compositeCols);
+        // Создаем композитные эффекты ниже с прокруткой - увеличиваем отступ
+        this.createCompositeEffectsSection(width, 380, compositeCols);
         
         console.log(`TestEffects: Создано ${this.enemies.length} интерактивных врагов для демонстрации эффектов`);
     }
@@ -325,7 +325,8 @@ export class TestEffects extends Phaser.Scene {
         }).setOrigin(0.5);
         
         const cellWidth = width / cols;
-        const cellHeight = (sectionHeight - 40) / Math.ceil(this.effects.length / cols);
+        // Увеличиваем высоту ячейки для размещения текста под иконками
+        const cellHeight = Math.max(80, (sectionHeight - 40) / Math.ceil(this.effects.length / cols));
         const gridStartY = startY + 40;
         
         for (let i = 0; i < this.effects.length; i++) {
@@ -413,8 +414,8 @@ export class TestEffects extends Phaser.Scene {
      * Создает врага для демонстрации базового эффекта
      */
     createEffectEnemy(effectName, x, y, type) {
-        // Сдвигаем врага выше, чтобы текст не накладывался
-        const enemyY = y - 15;
+        // Позиционируем врага в верхней части ячейки
+        const enemyY = y - 25;
         
         // Создаем простой спрайт с эмодзи
         const enemy = this.add.text(x, enemyY, '🐜', {
@@ -438,8 +439,8 @@ export class TestEffects extends Phaser.Scene {
             enemy.clearTint();
         });
         
-        // Подпись с названием эффекта - позиционируем под врагом с меньшим отступом
-        const label = this.add.text(x, enemyY + 30, effectName, {
+        // Подпись с названием эффекта - позиционируем под врагом с достаточным отступом
+        const label = this.add.text(x, enemyY + 40, effectName, {
             fontSize: '9px',
             color: '#ffffff',
             backgroundColor: '#000000',

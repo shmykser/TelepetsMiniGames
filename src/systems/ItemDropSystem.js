@@ -1,18 +1,20 @@
 import { Item } from '../objects/Item';
-import { ITEM_TYPES, DROP_SETTINGS } from '../types/itemTypes';
-import { ITEM_CONSTANTS } from '../constants/GameConstants.js';
+import { ITEM_TYPES, ITEMS } from '../types/itemTypes';
 
 /**
  * Система дропа предметов
  */
 export class ItemDropSystem {
-    constructor(scene, egg, probabilitySystem = null) {
+    constructor(scene, egg, probabilitySystem = null, abilitySystem = null) {
         this.scene = scene;
         this.egg = egg;
         this.probabilitySystem = probabilitySystem;
-        this.luck = DROP_SETTINGS.baseLuck; // Начальное везение
-        this.maxLuck = DROP_SETTINGS.maxLuck; // Максимальное везение
-        this.items = []; // Массив активных предметов
+        this.abilitySystem = abilitySystem;
+        this.items = []; // Отслеживание активных предметов
+        
+        // Подписываемся на события предметов
+        this.scene.events.on('item:created', this.onItemCreated.bind(this));
+        this.scene.events.on('item:removed', this.onItemRemoved.bind(this));
     }
     
     
@@ -26,17 +28,22 @@ export class ItemDropSystem {
         }
         
         const randomItem = Phaser.Utils.Array.GetRandom(availableItems);
-        this.createItem(x, y, randomItem);
+        
+        // Создаем предмет через статический метод Item
+        const item = Item.CreateItem(this.scene, x, y, randomItem, this.abilitySystem);
+        
+        return item;
     }
     
     /**
      * Получение доступных предметов для дропа
      */
     getAvailableItems() {
-        const items = [ITEM_TYPES.HEART]; // Сердце всегда доступно
+        const items = [ITEM_TYPES.HEART, ITEM_TYPES.PATCH, ITEM_TYPES.DOUBLEPATCH, ITEM_TYPES.SHOVEL]; // Сердце, пластырь и лопата всегда доступны
         
-        // Клевер выпадает только если везение <= 10
-        if (this.luck <= DROP_SETTINGS.maxLuck) {
+        // Клевер выпадает только если везение <= максимального
+        const currentLuck = this.abilitySystem ? this.abilitySystem.getLuck() : 5;
+        if (currentLuck <= 25) { // Максимальная удача для дропа клевера
             items.push(ITEM_TYPES.CLOVER);
         }
         
@@ -44,73 +51,16 @@ export class ItemDropSystem {
     }
     
     /**
-     * Создание предмета
+     * Обработка создания предмета (событие)
      */
-    createItem(x, y, itemType) {
-        const item = new Item(this.scene, x, y, itemType);
+    onItemCreated(item) {
         this.items.push(item);
-        
-        // Добавляем предмет в сцену
-        this.scene.add.existing(item);
-        
-        // Устанавливаем высокую глубину, чтобы предмет был поверх всего
-        item.setDepth(ITEM_CONSTANTS.ITEM_DEPTH);
-        
-        // Предмет уже интерактивный (setInteractive в Item.js)
-        
-        // Автоматическое удаление через заданное время
-        this.scene.time.delayedCall(ITEM_CONSTANTS.AUTO_REMOVE_DELAY, () => {
-            if (item && !item.isCollected) {
-                this.removeItem(item);
-            }
-        });
-        
-        return item;
     }
     
     /**
-     * Сбор предмета
+     * Обработка удаления предмета (событие)
      */
-    collectItem(item) {
-        if (item.isCollected) {
-            return false;
-        }
-        
-        const itemType = item.itemType;
-        let collected = false;
-        
-        // Применяем эффект предмета
-        switch (itemType) {
-            case ITEM_TYPES.HEART:
-                collected = this.egg.heal(ITEM_CONSTANTS.HEART_HEAL_AMOUNT);
-                break;
-                
-            case ITEM_TYPES.CLOVER:
-                this.increaseLuck(DROP_SETTINGS.luckIncrease);
-                collected = true;
-                break;
-        }
-        
-        if (collected) {
-            item.collect();
-            this.removeItem(item);
-            // Эффект предмета можно обработать здесь при необходимости
-        }
-        
-        return collected;
-    }
-    
-    /**
-     * Увеличение везения
-     */
-    increaseLuck(amount) {
-        this.luck = Math.min(this.maxLuck, this.luck + amount);
-    }
-    
-    /**
-     * Удаление предмета из списка
-     */
-    removeItem(item) {
+    onItemRemoved(item) {
         const index = this.items.indexOf(item);
         if (index !== -1) {
             this.items.splice(index, 1);
@@ -121,14 +71,10 @@ export class ItemDropSystem {
      * Очистка всех предметов
      */
     clearAllItems() {
-        // Уничтожаем все предметы
-        this.items.forEach(item => {
-            if (item && item.destroy) {
-                item.destroy();
-            }
-        });
+        // Эмитим событие - предметы сами себя уничтожат
+        this.scene.events.emit('items:clear-all');
         
-        // Очищаем массив
+        // Очищаем массив отслеживания
         this.items = [];
     }
     
@@ -136,6 +82,10 @@ export class ItemDropSystem {
      * Уничтожение системы
      */
     destroy() {
+        // Отписываемся от событий
+        this.scene.events.off('item:created', this.onItemCreated.bind(this));
+        this.scene.events.off('item:removed', this.onItemRemoved.bind(this));
+        
         this.clearAllItems();
     }
 }

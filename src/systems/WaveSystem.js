@@ -1,7 +1,6 @@
-import { settings } from '../../config/settings.js';
 import { Enemy } from '../objects/Enemy';
 import { enemyTypes } from '../types/enemyTypes';
-import { enemyTypesByMinute, enemyWeights, SPAWN_CONSTANTS } from '../types/waveTypes.js';
+import { enemyTypesByMinute, enemyWeights, SPAWN_CONSTANTS, SPAWN_SETTINGS, WAVE_SETTINGS } from '../types/waveTypes.js';
 import { GeometryUtils } from '../utils/GeometryUtils.js';
 
 /**
@@ -11,7 +10,8 @@ import { GeometryUtils } from '../utils/GeometryUtils.js';
 export class WaveSystem {
     constructor(scene, probabilitySystem = null) {
         this.scene = scene;
-        this.gameSettings = settings.game;
+        this.waveSettings = WAVE_SETTINGS;
+        this.spawnSettings = SPAWN_SETTINGS;
         this.probabilitySystem = probabilitySystem;
         
         // Состояние игры
@@ -59,8 +59,8 @@ export class WaveSystem {
         
         // Эмитим событие начала игры
         this.scene.events.emit('gameStarted', {
-            duration: this.gameSettings.duration,
-            maxWaves: this.gameSettings.maxWaves
+            duration: this.waveSettings.duration,
+            maxWaves: this.waveSettings.maxWaves
         });
     }
     
@@ -100,7 +100,7 @@ export class WaveSystem {
         if (!this.isGameActive) return;
         
         // Проверяем лимит врагов на экране
-        if (this.currentEnemiesOnScreen >= this.gameSettings.spawn.maxEnemiesOnScreen) {
+        if (this.currentEnemiesOnScreen >= this.spawnSettings.maxEnemiesOnScreen) {
             // Если достигли лимита, ждем немного и пробуем снова
             this.spawnTimer = this.scene.time.delayedCall(SPAWN_CONSTANTS.RETRY_DELAY, this.scheduleNextSpawn);
             return;
@@ -120,17 +120,17 @@ export class WaveSystem {
      */
     calculateSpawnDelay() {
         const gameProgress = this.getGameProgress(); // 0-1
-        const minRate = this.gameSettings.spawn.minRate;
-        const baseRate = this.gameSettings.spawn.baseRate;
+        const minRate = this.spawnSettings.minRate;
+        const baseRate = this.spawnSettings.baseRate;
         
         // Экспоненциальное ускорение спавна
-        const currentRate = baseRate * Math.pow(this.gameSettings.spawn.rateMultiplier, gameProgress * SPAWN_CONSTANTS.SPAWN_RATE_MULTIPLIER);
+        const currentRate = baseRate * Math.pow(this.spawnSettings.rateMultiplier, gameProgress * SPAWN_CONSTANTS.SPAWN_RATE_MULTIPLIER);
         const finalRate = Math.max(minRate, currentRate);
         
         // Добавляем небольшую случайность
         const randomFactor = GeometryUtils.randomFloat(
-            this.gameSettings.spawn.randomFactor.min,
-            this.gameSettings.spawn.randomFactor.max
+            this.spawnSettings.randomFactor.min,
+            this.spawnSettings.randomFactor.max
         );
         
         return finalRate * randomFactor;
@@ -195,10 +195,10 @@ export class WaveSystem {
         }
         
         // Определяем количество врагов для спавна
-        const enemiesToSpawn = count !== null ? count : this.gameSettings.spawn.enemiesPerSpawn;
+        const enemiesToSpawn = count !== null ? count : this.spawnSettings.enemiesPerSpawn;
         
         // Проверяем лимит врагов на экране для всей группы
-        const availableSlots = this.gameSettings.spawn.maxEnemiesOnScreen - this.currentEnemiesOnScreen;
+        const availableSlots = this.spawnSettings.maxEnemiesOnScreen - this.currentEnemiesOnScreen;
         const actualSpawnCount = Math.min(enemiesToSpawn, availableSlots);
         
         if (actualSpawnCount <= 0) {
@@ -343,13 +343,13 @@ export class WaveSystem {
         
         // Проверяем окончание игры
         const gameTime = this.scene.time.now - this.gameStartTime;
-        if (gameTime >= this.gameSettings.duration) {
+        if (gameTime >= this.waveSettings.duration) {
             this.stopGame();
             return;
         }
         
         // Обновляем текущую минуту
-        const newMinute = GeometryUtils.floor(gameTime / this.gameSettings.waveDuration) + 1;
+        const newMinute = GeometryUtils.floor(gameTime / this.waveSettings.waveDuration) + 1;
         if (newMinute !== this.currentMinute) {
             this.currentMinute = newMinute;
             this.onMinuteChanged();
@@ -380,7 +380,7 @@ export class WaveSystem {
         if (!this.isGameActive) return 0;
         
         const gameTime = this.scene.time.now - this.gameStartTime;
-        return Math.min(1, gameTime / this.gameSettings.duration);
+        return Math.min(1, gameTime / this.waveSettings.duration);
     }
     
     /**
@@ -390,7 +390,7 @@ export class WaveSystem {
         if (!this.isGameActive) return 0;
         
         const gameTime = this.scene.time.now - this.gameStartTime;
-        return Math.max(0, this.gameSettings.duration - gameTime);
+        return Math.max(0, this.waveSettings.duration - gameTime);
     }
     
     /**

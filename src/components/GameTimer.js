@@ -3,7 +3,7 @@ import { BaseUIComponent } from './BaseUIComponent.js';
 import { UIUtils } from '../utils/UIUtils.js';
 import { UI_THEME } from '../utils/UITheme.js';
 import { GeometryUtils } from '../utils/GeometryUtils.js';
-import { UI_CONSTANTS } from '../constants/GameConstants.js';
+import { UI_CONSTANTS } from '../settings/GameSettings.js';
 
 /**
  * Компонент таймера игры

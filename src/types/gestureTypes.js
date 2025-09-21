@@ -1,7 +1,6 @@
 /**
  * Типы жестов и действий
  */
-import { DAMAGE_CONSTANTS, EFFECT_CONSTANTS, GESTURE_CONSTANTS } from '../constants/GameConstants.js';
 
 // Типы целей
 export const TARGET_TYPES = {
@@ -18,14 +17,14 @@ export const GESTURE_ACTIONS = {
     'tap_enemy': {
         name: 'damage_enemy',
         description: 'Нанести урон врагу',
-        damage: DAMAGE_CONSTANTS.TAP_DAMAGE
+        damage: null // Будет браться из AbilitySystem в рантайме
     },
     
-    // Тап по яйцу - защитить
+    // Тап по яйцу - активировать взрыв
     'tap_egg': {
-        name: 'protect_egg',
-        description: 'Защитить яйцо',
-        shield: GESTURE_CONSTANTS.EGG_PROTECTION.SHIELD_AMOUNT
+        name: 'activate_egg_explosion',
+        description: 'Активировать взрыв яйца',
+        explosionDamage: null // Будет браться из AbilitySystem в рантайме
     },
     
     // Тап по предмету - собрать
@@ -42,59 +41,48 @@ export const GESTURE_ACTIONS = {
     },
     
     
-    
+    //НЕ ИСПОЛЬЗУЮТСЯ ------------------------
     
     // Долгий тап по врагу - заморозка
     'longTap_enemy': {
         name: 'freeze_enemy',
         description: 'Заморозить врага',
-        freezeDuration: EFFECT_CONSTANTS.FREEZE_DURATION
     },
     
     // Долгий тап по яйцу - щит
     'longTap_egg': {
         name: 'shield_egg',
         description: 'Создать щит для яйца',
-        shieldDuration: EFFECT_CONSTANTS.SHIELD_DURATION,
-        shieldStrength: EFFECT_CONSTANTS.SHIELD_STRENGTH
     },
     
     // Долгий тап по полю - стена
     'longTap_field': {
-        name: 'create_wall',
-        description: 'Создать стену',
-        wallType: 'barrier'
+        name: 'create_pit',
+        description: 'Создать яму',
     },
     
     // Линия по полю - волна урона
     'line_field': {
         name: 'damage_wave',
         description: 'Волна урона по линии',
-        damage: DAMAGE_CONSTANTS.WAVE_DAMAGE,
-        range: EFFECT_CONSTANTS.WAVE_RANGE
     },
     
     // Круг по полю - взрыв
     'circle_field': {
         name: 'explosion',
         description: 'Взрыв в области',
-        radius: EFFECT_CONSTANTS.EXPLOSION_RADIUS,
-        damage: DAMAGE_CONSTANTS.EXPLOSION_DAMAGE
     },
     
     // Треугольник по врагу - критический урон
     'triangle_enemy': {
         name: 'critical_damage',
         description: 'Критический урон врагу',
-        damage: DAMAGE_CONSTANTS.CRITICAL_DAMAGE
     },
     
     // Треугольник по полю - взрыв
     'triangle_field': {
         name: 'explosion',
-        description: 'Взрыв треугольником',
-        radius: EFFECT_CONSTANTS.EXPLOSION_RADIUS,
-        damage: DAMAGE_CONSTANTS.EXPLOSION_DAMAGE
+        description: '',
     }
 };
 
@@ -119,5 +107,17 @@ export const TARGET_SETTINGS = {
     item: {
         missTolerance: 25,           // Максимальный промах в пикселях
         priority: 3
+    }
+};
+
+// Настройки жестов (перенесено из GameSettings.js)
+export const GESTURE_CONSTANTS = {
+    TAP: {
+        MAX_DURATION: 200,      // Максимальная длительность тапа (мс)
+        MAX_DISTANCE: 10        // Максимальное расстояние для тапа (пиксели)
+    },
+    LONG_TAP: {
+        MIN_DURATION: 500,      // Минимальная длительность долгого тапа (мс)
+        MAX_DISTANCE: 10        // Максимальное расстояние для долгого тапа (пиксели)
     }
 };

@@ -158,6 +158,17 @@ export class EffectSystem {
                 color: 0xff6600,
                 thickness: 3,
                 alpha: 0.8
+            },
+
+            // АУРА
+            auraGlow: {
+                baseRadius: 60,
+                color: 0x00ff00,
+                thickness: 2,
+                alpha: 0.3,
+                duration: 1000,
+                yoyo: true,
+                repeat: -1
             }
         };
 
@@ -269,6 +280,10 @@ export class EffectSystem {
             // Взрыв
             case 'blast':
                 return this.createBlastEffect(target, config);
+
+            // Аура
+            case 'auraGlow':
+                return this.createAuraGlowEffect(target, config);
 
             default:
                 console.warn(`Unknown effect type: ${effectType}`);
@@ -625,7 +640,7 @@ export class EffectSystem {
      * Создает эффект взрыва (круговая волна)
      */
     createBlastEffect(target, config) {
-        const radius = config.baseRadius || config.radius || 100;
+        const radius = config.radius || config.baseRadius || 100;
         const duration = config.duration || 800;
         const color = config.color || 0xff6600;
         const thickness = config.thickness || 3;
@@ -650,6 +665,37 @@ export class EffectSystem {
         return tween;
     }
 
+    /**
+     * Создает эффект ауры (постоянное радиальное свечение)
+     */
+    createAuraGlowEffect(target, config) {
+        const radius = config.baseRadius || config.radius || 60;
+        const color = config.color || 0x00ff00;
+        const thickness = config.thickness || 2;
+        const alpha = config.alpha || 0.3;
+        const duration = config.duration || 1000;
+        
+        // Создаем круг для ауры
+        const aura = this.scene.add.circle(target.x, target.y, radius, color);
+        aura.setAlpha(alpha);
+        aura.setStrokeStyle(thickness, color);
+        aura.setFillStyle(0x000000, 0); // Прозрачная заливка
+        
+        // Сохраняем ссылку на ауру в объекте для отслеживания
+        target.auraGlow = aura;
+        
+        // Анимация пульсации
+        const tween = this.scene.tweens.add({
+            targets: aura,
+            alpha: alpha * 2,
+            duration: duration,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+        
+        return tween;
+    }
 
     // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
 
@@ -710,7 +756,8 @@ export class EffectSystem {
         return [
             'shake', 'flash', 'pulse', 'rotation', 'fadeIn', 'fadeOut',
             'scale', 'move', 'damage', 'explosion', 'flicker', 'glow',
-            'wave', 'burstMovement', 'chaosMovement', 'particles', 'blast'
+            'wave', 'burstMovement', 'chaosMovement', 'particles', 'blast',
+            'auraGlow'
         ];
     }
 
@@ -721,6 +768,7 @@ export class EffectSystem {
         this.activeEffects.clear();
         this.scene.tweens.killAll();
     }
+
 
     /**
      * Получает статистику активных эффектов

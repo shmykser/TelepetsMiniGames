@@ -3,4 +3,3 @@ description:
 globs:
 alwaysApply: true
 ---
-/src/animations/AnimationLibrary.js игровые константы, физики, жестов и другое. Если чего то не достаточно, 

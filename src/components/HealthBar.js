@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { BaseUIComponent } from './BaseUIComponent.js';
 import { PropertyUtils } from '../utils/PropertyUtils.js';
-import { COLORS } from '../constants/GameConstants.js';
+import { COLORS } from '../settings/GameSettings.js';
 /**
  * Универсальный компонент полосы здоровья
  * Может использоваться для врагов, яйца, защиты и любых других объектов
@@ -14,6 +14,7 @@ export class HealthBar extends BaseUIComponent {
         PropertyUtils.defineProperty(this, "backgroundBar", undefined);
         PropertyUtils.defineProperty(this, "healthBar", undefined);
         PropertyUtils.defineProperty(this, "borderBar", undefined);
+        PropertyUtils.defineProperty(this, "healthText", undefined);
         PropertyUtils.defineProperty(this, "targetObject", undefined);
         // Настройки полосы здоровья - используем утилитарную функцию
         PropertyUtils.defineProperty(this, "barWidth", undefined);
@@ -22,6 +23,8 @@ export class HealthBar extends BaseUIComponent {
         PropertyUtils.defineProperty(this, "offsetX", undefined);
         PropertyUtils.defineProperty(this, "showWhenFull", undefined);
         PropertyUtils.defineProperty(this, "showWhenEmpty", undefined);
+        PropertyUtils.defineProperty(this, "showBar", undefined);
+        PropertyUtils.defineProperty(this, "showDigits", undefined);
         this.targetObject = targetObject;
         // Настройки по умолчанию
         this.barWidth = options.barWidth || this.calculateBarWidth();
@@ -30,6 +33,8 @@ export class HealthBar extends BaseUIComponent {
         this.offsetX = options.offsetX || 0;
         this.showWhenFull = options.showWhenFull || false;
         this.showWhenEmpty = options.showWhenEmpty || true;
+        this.showBar = options.showBar !== false; // По умолчанию включено
+        this.showDigits = options.showDigits || false; // По умолчанию выключено
         // Цвета по умолчанию
         const colors = {
             background: COLORS.BLACK,
@@ -41,8 +46,18 @@ export class HealthBar extends BaseUIComponent {
         this.backgroundBar = scene.add.graphics();
         this.healthBar = scene.add.graphics();
         this.borderBar = scene.add.graphics();
+        
+        // Создаем текстовый элемент для цифрового отображения
+        this.healthText = scene.add.text(0, 0, '', {
+            fontSize: '10px',
+            fontFamily: 'Arial',
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 1
+        }).setOrigin(0.5, 0.5);
+        
         // Добавляем в контейнер
-        this.add([this.backgroundBar, this.healthBar, this.borderBar]);
+        this.add([this.backgroundBar, this.healthBar, this.borderBar, this.healthText]);
         // Настраиваем цвета
         this.setColors(colors);
         // Позиционируем относительно объекта
@@ -87,22 +102,28 @@ export class HealthBar extends BaseUIComponent {
     updateHealth() {
         const healthPercent = this.targetObject.health / this.targetObject.maxHealth;
         
-        // Определяем, нужно ли показывать полосу
+        // Определяем, нужно ли показывать компонент
         const shouldShow = this.shouldShowBar(healthPercent);
         this.setVisible(shouldShow);
         if (!shouldShow)
             return;
+        
         // Обновляем позицию
         this.updatePosition();
-        // Очищаем полосу здоровья
-        this.healthBar.clear();
-        // Вычисляем ширину полосы здоровья
-        const healthWidth = this.barWidth * healthPercent;
-        // Определяем цвет в зависимости от процента здоровья
-        const healthColor = this.getHealthColor(healthPercent);
-        // Рисуем полосу здоровья (центрируем по горизонтали)
-        this.healthBar.fillStyle(healthColor, 0.9);
-        this.healthBar.fillRect(-this.barWidth / 2, 0, healthWidth, this.barHeight);
+        
+        // Обновляем полосу здоровья
+        if (this.showBar) {
+            this.updateHealthBar(healthPercent);
+        } else {
+            this.hideHealthBar();
+        }
+        
+        // Обновляем цифровое отображение
+        if (this.showDigits) {
+            this.updateHealthText();
+        } else {
+            this.hideHealthText();
+        }
     }
     
     /**
@@ -130,6 +151,60 @@ export class HealthBar extends BaseUIComponent {
             return this.showWhenFull;
         return true; // Показываем, если здоровье не полное и не пустое
     }
+    /**
+     * Обновляет полосу здоровья
+     */
+    updateHealthBar(healthPercent) {
+        // Очищаем полосу здоровья
+        this.healthBar.clear();
+        
+        // Вычисляем ширину полосы здоровья
+        const healthWidth = this.barWidth * healthPercent;
+        
+        // Определяем цвет в зависимости от процента здоровья
+        const healthColor = this.getHealthColor(healthPercent);
+        
+        // Рисуем полосу здоровья (центрируем по горизонтали)
+        this.healthBar.fillStyle(healthColor, 0.9);
+        this.healthBar.fillRect(-this.barWidth / 2, 0, healthWidth, this.barHeight);
+    }
+    
+    /**
+     * Скрывает полосу здоровья
+     */
+    hideHealthBar() {
+        this.backgroundBar.clear();
+        this.healthBar.clear();
+        this.borderBar.clear();
+    }
+    
+    /**
+     * Обновляет цифровое отображение здоровья
+     */
+    updateHealthText() {
+        const currentHealth = Math.ceil(this.targetObject.health);
+        const maxHealth = Math.ceil(this.targetObject.maxHealth);
+        
+        this.healthText.setText(`${currentHealth}/${maxHealth}`);
+        this.healthText.setVisible(true);
+        
+        // Позиционируем текст
+        if (this.showBar) {
+            // Если показывается полоса - текст сверху
+            this.healthText.y = -this.barHeight - 8;
+        } else {
+            // Если только цифры - текст по центру
+            this.healthText.y = 0;
+        }
+    }
+    
+    /**
+     * Скрывает цифровое отображение
+     */
+    hideHealthText() {
+        this.healthText.setVisible(false);
+    }
+    
     /**
      * Определяет цвет полосы здоровья в зависимости от процента
      */
@@ -164,6 +239,12 @@ export class HealthBar extends BaseUIComponent {
         if (options.offsetX !== undefined) {
             this.offsetX = options.offsetX;
         }
+        if (options.showBar !== undefined) {
+            this.showBar = options.showBar;
+        }
+        if (options.showDigits !== undefined) {
+            this.showDigits = options.showDigits;
+        }
         this.updateHealth();
     }
     /**
@@ -173,6 +254,7 @@ export class HealthBar extends BaseUIComponent {
         this.backgroundBar.destroy();
         this.healthBar.destroy();
         this.borderBar.destroy();
+        this.healthText.destroy();
         super.destroy();
     }
 }

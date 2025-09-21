@@ -7,10 +7,13 @@ import { GestureActionSystem } from '../systems/GestureActionSystem';
 import { ProbabilitySystem } from '../systems/ProbabilitySystem';
 import { EffectSystem } from '../systems/EffectSystem';
 import { EventSystem } from '../systems/EventSystem.js';
+import { AbilitySystem } from '../systems/AbilitySystem.js';
 import { EffectHandler } from '../handlers/EffectHandler.js';
 import { EVENT_TYPES } from '../types/EventTypes.js';
-import { settings } from '../../config/settings.js';
+import { BACKGROUND_SETTINGS } from '../settings/GameSettings.js';
+import { ABILITIES } from '../types/abilityTypes.js';
 import { BackgroundUtils } from '../utils/BackgroundUtils.js';
+import { AbilitiesDisplay } from '../components/AbilitiesDisplay.js';
 
 /**
  * Основная игровая сцена EggDefense
@@ -23,6 +26,9 @@ export class EggDefense extends Phaser.Scene {
     }
 
     create() {
+        // Сбрасываем флаг окончания игры для корректного рестарта
+        this.isGameEnded = false;
+        
         // Создание игровых объектов
         this.createGameObjects();
         
@@ -43,6 +49,9 @@ export class EggDefense extends Phaser.Scene {
         // Система событий (центральная)
         this.eventSystem = new EventSystem();
         
+        // Система способностей
+        this.abilitySystem = new AbilitySystem(this);
+        
         // Система вероятности (централизованная)
         this.probabilitySystem = new ProbabilitySystem(this);
         this.probabilitySystem.init();
@@ -50,11 +59,14 @@ export class EggDefense extends Phaser.Scene {
         // Система эффектов (для совместимости)
         this.effectSystem = new EffectSystem(this);
         
+        // Массив защитных объектов (ям)
+        this.defenses = [];
+        
         // Обработчик эффектов (Event-Driven Architecture)
         this.effectHandler = new EffectHandler(this, this.eventSystem);
         
         // Инициализируем системы в классе Enemy
-        Enemy.initDropSystems(this, this.egg, this.probabilitySystem);
+        Enemy.initDropSystems(this, this.egg, this.probabilitySystem, this.abilitySystem);
         Enemy.initEventSystem(this.eventSystem);
         
         // Система волн для спавна врагов
@@ -73,10 +85,27 @@ export class EggDefense extends Phaser.Scene {
         this.gestureActionSystem = new GestureActionSystem(
             this, 
             this.waveSystem.enemies, 
-            [], // defenses - пока пустой
+            this.defenses, // Передаем реальный массив защитных объектов
             this.egg,
-            Enemy.itemDropSystem // Передаем ItemDropSystem для обработки предметов
+            Enemy.itemDropSystem, // Передаем ItemDropSystem для обработки предметов
+            this.abilitySystem // Передаем AbilitySystem для получения актуальных значений
         );
+        
+        // Передаем систему способностей яйцу
+        if (this.egg && this.abilitySystem) {
+            this.egg.abilitySystem = this.abilitySystem;
+            this.egg.scene.events.on('ability:upgraded', this.egg.onAbilityUpgraded, this.egg);
+            
+            // Инициализируем способности если они разблокированы
+            this.egg.updateAura();
+            this.egg.updateEggExplosion();
+            
+            // Для тестирования - прокачиваем взрыв яйца
+            if (this.egg.eggExplosion <= 0) {
+                this.abilitySystem.upgradeAbility('EGG_EXPLOSION');
+                this.egg.updateEggExplosion();
+            }
+        }
         
         // Устанавливаем яйцо как цель для волновой системы
         this.waveSystem.setTarget(this.egg);
@@ -87,17 +116,22 @@ export class EggDefense extends Phaser.Scene {
      */
     createGameObjects() {
         // Создание травяного фона
-        this.grassBackground = BackgroundUtils.createAnimatedGrassBackground(this, settings.game.background);
+        this.grassBackground = BackgroundUtils.createAnimatedGrassBackground(this, BACKGROUND_SETTINGS);
         
         // Устанавливаем фон на самый нижний слой
         this.grassBackground.setDepth(-100);
         
-        // Создание яйца в центре экрана
+        // Создание яйца в центре экрана (abilitySystem будет передан позже)
         this.egg = Egg.CreateEgg(
             this, 
             this.scale.width / 2, 
             this.scale.height / 2,
-            settings.game.egg
+            {
+                health: ABILITIES.EGG_HEALTH.baseValue,
+                texture: '🥚',
+                spriteKey: 'egg',
+                size: 2
+            }
         );
         
     }
@@ -106,7 +140,16 @@ export class EggDefense extends Phaser.Scene {
      * Настройка UI
      */
     setupUI() {
-        // UI удален по запросу пользователя
+        // Создаем дисплей способностей в правом верхнем углу
+        this.abilitiesDisplay = new AbilitiesDisplay(
+            this,
+            this.scale.width - 100, // Сдвинули левее от правого края
+            100, // Отступ от верхнего края
+            this.abilitySystem // Передаем систему способностей
+        );
+        
+        // Устанавливаем высокую глубину, чтобы было поверх игры
+        this.abilitiesDisplay.setDepth(1000);
     }
 
     /**
@@ -129,7 +172,7 @@ export class EggDefense extends Phaser.Scene {
         // Обновляем списки объектов в системе действий
         this.gestureActionSystem.updateObjects(
             this.waveSystem.enemies, 
-            [] // defenses - пока пустой
+            this.defenses // Передаем реальный массив защитных объектов
         );
         
         // Обрабатываем жест
@@ -179,7 +222,7 @@ export class EggDefense extends Phaser.Scene {
         this.showGameResult(won);
         
         // Возвращаемся в меню через заданное время
-        // this.time.delayedCall(settings.game.endGameDelay, () => {
+        // this.time.delayedCall(GAME_SETTINGS.endGameDelay, () => {
         //     this.scene.start('MenuScene');
         // });
     }
@@ -341,8 +384,28 @@ export class EggDefense extends Phaser.Scene {
             this.waveSystem.updateEnemies(time, delta);
         }
         
+        // Обновляем дисплей способностей
+        if (this.abilitiesDisplay) {
+            this.abilitiesDisplay.update(time, delta);
+        }
+        
         // Проверяем условия окончания игры
         this.checkGameEnd();
+    }
+
+    /**
+     * Очищает все защитные объекты (ямы)
+     */
+    clearDefenses() {
+        if (this.defenses && this.defenses.length > 0) {
+            console.log(`🧹 Очищаем ${this.defenses.length} защитных объектов`);
+            this.defenses.forEach(defense => {
+                if (defense && defense.destroy) {
+                    defense.destroy();
+                }
+            });
+            this.defenses = [];
+        }
     }
 
     /**
@@ -360,6 +423,10 @@ export class EggDefense extends Phaser.Scene {
         }
         
         // Уничтожаем все системы
+        if (this.abilitySystem) {
+            this.abilitySystem.destroy();
+        }
+        
         if (this.waveSystem) {
             this.waveSystem.destroy();
         }
@@ -372,8 +439,15 @@ export class EggDefense extends Phaser.Scene {
             this.itemDropSystem.destroy();
         }
         
+        // Очищаем защитные объекты (ямы)
+        this.clearDefenses();
+        
         if (this.effectSystem) {
             this.effectSystem.clearAllEffects();
+        }
+        
+        if (this.abilitiesDisplay) {
+            this.abilitiesDisplay.destroy();
         }
     }
 }

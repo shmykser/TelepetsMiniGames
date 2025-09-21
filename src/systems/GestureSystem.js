@@ -1,5 +1,5 @@
 import { GeometryUtils } from '../utils/GeometryUtils.js';
-import { GESTURE_CONSTANTS } from '../constants/GameConstants.js';
+import { GESTURE_CONSTANTS } from '../types/gestureTypes.js';
 import { QDollarRecognizer, Point } from '../utils/qdollar.js';
 
 /**

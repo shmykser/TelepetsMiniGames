@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { settings } from '@config/settings';
+import { PHASER_SETTINGS } from '@/settings/GameSettings';
 import { PreloadScene } from '@/scenes/PreloadScene';
 import { MenuScene } from '@/scenes/MenuScene';
 import { EggDefense } from '@/scenes/EggDefense';
@@ -10,23 +10,23 @@ import { TestGestures } from '@/scenes/TestGestures';
 import { initTelegram } from './telegram/TelegramInit';
 const config = {
     type: Phaser.AUTO,
-    backgroundColor: settings.backgroundColor,
+    backgroundColor: PHASER_SETTINGS.backgroundColor,
     scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        width: settings.width,
-        height: settings.height,
+        width: PHASER_SETTINGS.width,
+        height: PHASER_SETTINGS.height,
         parent: 'game',
         min: {
-            width: settings.responsive.minWidth,
-            height: settings.responsive.minHeight
+            width: PHASER_SETTINGS.responsive.minWidth,
+            height: PHASER_SETTINGS.responsive.minHeight
         },
         max: {
-            width: settings.responsive.maxWidth,
-            height: settings.responsive.maxHeight
+            width: PHASER_SETTINGS.responsive.maxWidth,
+            height: PHASER_SETTINGS.responsive.maxHeight
         }
     },
-    physics: settings.physics,
+    physics: PHASER_SETTINGS.physics,
     scene: [PreloadScene, MenuScene, EggDefense, TestEffects, SpriteTestScene, DemoComponents, TestGestures],
     render: {
         pixelArt: false,

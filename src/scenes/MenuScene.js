@@ -1,4 +1,3 @@
-import { settings } from '../../config/settings.js';
 import { BackgroundUtils } from '../utils/BackgroundUtils.js';
 
 export class MenuScene extends Phaser.Scene {

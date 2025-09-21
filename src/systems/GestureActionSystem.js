@@ -1,18 +1,19 @@
 import { GESTURE_ACTIONS, TARGET_TYPES, TARGET_SETTINGS } from '../types/gestureTypes';
-import { DAMAGE_CONSTANTS, EFFECT_CONSTANTS } from '../constants/GameConstants.js';
 import { GeometryUtils } from '../utils/GeometryUtils.js';
+import { Defense } from '../objects/Defense.js';
 
 /**
  * Система обработки жестов и выполнения действий
  * Следует принципу Single Responsibility Principle
  */
 export class GestureActionSystem {
-    constructor(scene, enemies, defenses, egg = null, itemDropSystem = null) {
+    constructor(scene, enemies, defenses, egg = null, itemDropSystem = null, abilitySystem = null) {
         this.scene = scene;
         this.enemies = enemies;
         this.defenses = defenses;
         this.egg = egg;
         this.itemDropSystem = itemDropSystem;
+        this.abilitySystem = abilitySystem;
     }
     
     /**
@@ -150,21 +151,20 @@ export class GestureActionSystem {
         try {
             switch (action.name) {
                 case 'damage_enemy':
-                    return this.damageEnemy(target.object, action.damage);
+                    // Если damage не указан в action, используем AbilitySystem
+                    const damage = action.damage || this.abilitySystem?.getTapDamage() || 5;
+                    return this.damageEnemy(target.object, damage);
                     
                 case 'critical_damage':
-                    return this.damageEnemy(target.object, DAMAGE_CONSTANTS.TAP_DAMAGE);
+                    return this.damageEnemy(target.object, this.abilitySystem?.getTapDamage() || 5);
                     
-                case 'protect_egg':
-                    console.log(`🛡️ ${gesture.type} → Защитить яйцо (щит: ${action.shield})`);
-                    return true;
+                case 'activate_egg_explosion':
+                    console.log(`💥 ${gesture.type} → Активировать взрыв яйца`);
+                    return this.activateEggExplosion(target.object);
                     
                 case 'collect_item':
                     console.log(`💎 Распознан жест: ${gesture.type} → Собираем предмет`);
-                    if (this.itemDropSystem) {
-                        return this.itemDropSystem.collectItem(target.object);
-                    }
-                    return false;
+                    return this.collectItem(target.object);
                     
                 case 'place_defense':
                     console.log(`🏗️ ${gesture.type} → Установить защиту (тип: ${action.defenseType})`);
@@ -186,9 +186,8 @@ export class GestureActionSystem {
                     console.log(`🛡️ ${gesture.type} → Щит для яйца (длительность: ${action.shieldDuration}мс, сила: ${action.shieldStrength})`);
                     return true;
                     
-                case 'create_wall':
-                    console.log(`🧱 ${gesture.type} → Создать стену (тип: ${action.wallType})`);
-                    return true;
+                case 'create_pit':
+                    return this.placePit(gesture.x, gesture.y);
                     
                 case 'damage_wave':
                     console.log(`🌊 ${gesture.type} → Волна урона (урон: ${action.damage}, дальность: ${action.range})`);
@@ -210,7 +209,11 @@ export class GestureActionSystem {
      * @param {number} damage - Количество урона
      * @returns {boolean} Успешность атаки
      */
-    damageEnemy(enemy, damage = DAMAGE_CONSTANTS.TAP_DAMAGE) {
+    damageEnemy(enemy, damage = null) {
+        // Если урон не указан, берем из AbilitySystem или используем базовое значение
+        if (damage === null) {
+            damage = this.abilitySystem?.getTapDamage() || 5;
+        }
         if (!enemy || !enemy.isAlive) {
             return false;
         }
@@ -221,55 +224,33 @@ export class GestureActionSystem {
     
     
     /**
-     * Взрыв в области
-     * @param {number} x - X координата взрыва
-     * @param {number} y - Y координата взрыва
-     * @param {number} radius - Радиус взрыва
-     * @param {number} damage - Урон от взрыва
-     * @returns {boolean} Успешность взрыва
+     * Активирует взрыв яйца
+     * @param {Object} egg - Объект яйца
+     * @returns {boolean} Успешность активации
      */
-    explosion(x, y, radius = EFFECT_CONSTANTS.EXPLOSION_RADIUS, damage = DAMAGE_CONSTANTS.EXPLOSION_DAMAGE) {
-        // Находим врагов в радиусе взрыва
-        const enemiesInRange = GeometryUtils.findObjectsInRadius(this.enemies, x, y, radius, (enemy) => enemy.isAlive);
-        enemiesInRange.forEach(enemy => {
-            this.damageEnemy(enemy, damage);
-        });
+    activateEggExplosion(egg) {
+        if (!egg || !egg.activateEggExplosion) {
+            return false;
+        }
         
-        return true;
+        return egg.activateEggExplosion();
     }
     
     /**
-     * Волна урона для линейных жестов
-     * @param {number} x - X координата волны
-     * @param {number} y - Y координата волны
-     * @param {Object} gesture - Объект жеста с координатами линии
-     * @param {number} damage - Урон от волны
-     * @param {number} range - Дальность волны
-     * @returns {boolean} Успешность волны
+     * Собирает предмет
+     * @param {Object} item - Объект предмета
+     * @returns {boolean} Успешность сбора
      */
-    damageWave(x, y, gesture, damage = DAMAGE_CONSTANTS.WAVE_DAMAGE, range = EFFECT_CONSTANTS.WAVE_RANGE) {
-        // Для линейных жестов используем направление линии
-        let direction = 'right'; // По умолчанию
-        
-        if (gesture.type === 'line' && gesture.endX && gesture.endY) {
-            const deltaX = gesture.endX - gesture.x;
-            const deltaY = gesture.endY - gesture.y;
-            
-            // Определяем основное направление
-            if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                direction = deltaX > 0 ? 'right' : 'left';
-            } else {
-                direction = deltaY > 0 ? 'down' : 'up';
-            }
+    collectItem(item) {
+        if (!item || item.isCollected) {
+            return false;
         }
         
-        // Находим врагов в направлении волны
-        const enemiesInWave = GeometryUtils.findObjectsInDirection(this.enemies, x, y, direction, range, (enemy) => enemy.isAlive);
-        enemiesInWave.forEach(enemy => {
-            this.damageEnemy(enemy, damage);
-        });
+        // Активируем эффект предмета
+        item.activate();
         
-        return true;
+        // Собираем предмет
+        return item.collect();
     }
     
     /**
@@ -281,4 +262,147 @@ export class GestureActionSystem {
         this.enemies = enemies;
         this.defenses = defenses;
     }
+    
+    /**
+     * Размещает или расширяет яму по координатам
+     * @param {number} x - Координата X
+     * @param {number} y - Координата Y
+     * @returns {boolean} Успешность операции
+     */
+    placePit(x, y) {
+        if (!this.abilitySystem) {
+            console.log(`🕳️ Нет доступа к системе способностей`);
+            return false;
+        }
+        
+        const shovelCount = this.abilitySystem.getShovelCount();
+        const pitCount = this.abilitySystem.getPitCount();
+        const maxPits = this.abilitySystem.abilities.PIT?.maxValue || 4;
+        
+        // Проверяем, есть ли лопаты
+        if (shovelCount <= 0) {
+            console.log(`🪓 Нет доступных лопат для копания (лопат: ${shovelCount})`);
+            return false;
+        }
+        
+        // Проверяем, есть ли уже яма в этом месте
+        const existingPit = this.findPitAt(x, y);
+        
+        if (existingPit) {
+            // Расширяем существующую яму (pitCount не изменяется)
+            console.log(`🔍 Найдена существующая яма для расширения`);
+            return this.expandPit(existingPit);
+        } else {
+            // Проверяем, можно ли выкопать новую яму
+            if (pitCount >= maxPits) {
+                console.log(`🕳️ Достигнуто максимальное количество ям на поле (${pitCount}/${maxPits})`);
+                return false;
+            }
+            
+            // Создаем новую яму (pitCount увеличивается)
+            console.log(`🆕 Выкапываем новую яму`);
+            return this.digNewPit(x, y);
+        }
+    }
+    
+    /**
+     * Находит яму по координатам
+     * @param {number} x - Координата X
+     * @param {number} y - Координата Y
+     * @returns {Object|null} Найденная яма или null
+     */
+    findPitAt(x, y) {
+        const searchRadius = 50; // Радиус поиска в пикселях
+        
+        if (!this.defenses || this.defenses.length === 0) {
+            return null;
+        }
+        
+        // Используем GeometryUtils для поиска
+        const pit = GeometryUtils.findFirstObjectInRadius(
+            this.defenses, 
+            x, y, 
+            searchRadius,
+            (defense) => defense && defense.defenseType === 'pit' && defense.isAlive
+        );
+        
+        if (pit) {
+            const distance = GeometryUtils.distance(x, y, pit.x, pit.y);
+            console.log(`🎯 Найдена яма в радиусе ${distance.toFixed(1)}px от (${x}, ${y})`);
+        } else {
+            console.log(`🔍 Ям не найдено в радиусе ${searchRadius}px от (${x}, ${y})`);
+        }
+        
+        return pit;
+    }
+    
+    /**
+     * Расширяет существующую яму
+     * @param {Object} pit - Объект ямы
+     * @returns {boolean} Успешность расширения
+     */
+    expandPit(pit) {
+        try {
+            const pitHealthIncrease = this.abilitySystem.getPitHealth();
+            
+            // Увеличиваем здоровье ямы (Defense использует прямое изменение health)
+            const oldHealth = pit.health;
+            const newHealth = Math.min(pit.health + pitHealthIncrease, pit.maxHealth);
+            pit.health = newHealth;
+            
+            // Увеличиваем размер визуально
+            const currentScale = pit.scaleX;
+            const newScale = Math.min(currentScale * 1.2, 3.0); // Максимум в 5 раза больше
+            pit.setScale(newScale);
+            
+            // Обновляем счетчики (только лопаты, pitCount не изменяется)
+            this.abilitySystem.abilities.SHOVEL_COUNT -= 1;
+            
+            console.log(`🕳️ Яма расширена в (${pit.x}, ${pit.y})`);
+            console.log(`💚 Здоровье: ${oldHealth} → ${newHealth} (+${pitHealthIncrease})`);
+            console.log(`📏 Размер: ${currentScale.toFixed(1)} → ${newScale.toFixed(1)}`);
+            console.log(`🪓 Лопат осталось: ${this.abilitySystem.getShovelCount()}`);
+            
+            // Взаимодействие с врагом - заглушка
+            console.log(`⚔️ Взаимодействие с врагами (заглушка)`);
+            
+            return true;
+        } catch (error) {
+            console.error('Ошибка расширения ямы:', error);
+            return false;
+        }
+    }
+    
+    /**
+     * Выкапывает новую яму
+     * @param {number} x - Координата X
+     * @param {number} y - Координата Y
+     * @returns {boolean} Успешность создания
+     */
+    digNewPit(x, y) {
+        try {
+            // Создаем объект ямы через Defense.createDefense
+            const pit = Defense.createDefense(this.scene, 'pit', x, y);
+            
+            // Добавляем в массив защитных объектов сцены
+            this.scene.defenses.push(pit);
+            
+            // Обновляем счетчики
+            this.abilitySystem.abilities.PIT += 1;
+            this.abilitySystem.abilities.SHOVEL_COUNT -= 1;
+            
+            console.log(`🕳️ Яма выкопана в (${x}, ${y}), здоровье: ${pit.health}`);
+            console.log(`🕳️ Ям на поле: ${this.abilitySystem.getPitCount()}`);
+            console.log(`🪓 Лопат осталось: ${this.abilitySystem.getShovelCount()}`);
+            
+            // Взаимодействие с врагом - заглушка
+            console.log(`⚔️ Взаимодействие с врагами (заглушка)`);
+            
+            return true;
+        } catch (error) {
+            console.error('Ошибка создания ямы:', error);
+            return false;
+        }
+    }
+    
 }

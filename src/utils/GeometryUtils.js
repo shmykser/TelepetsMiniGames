@@ -387,7 +387,7 @@ export class GeometryUtils {
             baseRadius = 10; // Минимальный размер 10px
         }
         
-        // Общий радиус = размер объекта + толерантность промаха
+        // Общий радиус = размер объекта + толерантность промаха для данного типа объекта
         const totalRadius = baseRadius + settings.missTolerance;
         
         return totalRadius;

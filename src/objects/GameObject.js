@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { HealthBar } from '../components/HealthBar';
 import { PropertyUtils } from '../utils/PropertyUtils.js';
-import { PHYSICS_CONSTANTS } from '../constants/GameConstants.js';
+import { PHYSICS_CONSTANTS } from '../settings/GameSettings.js';
+import { GeometryUtils } from '../utils/GeometryUtils.js';
 
 export class GameObject extends Phaser.GameObjects.Sprite {
     constructor(scene, config) {
@@ -16,9 +17,13 @@ export class GameObject extends Phaser.GameObjects.Sprite {
         PropertyUtils.defineProperty(this, "_body", undefined);
         PropertyUtils.defineProperty(this, "_healthBar", undefined);
         
+        // Свойства кулдауна
+        PropertyUtils.defineProperty(this, "_cooldown", config.cooldown || 0);
+        PropertyUtils.defineProperty(this, "_lastActionTime", 0);
+        
         // Инициализация базовых свойств
         this._health = config.health;
-        this._maxHealth = config.health;
+        this._maxHealth = config.maxHealth !== undefined ? config.maxHealth : config.health;
         
         // Добавляем в сцену и физику
         scene.add.existing(this);
@@ -37,10 +42,11 @@ export class GameObject extends Phaser.GameObjects.Sprite {
     get maxHealth() { return this._maxHealth; }
     get isAlive() { return this._isAlive; }
     get physicsBody() { return this._body; }
+    get cooldown() { return this._cooldown; }
     
     // Сеттеры - только базовые для всех объектов
     set health(value) {
-        this._health = Math.max(0, Math.min(value, this._maxHealth));
+        this._health = Math.max(0, Math.min(value, this.maxHealth));
         this.updateHealthBar();
         if (this._health <= 0) {
             this.die();
@@ -171,5 +177,107 @@ export class GameObject extends Phaser.GameObjects.Sprite {
         // Очищаем
         text.destroy();
         renderTexture.destroy();
+    }
+    
+    // ========== МЕТОДЫ АТАКИ В РАДИУСЕ ==========
+    
+    /**
+     * Универсальный метод нанесения урона в радиусе
+     * @param {number} damage - Урон для нанесения
+     * @param {number} radius - Радиус атаки в пикселях
+     * @param {Array} targets - Массив целей для атаки
+     * @param {Function} targetFilter - Функция фильтрации целей (опционально)
+     * @param {string} attackType - Тип атаки для логирования (опционально)
+     * @returns {number} Количество пораженных целей
+     */
+    damageInRadius(damage, radius, targets, targetFilter = null, attackType = 'attack') {
+        if (!this.isAlive || !this.scene || !targets || targets.length === 0) {
+            return 0;
+        }
+        
+        // Определяем фильтр по умолчанию - только живые объекты
+        const defaultFilter = (target) => target && target.isAlive;
+        const filter = targetFilter || defaultFilter;
+        
+        // Находим цели в радиусе
+        const targetsInRadius = GeometryUtils.findObjectsInRadius(
+            targets,
+            this.x,
+            this.y,
+            radius,
+            filter
+        );
+        
+        if (targetsInRadius.length === 0) {
+            return 0;
+        }
+        
+        // Наносим урон каждой цели
+        let hitCount = 0;
+        targetsInRadius.forEach((target, index) => {
+            if (target.takeDamage && typeof target.takeDamage === 'function') {
+                target.takeDamage(damage);
+                hitCount++;
+                
+                // Эмитим событие атаки
+                this.emit(`${attackType}:hit`, {
+                    attacker: this,
+                    target: target,
+                    damage: damage,
+                    index: index
+                });
+            }
+        });
+        
+        // Эмитим общее событие атаки в радиусе
+        this.emit(`${attackType}:radius`, {
+            attacker: this,
+            damage: damage,
+            radius: radius,
+            hitCount: hitCount,
+            totalTargets: targetsInRadius.length,
+            position: { x: this.x, y: this.y }
+        });
+        
+        return hitCount;
+    }
+    
+    
+    // ========== МЕТОДЫ КУЛДАУНА ==========
+    
+    /**
+     * Проверяет, готов ли объект к действию (прошел ли кулдаун)
+     * @param {number} currentTime - Текущее время (обычно scene.time.now)
+     * @returns {boolean} true если кулдаун прошел
+     */
+    isActionReady(currentTime) {
+        if (this._cooldown <= 0) return true;
+        return (currentTime - this._lastActionTime) >= this._cooldown;
+    }
+    
+    /**
+     * Устанавливает время последнего действия (сбрасывает кулдаун)
+     * @param {number} currentTime - Текущее время (обычно scene.time.now)
+     */
+    setLastActionTime(currentTime) {
+        this._lastActionTime = currentTime;
+    }
+    
+    /**
+     * Получает оставшееся время кулдауна в миллисекундах
+     * @param {number} currentTime - Текущее время (обычно scene.time.now)
+     * @returns {number} Оставшееся время или 0 если кулдаун прошел
+     */
+    getCooldownRemaining(currentTime) {
+        if (this._cooldown <= 0) return 0;
+        return Math.max(0, this._cooldown - (currentTime - this._lastActionTime));
+    }
+    
+    /**
+     * Устанавливает новый кулдаун
+     * @param {number} newCooldown - Новое значение кулдауна в миллисекундах
+     */
+    setCooldown(newCooldown) {
+        this._cooldown = Math.max(0, newCooldown);
     }
 }

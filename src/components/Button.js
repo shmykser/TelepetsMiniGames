@@ -1,5 +1,5 @@
 import { BaseUIComponent } from './BaseUIComponent.js';
-import { UI_CONSTANTS } from '../constants/GameConstants.js';
+import { UI_CONSTANTS } from '../settings/GameSettings.js';
 
 /**
  * Компонент кнопки

@@ -2,7 +2,7 @@ import { GameObject } from './GameObject';
 import { enemyTypes } from '../types/enemyTypes';
 import { PropertyUtils } from '../utils/PropertyUtils.js';
 import { GeometryUtils } from '../utils/GeometryUtils.js';
-import { PHYSICS_CONSTANTS, COLORS } from '../constants/GameConstants.js';
+import { PHYSICS_CONSTANTS, COLORS } from '../settings/GameSettings.js';
 import { ItemDropSystem } from '../systems/ItemDropSystem.js';
 import { EVENT_TYPES } from '../types/EventTypes.js';
 export class Enemy extends GameObject {
@@ -271,8 +271,8 @@ export class Enemy extends GameObject {
     /**
      * Статический метод для инициализации систем дропа
      */
-    static initDropSystems(scene, egg, probabilitySystem) {
-        Enemy.itemDropSystem = new ItemDropSystem(scene, egg, probabilitySystem);
+    static initDropSystems(scene, egg, probabilitySystem, abilitySystem = null) {
+        Enemy.itemDropSystem = new ItemDropSystem(scene, egg, probabilitySystem, abilitySystem);
         Enemy.probabilitySystem = probabilitySystem;
     }
     
@@ -307,6 +307,9 @@ export class Enemy extends GameObject {
         // Настраиваем размер на основе усиленного размера
         const enemySize = PHYSICS_CONSTANTS.BASE_ENEMY_SIZE * enhancedSize;
         enemy.setScale(enemySize / PHYSICS_CONSTANTS.DEFAULT_TEXTURE_SIZE);
+        
+        // Устанавливаем глубину отрисовки (поверх защиты)
+        enemy.setDepth(30);
         
         // Создаем полосу здоровья
         enemy.createHealthBar({

@@ -13,6 +13,9 @@ export class PreloadScene extends Phaser.Scene {
         
         // Загружаем спрайты врагов
         this.loadEnemySprites();
+
+        // Загружаем спрайты предметов
+        this.loadItemSprites();
         
         // Загружаем другие ассеты (если есть)
         this.loadOtherAssets();
@@ -64,12 +67,33 @@ export class PreloadScene extends Phaser.Scene {
         });
     }
 
+    loadItemSprites() {
+        const itemTypes = ['heart', 'clover', 'patch', 'doublepatch', 'shovel']; // все предметы со спрайтами
+        const sizes = ['32x32', '64x64', '128x128'];
+        
+        itemTypes.forEach(itemType => {
+            sizes.forEach(size => {
+                const textureKey = `${itemType}_${size}`;
+                const texturePath = `/TelepetsMiniGames/assets/graphics/sprites/item/${itemType}_${size}.png`;
+                
+                try {
+                    this.load.image(textureKey, texturePath);
+                } catch (error) {
+                    console.log(`Item sprite not found: ${texturePath}`);
+                }
+            });
+        });
+    }
+
     loadOtherAssets() {
         // Здесь можно добавить загрузку других ассетов
         // Например, спрайты защиты, UI элементы и т.д.
         
-        // Загружаем спрайты защиты (если есть)
+        // Загружаем спрайты защиты
         this.loadDefenseSprites();
+        
+        // Загружаем спрайты яйца
+        this.loadEggSprites();
         
         // Загружаем текстуры фона
         this.loadBackgroundTextures();
@@ -77,7 +101,7 @@ export class PreloadScene extends Phaser.Scene {
 
     loadDefenseSprites() {
         // Проверяем, есть ли спрайты защиты в папке
-        const defenseTypes = ['sugar', 'stone', 'barrier', 'spikes'];
+        const defenseTypes = ['donut', 'stone', 'shell', 'pit']; // Обновлен список согласно defenseTypes.js
         const sizes = ['32x32', '64x64', '128x128'];
         
         defenseTypes.forEach(defenseType => {
@@ -92,6 +116,22 @@ export class PreloadScene extends Phaser.Scene {
                     console.log(`Defense sprite not found: ${texturePath}`);
                 }
             });
+        });
+    }
+    
+    loadEggSprites() {
+        // Загружаем спрайты яйца
+        const sizes = ['32x32', '64x64', '128x128'];
+        
+        sizes.forEach(size => {
+            const textureKey = `egg_${size}`;
+            const texturePath = `/TelepetsMiniGames/assets/graphics/sprites/egg/egg_${size}.png`;
+            
+            try {
+                this.load.image(textureKey, texturePath);
+            } catch (error) {
+                console.log(`Egg sprite not found: ${texturePath}`);
+            }
         });
     }
     
