@@ -1,4 +1,4 @@
-import { settings } from '@config/settings';
+import { settings } from '../../config/settings.js';
 import WebApp from '@twa-dev/sdk';
 export function initTelegram() {
     if (!settings.telegram.enabled)
