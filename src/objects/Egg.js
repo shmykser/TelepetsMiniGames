@@ -1,4 +1,4 @@
-import { GameObject } from './GameObject';
+import { GameObject } from './GameObject.js';
 import { PHYSICS_CONSTANTS, COLORS } from '../settings/GameSettings.js';
 export class Egg extends GameObject {
     // Яйцо - статичный объект без вылупления

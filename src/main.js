@@ -1,13 +1,13 @@
 import Phaser from 'phaser';
-import { PHASER_SETTINGS } from '@/settings/GameSettings';
-import { PreloadScene } from '@/scenes/PreloadScene';
-import { MenuScene } from '@/scenes/MenuScene';
-import { EggDefense } from '@/scenes/EggDefense';
-import { TestEffects } from '@/scenes/TestEffects';
-import { SpriteTestScene } from '@/scenes/SpriteTestScene';
-import { DemoComponents } from '@/scenes/DemoComponents';
-import { TestGestures } from '@/scenes/TestGestures';
-import { initTelegram } from './telegram/TelegramInit';
+import { PHASER_SETTINGS } from './settings/GameSettings.js';
+import { PreloadScene } from './scenes/PreloadScene.js';
+import { MenuScene } from './scenes/MenuScene.js';
+import { EggDefense } from './scenes/EggDefense.js';
+import { TestEffects } from './scenes/TestEffects.js';
+import { SpriteTestScene } from './scenes/SpriteTestScene.js';
+import { DemoComponents } from './scenes/DemoComponents.js';
+import { TestGestures } from './scenes/TestGestures.js';
+import { initTelegram } from './telegram/TelegramInit.js';
 const config = {
     type: Phaser.AUTO,
     backgroundColor: PHASER_SETTINGS.backgroundColor,

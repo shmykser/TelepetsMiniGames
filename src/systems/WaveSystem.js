@@ -1,4 +1,4 @@
-import { Enemy } from '../objects/Enemy';
+import { Enemy } from '../objects/Enemy.js';
 import { enemyTypes } from '../types/enemyTypes';
 import { enemyTypesByMinute, enemyWeights, SPAWN_CONSTANTS, SPAWN_SETTINGS, WAVE_SETTINGS } from '../types/waveTypes.js';
 import { GeometryUtils } from '../utils/GeometryUtils.js';

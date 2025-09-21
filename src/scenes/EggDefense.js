@@ -1,11 +1,11 @@
 import Phaser from 'phaser';
-import { Egg } from '../objects/Egg';
-import { Enemy } from '../objects/Enemy';
-import { WaveSystem } from '../systems/WaveSystem';
-import { GestureSystem } from '../systems/GestureSystem';
-import { GestureActionSystem } from '../systems/GestureActionSystem';
-import { ProbabilitySystem } from '../systems/ProbabilitySystem';
-import { EffectSystem } from '../systems/EffectSystem';
+import { Egg } from '../objects/Egg.js';
+import { Enemy } from '../objects/Enemy.js';
+import { WaveSystem } from '../systems/WaveSystem.js';
+import { GestureSystem } from '../systems/GestureSystem.js';
+import { GestureActionSystem } from '../systems/GestureActionSystem.js';
+import { ProbabilitySystem } from '../systems/ProbabilitySystem.js';
+import { EffectSystem } from '../systems/EffectSystem.js';
 import { EventSystem } from '../systems/EventSystem.js';
 import { AbilitySystem } from '../systems/AbilitySystem.js';
 import { EffectHandler } from '../handlers/EffectHandler.js';

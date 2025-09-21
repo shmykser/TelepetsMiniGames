@@ -2,7 +2,7 @@
  * Сцена тестирования рисования с распознаванием жестов
  * Позволяет рисовать фигуры и распознавать их с помощью $Q
  */
-import { QDollarRecognizer, Point } from '@/utils/qdollar.js';
+import { QDollarRecognizer, Point } from '../utils/qdollar.js';
 
 export class TestGestures extends Phaser.Scene {
     constructor() {

@@ -51,7 +51,7 @@ export class MenuScene extends Phaser.Scene {
         
         // Кнопка запуска игры
         const gameButtonY = subtitleY + (isSmallMobile ? 80 : (isMobile ? 100 : 120));
-        const gameButton = this.add.rectangle(width / 2, gameButtonY, 250, 60, 0x27ae60)
+        const gameButton = this.add.rectangle(width / 2, gameButtonY, 200, 45, 0x27ae60)
             .setInteractive()
             .on('pointerdown', () => {
                 this.scene.start('EggDefense');
@@ -65,8 +65,8 @@ export class MenuScene extends Phaser.Scene {
         }).setOrigin(0.5);
         
         // Кнопка тестирования эффектов
-        const testButtonY = gameButtonY + 80;
-        const testButton = this.add.rectangle(width / 2, testButtonY, 250, 60, 0x8e44ad)
+        const testButtonY = gameButtonY + 65;
+        const testButton = this.add.rectangle(width / 2, testButtonY, 200, 45, 0x8e44ad)
             .setInteractive()
             .on('pointerdown', () => {
                 this.scene.start('TestEffects');
@@ -80,8 +80,8 @@ export class MenuScene extends Phaser.Scene {
         }).setOrigin(0.5);
         
         // Кнопка тестирования спрайтов
-        const spriteTestButtonY = testButtonY + 80;
-        const spriteTestButton = this.add.rectangle(width / 2, spriteTestButtonY, 250, 60, 0x16a085)
+        const spriteTestButtonY = testButtonY + 65;
+        const spriteTestButton = this.add.rectangle(width / 2, spriteTestButtonY, 200, 45, 0x16a085)
             .setInteractive()
             .on('pointerdown', () => {
                 this.scene.start('SpriteTestScene');
@@ -95,8 +95,8 @@ export class MenuScene extends Phaser.Scene {
         }).setOrigin(0.5);
         
         // Кнопка демо компонентов
-        const demoButtonY = spriteTestButtonY + 80;
-        const demoButton = this.add.rectangle(width / 2, demoButtonY, 250, 60, 0x3498db)
+        const demoButtonY = spriteTestButtonY + 65;
+        const demoButton = this.add.rectangle(width / 2, demoButtonY, 200, 45, 0x3498db)
             .setInteractive()
             .on('pointerdown', () => {
                 this.scene.start('DemoComponents');
@@ -110,8 +110,8 @@ export class MenuScene extends Phaser.Scene {
         }).setOrigin(0.5);
         
         // Кнопка тестирования жестов
-        const gesturesButtonY = demoButtonY + 80;
-        const gesturesButton = this.add.rectangle(width / 2, gesturesButtonY, 250, 60, 0x8e44ad)
+        const gesturesButtonY = demoButtonY + 65;
+        const gesturesButton = this.add.rectangle(width / 2, gesturesButtonY, 200, 45, 0x8e44ad)
             .setInteractive()
             .on('pointerdown', () => {
                 this.scene.start('TestGestures');
@@ -125,8 +125,8 @@ export class MenuScene extends Phaser.Scene {
         }).setOrigin(0.5);
         
         // Кнопка перезагрузки ассетов
-        const reloadButtonY = gesturesButtonY + 80;
-        const reloadButton = this.add.rectangle(width / 2, reloadButtonY, 250, 60, 0xe67e22)
+        const reloadButtonY = gesturesButtonY + 65;
+        const reloadButton = this.add.rectangle(width / 2, reloadButtonY, 200, 45, 0xe67e22)
             .setInteractive()
             .on('pointerdown', () => {
                 this.scene.start('PreloadScene');
@@ -140,7 +140,7 @@ export class MenuScene extends Phaser.Scene {
         }).setOrigin(0.5);
         
         // Инструкции по управлению
-        const instructionY = reloadButtonY + 80;
+        const instructionY = reloadButtonY + 65;
         this.add.text(width / 2, instructionY, 'Управление:', {
             fontSize: instructionFontSize,
             fill: '#ffffff',

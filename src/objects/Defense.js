@@ -1,4 +1,4 @@
-import { GameObject } from './GameObject';
+import { GameObject } from './GameObject.js';
 import { defenseTypes } from '../types/defenseTypes';
 import { PropertyUtils } from '../utils/PropertyUtils.js';
 import { PHYSICS_CONSTANTS, COLORS } from '../settings/GameSettings.js';

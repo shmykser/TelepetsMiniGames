@@ -1,4 +1,4 @@
-import { GameObject } from './GameObject';
+import { GameObject } from './GameObject.js';
 import { ITEMS, ITEM_TYPES, ITEM_CONSTANTS } from '../types/itemTypes';
 import { GeometryUtils } from '../utils/GeometryUtils.js';
 

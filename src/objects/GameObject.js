@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { HealthBar } from '../components/HealthBar';
+import { HealthBar } from '../components/HealthBar.js';
 import { PropertyUtils } from '../utils/PropertyUtils.js';
 import { PHYSICS_CONSTANTS } from '../settings/GameSettings.js';
 import { GeometryUtils } from '../utils/GeometryUtils.js';

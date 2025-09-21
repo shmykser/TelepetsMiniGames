@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { Enemy } from '../objects/Enemy';
-import { EffectSystem } from '../systems/EffectSystem';
+import { Enemy } from '../objects/Enemy.js';
+import { EffectSystem } from '../systems/EffectSystem.js';
 import { enemyTypes } from '../types/enemyTypes';
 
 /**

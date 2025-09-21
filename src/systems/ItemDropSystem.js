@@ -1,4 +1,4 @@
-import { Item } from '../objects/Item';
+import { Item } from '../objects/Item.js';
 import { ITEM_TYPES, ITEMS } from '../types/itemTypes';
 
 /**
