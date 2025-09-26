@@ -35,7 +35,6 @@ export class OrbitalMovementStrategy {
         this.directionChangeCooldown = 1000; // Задержка между сменами направления (1 секунда)
         this.initialDirectionSet = false; // Флаг, что начальное направление уже установлено
         
-        console.log(`🔄 [OrbitalMovementStrategy] Создана с параметрами: радиус=${this.minOrbitRadius}-${this.maxOrbitRadius}, скорость=${this.speed}, подход=${this.approachDistance}`);
     }
 
     /**
@@ -56,11 +55,6 @@ export class OrbitalMovementStrategy {
         // Проверяем столкновения с границами экрана и меняем направление
         this.checkBoundaryCollisions(time, delta);
 
-        // Добавляем отладочную информацию о позиции
-        if (time - this.lastDebugTime > 2000) {
-            console.log(`🔄 [OrbitalMovement] Позиция: оса(${this.gameObject.x.toFixed(1)}, ${this.gameObject.y.toFixed(1)}), цель(${this.currentTarget.x.toFixed(1)}, ${this.currentTarget.y.toFixed(1)}), расстояние=${distance.toFixed(1)}`);
-            this.lastDebugTime = time;
-        }
 
         // Определяем, какой тип движения использовать
         if (distance > this.approachDistance) {
@@ -101,7 +95,6 @@ export class OrbitalMovementStrategy {
         if (!this.initialDirectionSet) {
             this.orbitDirection = Phaser.Math.Between(0, 1) === 0 ? -1 : 1;
             this.initialDirectionSet = true;
-            console.log(`🔄 [OrbitalMovementStrategy] Начало орбиты: радиус=${this.currentOrbitRadius}, направление=${this.orbitDirection === 1 ? 'по часовой' : 'против часовой'}`);
         }
         
         // Вычисляем начальный угол на основе текущей позиции
@@ -132,7 +125,6 @@ export class OrbitalMovementStrategy {
                 // При столкновении меняем направление орбитального движения
                 this.orbitDirection *= -1;
                 this.lastDirectionChangeTime = time;
-                console.log(`🔄 [OrbitalMovement] Столкновение с границей, смена направления орбиты: ${this.orbitDirection > 0 ? 'по часовой стрелке' : 'против часовой стрелки'}`);
             }
         }
     }
@@ -210,12 +202,6 @@ export class OrbitalMovementStrategy {
         const velocityX = Math.cos(tangentAngle) * orbitalSpeed;
         const velocityY = Math.sin(tangentAngle) * orbitalSpeed;
 
-        // Отладочная информация (каждые 2 секунды)
-        if (time - this.lastDebugTime > 2000) {
-            const directionText = this.orbitDirection > 0 ? 'по часовой' : 'против часовой';
-            console.log(`🔄 [OrbitalMovement] Орбитальное движение: расстояние=${currentDistance.toFixed(1)}, угол=${(currentAngle * 180 / Math.PI).toFixed(1)}°, направление=${directionText}`);
-            this.lastDebugTime = time;
-        }
 
         this.setVelocity(velocityX, velocityY);
         this.rotateToTarget();
@@ -323,7 +309,6 @@ export class OrbitalMovementStrategy {
                 target.y - this.gameObject.y
             );
             this.orbitAngle = Math.atan2(direction.y, direction.x);
-            console.log(`🔄 [OrbitalMovementStrategy] Цель установлена: (${target.x.toFixed(1)}, ${target.y.toFixed(1)})`);
         }
     }
 

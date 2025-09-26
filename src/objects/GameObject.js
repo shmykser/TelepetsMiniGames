@@ -95,6 +95,9 @@ export class GameObject extends Phaser.GameObjects.Sprite {
             this._healthBar.destroy();
         }
         this._healthBar = new HealthBar(this.scene, this, options);
+        
+        // Добавляем healthBar в сцену
+        this.scene.add.existing(this._healthBar);
     }
     
     updateHealthBar() {

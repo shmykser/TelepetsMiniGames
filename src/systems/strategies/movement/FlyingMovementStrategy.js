@@ -23,8 +23,6 @@ export class FlyingMovementStrategy {
         this.flightTime = 0;
         this.baseDirection = { x: 0, y: 0 };
         
-        // Диагностический лог параметров
-        console.log(`🦟 FLYING INIT: speed=${this.speed}, attackRange=${this.attackRange}, amplitude=${this.amplitude}, oscillationSpeed=${this.oscillationSpeed}, targetAttraction=${this.targetAttraction}`);
     }
 
     /**

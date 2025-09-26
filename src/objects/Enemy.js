@@ -285,6 +285,11 @@ export class Enemy extends GameObject {
      * Переопределяем die() для обработки дропа предметов и эффектов
      */
     die() {
+        // Останавливаем AICoordinator перед смертью
+        if (this._aiCoordinator) {
+            this._aiCoordinator.isActive = false;
+        }
+        
         // Применяем эффект взрыва при смерти
         if (Enemy.effectSystem) {
             Enemy.effectSystem.applyEffect('explosion', this, {
@@ -294,6 +299,9 @@ export class Enemy extends GameObject {
             });
         }
         
+        // Обрабатываем дроп предметов перед смертью
+        this.handleItemDrop();
+        
         // Отправляем событие смерти
         if (Enemy.eventSystem) {
             Enemy.eventSystem.emit(EVENT_TYPES.ENEMY_DEATH, {
@@ -301,9 +309,6 @@ export class Enemy extends GameObject {
                 position: { x: this.x, y: this.y }
             });
         }
-        
-        // Обрабатываем дроп предметов перед смертью
-        this.handleItemDrop();
         
         // Вызываем родительский метод
         super.die();
@@ -317,7 +322,9 @@ export class Enemy extends GameObject {
     handleItemDrop() {
         if (Enemy.itemDropSystem && Enemy.probabilitySystem) {
             // Проверяем вероятность дропа через ProbabilitySystem
-            if (Enemy.probabilitySystem.rollItemDrop(this.enemyType)) {
+            const shouldDrop = Enemy.probabilitySystem.rollItemDrop(this.enemyType);
+            
+            if (shouldDrop) {
                 Enemy.itemDropSystem.dropRandomItem(this.x, this.y);
             }
         }
@@ -347,8 +354,6 @@ export class Enemy extends GameObject {
 
             // Создаем AI координатор
             this._aiCoordinator = new AICoordinator(this, config);
-            
-            console.log(`✅ [Enemy] ${enemyType} использует новую систему ИИ`);
         } catch (error) {
             console.error(`❌ [Enemy] Ошибка инициализации новой системы ИИ для ${enemyType}:`, error);
             this._useNewAI = false;
@@ -363,16 +368,13 @@ export class Enemy extends GameObject {
         // Проверяем тип атаки из конфигурации
         if (this._enemyData.attack && this._enemyData.attack.strategy) {
             const strategy = this._enemyData.attack.strategy;
-            console.log(`🎯 [Enemy] ${this.enemyType} найден блок attack со стратегией: ${strategy}`);
             // Поддерживаем все типы стратегий
             if (['simple', 'singleUse', 'area', 'spawn'].includes(strategy)) {
                 return strategy;
             }
             // Fallback для неизвестных стратегий
-            console.log(`⚠️ [Enemy] ${this.enemyType} неизвестная стратегия: ${strategy}, используем fallback: simple`);
             return 'simple';
         }
-        console.log(`⚠️ [Enemy] ${this.enemyType} нет блока attack, используем по умолчанию: simple`);
         return 'simple'; // По умолчанию простая атака
     }
 

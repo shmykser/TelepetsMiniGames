@@ -53,7 +53,6 @@ export class JitteryMovementStrategy {
         if (distance <= this.attackRange) {
             // Эмитируем событие достижения цели только один раз
             if (!this.targetReachedEmitted && this.gameObject.scene && this.gameObject.scene.events) {
-                console.log(`🪰 [JitteryMovement] Муха достигла цели! Расстояние: ${distance.toFixed(1)}, attackRange: ${this.attackRange}`);
                 this.gameObject.scene.events.emit('movement:targetReached', this.currentTarget);
                 this.targetReachedEmitted = true;
             }

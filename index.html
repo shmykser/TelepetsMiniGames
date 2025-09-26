@@ -23,14 +23,25 @@
         -moz-user-select: none;
         -ms-user-select: none;
         user-select: none;
+        /* Поддержка safe-area для мобильных устройств */
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
       }
       
       #game {
         width: 100vw;
         height: 100vh;
+        height: 100svh; /* Support for newer browsers with safe-area */
         display: flex;
         justify-content: center;
         align-items: center;
+        /* Учитываем safe-area для позиционирования */
+        margin-top: calc(-1 * env(safe-area-inset-top));
+        margin-bottom: calc(-1 * env(safe-area-inset-bottom));
+        margin-left: calc(-1 * env(safe-area-inset-left));
+        margin-right: calc(-1 * env(safe-area-inset-right));
       }
       
       canvas {

@@ -104,7 +104,6 @@ export class RandomPointMovementStrategy {
             this.currentTarget = newTarget;
             this.lastTargetTime = time;
             this.isMoving = true;
-            console.log(`🐀 [RandomPointMovementStrategy] Выбрана новая случайная цель: (${newTarget.x.toFixed(1)}, ${newTarget.y.toFixed(1)})`);
         }
     }
 
@@ -183,7 +182,6 @@ export class RandomPointMovementStrategy {
     setTarget(target, time) {
         // RandomPointMovementStrategy игнорирует внешние цели
         // и работает только со своими случайными точками
-        console.log(`🐀 [RandomPointMovementStrategy] Игнорируем внешнюю цель, выбираем случайную точку`);
         
         // Если у нас еще нет цели, выбираем случайную
         if (!this.currentTarget) {
@@ -299,7 +297,6 @@ export class RandomPointMovementStrategy {
      * @param {number} time - Текущее время
      */
     onTargetReached(time) {
-        console.log(`🐀 [RandomPointMovementStrategy] Достигнута цель, уведомляем систему стелса`);
         
         // Уведомляем AICoordinator о достижении цели
         if (this.gameObject && this.gameObject._aiCoordinator) {

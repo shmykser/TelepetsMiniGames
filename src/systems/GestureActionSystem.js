@@ -1,6 +1,7 @@
 import { GESTURE_ACTIONS, TARGET_TYPES, TARGET_SETTINGS } from '../types/gestureTypes';
 import { GeometryUtils } from '../utils/GeometryUtils.js';
 import { Defense } from '../objects/Defense.js';
+import { Enemy } from '../objects/Enemy.js';
 
 /**
  * Система обработки жестов и выполнения действий
@@ -14,6 +15,7 @@ export class GestureActionSystem {
         this.egg = egg;
         this.itemDropSystem = itemDropSystem;
         this.abilitySystem = abilitySystem;
+        
     }
     
     /**
@@ -26,18 +28,15 @@ export class GestureActionSystem {
         const target = this.detectTarget(gesture.x, gesture.y);
         gesture.target = target;
         
-        console.log(`🎯 Жест ${gesture.type} в точке (${gesture.x}, ${gesture.y}) → цель: ${target.type}`);
         
         // Формируем ключ действия
         const actionKey = `${gesture.type}_${target.type}`;
         const action = GESTURE_ACTIONS[actionKey];
         
         if (!action) {
-            console.log(`❌ Действие ${actionKey} не найдено`);
             return false;
         }
         
-        console.log(`✅ Найдено действие: ${actionKey} → ${action.name}`);
         
         // Выполняем действие
         return this.executeAction(action, gesture, target);
@@ -52,27 +51,49 @@ export class GestureActionSystem {
     detectTarget(x, y) {
         // Проверяем предметы (приоритет 1 - самый высокий для точного клика)
         if (this.itemDropSystem && this.itemDropSystem.items) {
-            console.log(`🔍 Проверяем ${this.itemDropSystem.items.length} предметов на экране`);
-            
             const item = GeometryUtils.findFirstObjectInRadius(
                 this.itemDropSystem.items, x, y,
                 TARGET_SETTINGS.item.missTolerance,
                 (item) => {
                     const itemHitRadius = GeometryUtils.calculateHitRadius(item, 'item', TARGET_SETTINGS);
                     const inRadius = GeometryUtils.isInRadius(x, y, item.x, item.y, itemHitRadius);
-                    console.log(`📦 Предмет в (${item.x}, ${item.y}), радиус: ${itemHitRadius}, попадание: ${inRadius}, собран: ${item.isCollected}`);
                     return inRadius && !item.isCollected;
                 }
             );
             
             if (item) {
-                console.log(`✅ Найден предмет для сбора:`, item.itemType);
                 return {
                     type: TARGET_TYPES.ITEM,
                     object: item,
                     x: x,
                     y: y
                 };
+            }
+        } else {
+            // Попробуем получить ItemDropSystem из Enemy
+            if (Enemy.itemDropSystem) {
+                this.itemDropSystem = Enemy.itemDropSystem;
+                
+                if (this.itemDropSystem && this.itemDropSystem.items) {
+                    const item = GeometryUtils.findFirstObjectInRadius(
+                        this.itemDropSystem.items, x, y,
+                        TARGET_SETTINGS.item.missTolerance,
+                        (item) => {
+                            const itemHitRadius = GeometryUtils.calculateHitRadius(item, 'item', TARGET_SETTINGS);
+                            const inRadius = GeometryUtils.isInRadius(x, y, item.x, item.y, itemHitRadius);
+                            return inRadius && !item.isCollected;
+                        }
+                    );
+                    
+                    if (item) {
+                        return {
+                            type: TARGET_TYPES.ITEM,
+                            object: item,
+                            x: x,
+                            y: y
+                        };
+                    }
+                }
             }
         }
         
@@ -159,42 +180,33 @@ export class GestureActionSystem {
                     return this.damageEnemy(target.object, this.abilitySystem?.getTapDamage() || 5);
                     
                 case 'activate_egg_explosion':
-                    console.log(`💥 ${gesture.type} → Активировать взрыв яйца`);
                     return this.activateEggExplosion(target.object);
                     
                 case 'collect_item':
-                    console.log(`💎 Распознан жест: ${gesture.type} → Собираем предмет`);
                     return this.collectItem(target.object);
                     
                 case 'place_defense':
-                    console.log(`🏗️ ${gesture.type} → Установить защиту (тип: ${action.defenseType})`);
                     return true;
                     
                 case 'heal_egg':
-                    console.log(`❤️ ${gesture.type} → Лечить яйцо (лечение: ${action.heal})`);
                     return true;
                     
                 case 'explosion':
-                    console.log(`💣 ${gesture.type} → Взрыв (радиус: ${action.radius}, урон: ${action.damage})`);
                     return true;
                     
                 case 'freeze_enemy':
-                    console.log(`🧊 ${gesture.type} → Заморозить врага (длительность: ${action.freezeDuration}мс)`);
                     return true;
                     
                 case 'shield_egg':
-                    console.log(`🛡️ ${gesture.type} → Щит для яйца (длительность: ${action.shieldDuration}мс, сила: ${action.shieldStrength})`);
                     return true;
                     
                 case 'create_pit':
                     return this.placePit(gesture.x, gesture.y);
                     
                 case 'damage_wave':
-                    console.log(`🌊 ${gesture.type} → Волна урона (урон: ${action.damage}, дальность: ${action.range})`);
                     return true;
                     
                 default:
-                    console.log(`❓ Неизвестное действие: ${action.name} для жеста ${gesture.type}`);
                     return false;
             }
         } catch (error) {
@@ -250,7 +262,8 @@ export class GestureActionSystem {
         item.activate();
         
         // Собираем предмет
-        return item.collect();
+        const result = item.collect();
+        return result;
     }
     
     /**
@@ -261,6 +274,11 @@ export class GestureActionSystem {
     updateObjects(enemies, defenses) {
         this.enemies = enemies;
         this.defenses = defenses;
+        
+        // Обновляем ItemDropSystem из статического свойства Enemy
+        if (this.itemDropSystem !== Enemy.itemDropSystem) {
+            this.itemDropSystem = Enemy.itemDropSystem;
+        }
     }
     
     /**
@@ -271,7 +289,6 @@ export class GestureActionSystem {
      */
     placePit(x, y) {
         if (!this.abilitySystem) {
-            console.log(`🕳️ Нет доступа к системе способностей`);
             return false;
         }
         
@@ -281,7 +298,6 @@ export class GestureActionSystem {
         
         // Проверяем, есть ли лопаты
         if (shovelCount <= 0) {
-            console.log(`🪓 Нет доступных лопат для копания (лопат: ${shovelCount})`);
             return false;
         }
         
@@ -290,12 +306,10 @@ export class GestureActionSystem {
         
         if (existingPit) {
             // Расширяем существующую яму (pitCount не изменяется)
-            console.log(`🔍 Найдена существующая яма для расширения`);
             return this.expandPit(existingPit);
         } else {
             // Проверяем, можно ли выкопать новую яму
             if (pitCount >= maxPits) {
-                console.log(`🕳️ Достигнуто максимальное количество ям на поле (${pitCount}/${maxPits})`);
                 return false;
             }
             

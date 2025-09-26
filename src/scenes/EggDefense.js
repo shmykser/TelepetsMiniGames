@@ -14,6 +14,7 @@ import { EVENT_TYPES } from '../types/EventTypes.js';
 import { BACKGROUND_SETTINGS, DEPTH_CONSTANTS } from '../settings/GameSettings.js';
 import { ABILITIES } from '../types/abilityTypes.js';
 import { BackgroundUtils } from '../utils/BackgroundUtils.js';
+import { SafeAreaUtils } from '../utils/SafeAreaUtils.js';
 import { AbilitiesDisplay } from '../components/AbilitiesDisplay.js';
 
 /**
@@ -41,6 +42,9 @@ export class EggDefense extends Phaser.Scene {
         
         // Настройка обработчиков клавиш
         this.setupKeyboardHandlers();
+        
+        // Настройка обработчика изменения размера экрана
+        this.setupResizeHandler();
         
         // Запуск игры
         this.startGame();
@@ -187,17 +191,32 @@ export class EggDefense extends Phaser.Scene {
     }
     
     /**
+     * Настройка обработчика изменения размера экрана
+     */
+    setupResizeHandler() {
+        // Обработчик изменения размера экрана для обновления позиции UI элементов
+        this.scale.on('resize', () => {
+            this.updateUIPositions();
+        });
+    }
+    
+    /**
      * Настройка UI
      */
     setupUI() {
         // Создаем таймер в верхней части экрана по центру
         this.createTimer();
         
-        // Создаем дисплей способностей в правом верхнем углу
+        // Создаем дисплей способностей в правом верхнем углу с учетом safe-area
+        const safeAreaRight = SafeAreaUtils.getSafeAreaRight();
+        const safeAreaTop = SafeAreaUtils.getSafeAreaTop();
+        const abilitiesX = SafeAreaUtils.getSafeRightPosition(this.scale.width, this.scale.width - 100, 200);
+        const abilitiesY = SafeAreaUtils.getSafeTopPosition(100, 100);
+        
         this.abilitiesDisplay = new AbilitiesDisplay(
             this,
-            this.scale.width - 100, // Сдвинули левее от правого края
-            100, // Отступ от верхнего края
+            abilitiesX,
+            abilitiesY,
             this.abilitySystem // Передаем систему способностей
         );
         
@@ -212,10 +231,14 @@ export class EggDefense extends Phaser.Scene {
      * Создание таймера игры
      */
     createTimer() {
+        // Вычисляем безопасную позицию с учетом safe-area
+        const safeAreaTop = SafeAreaUtils.getSafeAreaTop();
+        const timerY = SafeAreaUtils.getSafeTopPosition(30, 32);
+        
         // Создаем фон для таймера (уменьшенный размер)
         this.timerBackground = this.add.rectangle(
             this.scale.width / 2,
-            50,
+            timerY,
             80,
             32,
             0x000000,
@@ -225,7 +248,7 @@ export class EggDefense extends Phaser.Scene {
         // Создаем текст таймера
         this.timerText = this.add.text(
             this.scale.width / 2,
-            50,
+            timerY,
             '10:00',
             {
                 fontSize: '24px',
@@ -243,6 +266,11 @@ export class EggDefense extends Phaser.Scene {
         // Изначально скрываем таймер до запуска игры
         this.timerBackground.setVisible(false);
         this.timerText.setVisible(false);
+        
+        // Логируем информацию о safe-area для отладки
+        if (safeAreaTop > 0) {
+            console.log(`📱 Safe Area: top=${safeAreaTop}px, timer Y=${timerY}px`);
+        }
     }
     
     /**
@@ -278,6 +306,35 @@ export class EggDefense extends Phaser.Scene {
             this.timerText.setVisible(false);
         }
     }
+    
+    /**
+     * Обновление позиции таймера при изменении размера экрана
+     */
+    updateTimerPosition() {
+        if (!this.timerText || !this.timerBackground) return;
+        
+        // Вычисляем новую безопасную позицию
+        const timerY = SafeAreaUtils.getSafeTopPosition(30, 32);
+        
+        // Обновляем позицию таймера
+        this.timerBackground.setPosition(this.scale.width / 2, timerY);
+        this.timerText.setPosition(this.scale.width / 2, timerY);
+    }
+    
+    /**
+     * Обновление позиции UI элементов при изменении размера экрана
+     */
+    updateUIPositions() {
+        // Обновляем позицию таймера
+        this.updateTimerPosition();
+        
+        // Обновляем позицию дисплея способностей
+        if (this.abilitiesDisplay) {
+            const abilitiesX = SafeAreaUtils.getSafeRightPosition(this.scale.width, this.scale.width - 100, 200);
+            const abilitiesY = SafeAreaUtils.getSafeTopPosition(100, 100);
+            this.abilitiesDisplay.setPosition(abilitiesX, abilitiesY);
+        }
+    }
 
     /**
      * Запуск игры
@@ -308,6 +365,8 @@ export class EggDefense extends Phaser.Scene {
         if (success) {
             // Можно добавить визуальную обратную связь через EffectSystem
         }
+        
+        return success;
     }
 
     /**

@@ -33,19 +33,10 @@ export class AttackSystem extends ISystem {
     }
 
     setupStrategy() {
-        if (this.gameObject.enemyType === 'wasp') {
-            console.log(`🐝 [AttackSystem] ОСА: Настройка стратегии: ${this.strategyType}`);
-        }
         const strategyClass = this.getStrategyClass(this.strategyType);
         if (strategyClass) {
             this.strategy = new strategyClass(this.gameObject, this.config);
-            if (this.gameObject.enemyType === 'wasp') {
-                console.log(`🐝 [AttackSystem] ОСА: Стратегия ${this.strategyType} создана`);
-            }
         } else {
-            if (this.gameObject.enemyType === 'wasp') {
-                console.log(`🐝 [AttackSystem] ОСА: Стратегия ${this.strategyType} не найдена`);
-            }
         }
     }
 
@@ -68,9 +59,6 @@ export class AttackSystem extends ISystem {
     }
 
     updateSystem(time, delta) {
-        if (this.gameObject.enemyType === 'wasp') {
-            console.log(`🐝 [AttackSystem] ОСА: Update - стратегия: ${this.strategy ? 'есть' : 'нет'}`);
-        }
         if (this.strategy) {
             this.strategy.update(time, delta);
         } else {
@@ -152,13 +140,11 @@ export class AttackSystem extends ISystem {
      */
     isInRange() {
         if (!this.currentTarget || !this.gameObject) {
-            console.log(`🎯 [AttackSystem] isInRange: нет цели или объекта`);
             return false;
         }
 
         const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, this.currentTarget.x, this.currentTarget.y);
         const inRange = distance <= this.attackRange;
-        console.log(`🎯 [AttackSystem] isInRange: расстояние=${distance.toFixed(1)}, attackRange=${this.attackRange}, в радиусе=${inRange}`);
         return inRange;
     }
 

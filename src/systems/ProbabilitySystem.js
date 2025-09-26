@@ -68,7 +68,6 @@ export class ProbabilitySystem {
      * Обработчик смены минуты
      */
     onMinuteChanged() {
-        console.log(`[ProbabilitySystem] Минута ${this.currentMinute}:`, this.getCurrentProbabilities());
     }
     
     /**
@@ -112,10 +111,6 @@ export class ProbabilitySystem {
         const roll = Math.random() * 100;
         const success = roll < chance;
         
-        // Логирование для отладки
-        if (success) {
-            console.log(`[ProbabilitySystem] ${eventType}: успех! (${roll.toFixed(2)} < ${chance})`);
-        }
         
         return success;
     }

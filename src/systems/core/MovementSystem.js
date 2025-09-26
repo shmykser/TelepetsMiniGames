@@ -40,10 +40,6 @@ export class MovementSystem extends ISystem {
         const movementConfig = this.config.get('movement', {});
         this.strategyType = movementConfig.strategy || this.getConfigValue('strategy', 'linear');
         
-        // Диагностический лог для комара
-        if (this.gameObject.enemyType === 'mosquito') {
-            console.log(`🦟 MOVEMENT SETUP: strategyType=${this.strategyType}, movementConfig=`, movementConfig);
-        }
         
         // Создаем стратегию движения
         switch (this.strategyType) {
@@ -297,10 +293,6 @@ export class MovementSystem extends ISystem {
             this.strategyType !== 'randomPoint' && this.strategyType !== 'spawner') {
             this.strategy.setTarget(target);
             
-            // Диагностический лог для блохи
-            if (this.gameObject.enemyType === 'flea') {
-                console.log(`🦗 MOVEMENT: Передаем цель в стратегию jumping (${target.x.toFixed(1)}, ${target.y.toFixed(1)})`);
-            }
         }
     }
 

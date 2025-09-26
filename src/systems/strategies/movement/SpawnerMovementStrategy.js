@@ -120,7 +120,6 @@ export class SpawnerMovementStrategy {
      */
     setTarget(target, time) {
         // Спавнер не двигается, игнорируем внешние цели
-        console.log(`🕷️ [SpawnerMovementStrategy] Игнорируем внешнюю цель, остаемся на месте`);
     }
 
     /**

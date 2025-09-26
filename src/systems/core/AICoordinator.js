@@ -100,7 +100,6 @@ export class AICoordinator {
             const attackConfig = this.config.get('attack', {});
             const attackStrategy = attackConfig.strategy || this.config.get('strategy', 'simple');
             
-            console.log(`🎯 [AICoordinator] Настройка стратегии атаки: ${attackStrategy} для ${this.gameObject.enemyType}`);
             
             attackSystem.setStrategy(attackStrategy);
             
@@ -111,9 +110,6 @@ export class AICoordinator {
                     // Устанавливаем условие: спавнить только когда на поверхности
                     spawnAttack.setConditionCallback(() => {
                         const isOnSurface = this.stealthStrategy && this.stealthStrategy.isOnSurfaceNow();
-                        if (this.gameObject.enemyType === 'mole') {
-                            console.log(`🐀 [AICoordinator] КРОТ: Проверка условия спавна - на поверхности: ${isOnSurface}`);
-                        }
                         return isOnSurface;
                     });
                 }
@@ -127,7 +123,6 @@ export class AICoordinator {
             
             if (stealthConfig.strategy === 'stealth') {
                 this.stealthStrategy = new StealthStrategy(this.gameObject, stealthSystemConfig);
-                console.log(`👻 [AICoordinator] Настройка стратегии стелса для ${this.gameObject.enemyType}`);
             } else if (stealthConfig.strategy === 'burrow') {
                 this.stealthStrategy = new BurrowStealthStrategy(this.gameObject, stealthSystemConfig);
         }
@@ -197,12 +192,10 @@ export class AICoordinator {
         }
 
         if (!this.currentTarget) {
-            console.log(`🎯 [AICoordinator] Нет цели, состояние: idle`);
             this.setState('idle');
             return;
         }
 
-        // console.log(`🎯 [AICoordinator] Цель установлена:`, this.currentTarget);
 
         // Проверяем, можем ли атаковать (только если стратегия атаки не 'none')
         const attackConfig = this.config.get('attack', {});
@@ -231,7 +224,6 @@ export class AICoordinator {
         if (movementStrategy === 'randomPoint' || movementStrategy === 'spawner') {
             // Для этих стратегий не передаем внешнюю цель
             // Они работают со своими внутренними целями
-            console.log(`🎯 [AICoordinator] ${movementStrategy} стратегия не использует внешнюю цель`);
             // Не устанавливаем состояние moving для этих стратегий
             return;
         }
@@ -273,10 +265,6 @@ export class AICoordinator {
         const movementConfig = this.config.get('movement', {});
         const movementStrategy = movementConfig.strategy || this.config.get('movement.strategy', 'linear');
         
-        // Диагностический лог для блохи
-        if (this.gameObject && this.gameObject.enemyType === 'flea') {
-            console.log(`🦗 AI: Устанавливаем цель (${target.x.toFixed(1)}, ${target.y.toFixed(1)}), стратегия: ${movementStrategy}`);
-        }
         
         if (movementSystem && movementStrategy !== 'randomPoint' && movementStrategy !== 'spawner') {
             movementSystem.moveTo(target);
@@ -485,13 +473,11 @@ export class AICoordinator {
      * @param {number} time - Текущее время
      */
     onTargetReached(time) {
-        console.log(`🎯 [AICoordinator] Цель достигнута, проверяем атаку`);
         
         // Проверяем, можем ли атаковать
         const attackSystem = this.systems.get('attack');
         
         if (!attackSystem) {
-            console.log(`🎯 [AICoordinator] Нет системы атаки`);
             return;
         }
         
@@ -499,7 +485,6 @@ export class AICoordinator {
         const attackConfig = this.config ? this.config.get('attack', {}) : {};
         const attackStrategy = attackConfig.strategy || 'simple';
         
-        console.log(`🎯 [AICoordinator] Стратегия атаки: ${attackStrategy}, система атаки:`, attackSystem);
         
         // Устанавливаем цель для системы атаки перед проверкой isInRange
         if (this.currentTarget) {
@@ -507,17 +492,14 @@ export class AICoordinator {
         }
         
         if (attackStrategy !== 'none' && attackSystem.isInRange && attackSystem.isInRange()) {
-            console.log(`🎯 [AICoordinator] Переходим к атаке`);
             this.setState('attacking');
             attackSystem.attack(this.currentTarget);
             return;
         } else {
-            console.log(`🎯 [AICoordinator] Не можем атаковать: strategy=${attackStrategy}, isInRange=${attackSystem.isInRange ? attackSystem.isInRange() : 'undefined'}`);
         }
         
         // Если у нас есть стратегия стелса burrow, выводим крота на поверхность
         if (this.stealthStrategy && this.stealthStrategy.goSurface) {
-            console.log(`🐀 [AICoordinator] Заставляем крота выйти на поверхность`);
             this.stealthStrategy.goSurface(time);
         }
     }

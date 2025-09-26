@@ -37,10 +37,6 @@ export class InertiaMovementStrategy {
         const attackConfig = config.get('attack', {});
         this.attackCooldown = attackConfig.cooldown || config.get('cooldown', 1000);
         
-        // Логирование
-        this.lastRotateLogTime = 0;
-        
-        // Диагностический лог параметров
         
         // Инициализируем физическое тело
         this.setupPhysics();

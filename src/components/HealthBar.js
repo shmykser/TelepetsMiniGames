@@ -62,8 +62,6 @@ export class HealthBar extends BaseUIComponent {
         this.setColors(colors);
         // Позиционируем относительно объекта
         this.updatePosition();
-        // Добавляем в сцену
-        scene.add.existing(this);
         // Устанавливаем высокий depth, чтобы HealthBar был поверх всех объектов
         this.setDepth(DEPTH_CONSTANTS.HEALTH_BAR);
         // Обновляем отображение

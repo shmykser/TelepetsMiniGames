@@ -187,7 +187,6 @@ export class TargetPointSystem {
      */
     clear() {
         this.targetPoints.clear();
-        console.log(`🎯 [TargetPointSystem] Очищены все целевые точки`);
     }
 
     /**

@@ -51,10 +51,6 @@ export class JumpingMovementStrategy {
             this.gameObject.body.setMass(this.mass);
             this.gameObject.body.setMaxVelocity(this.speed);
             
-            // Диагностический лог для блохи
-            if (this.gameObject.enemyType === 'flea') {
-                console.log(`🦗 JUMPING: Настроена физика, скорость: ${this.speed}, масса: ${this.mass}, сопротивление: ${this.drag}`);
-            }
         } else {
             console.error(`🦗 JUMPING: У объекта ${this.gameObject.enemyType} нет физического тела!`);
         }
@@ -67,24 +63,11 @@ export class JumpingMovementStrategy {
      */
     update(time, delta) {
         if (!this.currentTarget) {
-            // Диагностический лог для блохи
-            if (this.gameObject.enemyType === 'flea' && Date.now() % 2000 < 100) {
-                console.log(`🦗 JUMPING: Нет цели, враг: ${this.gameObject.enemyType}`);
-            }
             return;
         }
 
         const deltaSeconds = delta / 1000;
         
-        // Диагностический лог для блохи (только при смене состояния)
-        if (this.gameObject.enemyType === 'flea' && this.isJumping && !this.wasJumping) {
-            console.log(`🦗 JUMPING: Начинаем прыжок`);
-        }
-        if (this.gameObject.enemyType === 'flea' && this.isResting && !this.wasResting) {
-            console.log(`🦗 JUMPING: Начинаем отдых`);
-        }
-        this.wasJumping = this.isJumping;
-        this.wasResting = this.isResting;
         
         // Обновляем состояние прыжка
         this.updateJumpState(time);
@@ -110,10 +93,6 @@ export class JumpingMovementStrategy {
         if (this.isJumping) {
             const jumpElapsed = time - this.jumpStartTime;
             
-            // Диагностический лог для блохи (только при завершении)
-            if (this.gameObject.enemyType === 'flea' && jumpElapsed >= this.jumpDuration - 50) {
-                console.log(`🦗 JUMPING: Прыжок завершается через ${this.jumpDuration - jumpElapsed}мс`);
-            }
             
             if (jumpElapsed >= this.jumpDuration) {
                 // Завершаем прыжок
@@ -126,27 +105,15 @@ export class JumpingMovementStrategy {
                     this.gameObject.body.setVelocity(0, 0);
                 }
                 
-                // Диагностический лог для блохи
-                if (this.gameObject.enemyType === 'flea') {
-                    console.log(`🦗 JUMPING: Прыжок завершен, начинаем отдых`);
-                }
             }
         } else if (this.isResting) {
             const restElapsed = time - this.restStartTime;
             
-            // Диагностический лог для блохи (только при завершении)
-            if (this.gameObject.enemyType === 'flea' && restElapsed >= this.restDuration - 50) {
-                console.log(`🦗 JUMPING: Отдых завершается через ${this.restDuration - restElapsed}мс`);
-            }
             
             if (restElapsed >= this.restDuration) {
                 // Завершаем отдых
                 this.isResting = false;
                 
-                // Диагностический лог для блохи
-                if (this.gameObject.enemyType === 'flea') {
-                    console.log(`🦗 JUMPING: Отдых завершен, готовим следующий прыжок`);
-                }
             }
         }
     }
@@ -181,10 +148,6 @@ export class JumpingMovementStrategy {
                 dirY * currentSpeed
             );
             
-            // Диагностический лог для блохи (только в середине прыжка)
-            if (this.gameObject.enemyType === 'flea' && Math.floor(jumpProgress * 10) === 5) {
-                console.log(`🦗 JUMPING: Прыжок прогресс: ${(jumpProgress * 100).toFixed(1)}%, скорость: ${currentSpeed.toFixed(1)}`);
-            }
         }
     }
 
@@ -235,10 +198,6 @@ export class JumpingMovementStrategy {
         this.isJumping = true;
         this.jumpStartTime = this.gameObject.scene.time.now;
         
-        // Диагностический лог для блохи
-        if (this.gameObject.enemyType === 'flea') {
-            console.log(`🦗 JUMPING: Начинаем прыжок к (${this.jumpTargetPosition.x.toFixed(1)}, ${this.jumpTargetPosition.y.toFixed(1)}), isJumping: ${this.isJumping}, время: ${this.jumpStartTime}`);
-        }
     }
 
     /**
@@ -317,10 +276,6 @@ export class JumpingMovementStrategy {
             this.isJumping = false;
             this.isResting = false;
             
-            // Диагностический лог для блохи
-            if (this.gameObject.enemyType === 'flea') {
-                console.log(`🦗 JUMPING: Установлена новая цель (${target.x.toFixed(1)}, ${target.y.toFixed(1)})`);
-            }
         }
     }
 

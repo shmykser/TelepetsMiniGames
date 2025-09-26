@@ -316,6 +316,9 @@ export class Egg extends GameObject {
         
         // Устанавливаем глубину отрисовки
         egg.setDepth(DEPTH_CONSTANTS.EGG);
+        
+        // Отладочный вывод для проверки глубины (временно отключен)
+        // console.log(`🥚 [Egg] Создано с глубиной: ${egg.depth}, DEPTH_CONSTANTS.EGG: ${DEPTH_CONSTANTS.EGG}`);
 
         // Создаем полосу здоровья
         egg.createHealthBar({

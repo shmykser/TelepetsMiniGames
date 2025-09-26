@@ -110,10 +110,10 @@ export class EffectHandler {
             duration: 400
         });
         
-        // Эффект исчезновения
-        this.effectSystem.applyEffect('fadeOut', enemy, 1.0, {
-            duration: 600
-        });
+        // Убираем fadeOut эффект, так как объект уже уничтожен
+        // this.effectSystem.applyEffect('fadeOut', enemy, 1.0, {
+        //     duration: 600
+        // });
     }
 
     /**
