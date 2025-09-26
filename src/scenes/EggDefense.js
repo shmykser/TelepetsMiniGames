@@ -15,6 +15,7 @@ import { BACKGROUND_SETTINGS, DEPTH_CONSTANTS } from '../settings/GameSettings.j
 import { ABILITIES } from '../types/abilityTypes.js';
 import { BackgroundUtils } from '../utils/BackgroundUtils.js';
 import { SafeAreaUtils } from '../utils/SafeAreaUtils.js';
+import { TelegramTimer } from '../components/TelegramTimer.js';
 import { AbilitiesDisplay } from '../components/AbilitiesDisplay.js';
 
 /**
@@ -233,58 +234,34 @@ export class EggDefense extends Phaser.Scene {
     createTimer() {
         // Вычисляем безопасную позицию с учетом safe-area
         const safeAreaTop = SafeAreaUtils.getSafeAreaTop();
-        const timerY = SafeAreaUtils.getSafeTopPosition(30, 32);
+        const timerY = SafeAreaUtils.getSafeTopPosition(30, 40);
         
         // Отладочная информация
         console.log(`📱 [Timer] Safe Area Top: ${safeAreaTop}px`);
         console.log(`📱 [Timer] Timer Y: ${timerY}px`);
         console.log(`📱 [Timer] Screen size: ${this.scale.width}x${this.scale.height}`);
         
-        // Создаем фон для таймера (уменьшенный размер)
-        this.timerBackground = this.add.rectangle(
+        // Создаем Telegram-стилизованный таймер
+        this.telegramTimer = new TelegramTimer(
+            this,
             this.scale.width / 2,
             timerY,
-            80,
-            32,
-            0x000000,
-            0.7
+            90,  // Ширина
+            40   // Высота
         );
         
-        // Создаем текст таймера
-        this.timerText = this.add.text(
-            this.scale.width / 2,
-            timerY,
-            '10:00',
-            {
-                fontSize: '24px',
-                fill: '#ffffff',
-                fontStyle: 'bold',
-                stroke: '#000000',
-                strokeThickness: 2
-            }
-        ).setOrigin(0.5);
-        
-        // Устанавливаем высокую глубину, чтобы было поверх игры
-        this.timerBackground.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS);
-        this.timerText.setDepth(DEPTH_CONSTANTS.TIMER);
-        
-        // Изначально скрываем таймер до запуска игры
-        this.timerBackground.setVisible(false);
-        this.timerText.setVisible(false);
-        
-        console.log(`📱 [Timer] Timer created at position: ${this.scale.width / 2}, ${timerY}`);
+        console.log(`📱 [Timer] Telegram-styled timer created at position: ${this.scale.width / 2}, ${timerY}`);
     }
     
     /**
      * Обновление таймера
      */
     updateTimer() {
-        if (!this.timerText || !this.waveSystem) return;
+        if (!this.telegramTimer || !this.waveSystem) return;
         
         // Показываем таймер только если игра активна
         if (this.waveSystem.isGameActive) {
-            this.timerBackground.setVisible(true);
-            this.timerText.setVisible(true);
+            this.telegramTimer.setVisible(true);
             
             const remainingTime = this.waveSystem.getRemainingTime();
             const minutes = Math.floor(remainingTime / 60000);
@@ -292,20 +269,19 @@ export class EggDefense extends Phaser.Scene {
             
             // Форматируем время с ведущими нулями
             const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            this.timerText.setText(timeString);
+            this.telegramTimer.setText(timeString);
             
             // Меняем цвет в зависимости от оставшегося времени
             if (remainingTime <= 60000) { // Последняя минута - красный
-                this.timerText.setFill('#ff0000');
+                this.telegramTimer.setColor('#ff3b30'); // iOS red
             } else if (remainingTime <= 180000) { // Последние 3 минуты - желтый
-                this.timerText.setFill('#ffff00');
+                this.telegramTimer.setColor('#ffcc00'); // iOS yellow
             } else { // Обычное время - белый
-                this.timerText.setFill('#ffffff');
+                this.telegramTimer.setColor('#ffffff'); // Белый
             }
         } else {
             // Скрываем таймер если игра не активна
-            this.timerBackground.setVisible(false);
-            this.timerText.setVisible(false);
+            this.telegramTimer.setVisible(false);
         }
     }
     
@@ -313,14 +289,13 @@ export class EggDefense extends Phaser.Scene {
      * Обновление позиции таймера при изменении размера экрана
      */
     updateTimerPosition() {
-        if (!this.timerText || !this.timerBackground) return;
+        if (!this.telegramTimer) return;
         
         // Вычисляем новую безопасную позицию
-        const timerY = SafeAreaUtils.getSafeTopPosition(30, 32);
+        const timerY = SafeAreaUtils.getSafeTopPosition(30, 40);
         
         // Обновляем позицию таймера
-        this.timerBackground.setPosition(this.scale.width / 2, timerY);
-        this.timerText.setPosition(this.scale.width / 2, timerY);
+        this.telegramTimer.setPosition(this.scale.width / 2, timerY);
     }
     
     /**
