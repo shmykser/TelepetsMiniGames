@@ -15,7 +15,10 @@ export class SafeAreaUtils {
         try {
             const computedStyle = getComputedStyle(document.documentElement);
             const safeAreaTop = computedStyle.getPropertyValue('env(safe-area-inset-top)');
-            return parseInt(safeAreaTop) || 0;
+            const cssValue = parseInt(safeAreaTop) || 0;
+            
+            console.log(`📱 [SafeArea] CSS safe area: ${cssValue}px`);
+            return cssValue;
         } catch (error) {
             console.warn('SafeAreaUtils: Не удалось получить safe-area-inset-top:', error);
             return 0;

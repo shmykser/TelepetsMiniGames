@@ -235,6 +235,11 @@ export class EggDefense extends Phaser.Scene {
         const safeAreaTop = SafeAreaUtils.getSafeAreaTop();
         const timerY = SafeAreaUtils.getSafeTopPosition(30, 32);
         
+        // Отладочная информация
+        console.log(`📱 [Timer] Safe Area Top: ${safeAreaTop}px`);
+        console.log(`📱 [Timer] Timer Y: ${timerY}px`);
+        console.log(`📱 [Timer] Screen size: ${this.scale.width}x${this.scale.height}`);
+        
         // Создаем фон для таймера (уменьшенный размер)
         this.timerBackground = this.add.rectangle(
             this.scale.width / 2,
@@ -267,10 +272,7 @@ export class EggDefense extends Phaser.Scene {
         this.timerBackground.setVisible(false);
         this.timerText.setVisible(false);
         
-        // Логируем информацию о safe-area для отладки
-        if (safeAreaTop > 0) {
-            console.log(`📱 Safe Area: top=${safeAreaTop}px, timer Y=${timerY}px`);
-        }
+        console.log(`📱 [Timer] Timer created at position: ${this.scale.width / 2}, ${timerY}`);
     }
     
     /**

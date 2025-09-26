@@ -23,6 +23,8 @@
         -moz-user-select: none;
         -ms-user-select: none;
         user-select: none;
+        /* Safe-area только сверху для Dynamic Island */
+        padding-top: env(safe-area-inset-top);
       }
       
       #game {
@@ -32,6 +34,8 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        /* Компенсируем padding-top от safe-area */
+        margin-top: calc(-1 * env(safe-area-inset-top));
       }
       
       canvas {
