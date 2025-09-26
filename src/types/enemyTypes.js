@@ -31,7 +31,7 @@ export const enemyTypes = {
     },
     ant: {
         name: 'Муравей',
-        health: 5,
+        health: 10,
         canFly: false,
         size: 1,
         texture: '🐜',
@@ -529,7 +529,7 @@ export const enemyTypes = {
     },
     fly: {
         name: 'Муха',
-        health: 12,
+        health: 5,
         canFly: true,
         size: 1,
         texture: '🪰',

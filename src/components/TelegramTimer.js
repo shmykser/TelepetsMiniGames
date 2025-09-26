@@ -12,41 +12,46 @@ export class TelegramTimer {
         this.height = height;
         this.lastCanvasPosition = { left: 0, top: 0 };
         
-        // Telegram цветовая схема
+        // Telegram WebApp кнопки - полупрозрачные как на скриншоте
         this.colors = {
             accent: '#2481cc',       // Telegram accent color
             accentDark: '#1e6bb8',   // Темнее для hover эффектов
             text: '#ffffff',         // Белый текст
-            background: 'rgba(36, 129, 204, 0.7)',   // Фон кнопки с прозрачностью
-            backgroundAlpha: 0.7     // Прозрачность фона
+            background: 'rgba(0, 0, 0, 0.15)',   // Полупрозрачный черный как у кнопок WebApp
+            backgroundAlpha: 0.15    // Прозрачность для видимости фона
         };
         
         this.createElements();
     }
     
     createElements() {
-        // Создаем HTML контейнер для таймера
+        // Создаем HTML контейнер для таймера с точными параметрами кнопок Telegram
         this.container = document.createElement('div');
         this.container.style.position = 'absolute';
         this.container.style.left = `${this.x - this.width / 2}px`;
         this.container.style.top = `${this.y - this.height / 2}px`;
         this.container.style.width = `${this.width}px`;
         this.container.style.height = `${this.height}px`;
+        this.container.style.minHeight = '36px'; // Точная высота кнопок WebApp
         this.container.style.backgroundColor = this.colors.background;
-        this.container.style.borderRadius = '8px';
-        this.container.style.border = `1px solid ${this.colors.accent}40`; // 40 = 25% opacity
-        this.container.style.display = 'flex';
+        this.container.style.borderRadius = '8px'; // Точное скругление кнопок WebApp
+        this.container.style.border = 'none'; // Убираем границу
+        this.container.style.display = 'inline-flex'; // Как у кнопок WebApp
         this.container.style.alignItems = 'center';
         this.container.style.justifyContent = 'center';
-        this.container.style.fontFamily = 'SF Pro Display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif';
-        this.container.style.fontSize = '18px';
-        this.container.style.fontWeight = '600';
-        this.container.style.color = this.colors.text;
-        this.container.style.letterSpacing = '0.5px';
+        this.container.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'; // Системные шрифты
+        this.container.style.fontSize = '14px'; // Точный размер шрифта кнопок WebApp
+        this.container.style.fontWeight = '500'; // Средний вес шрифта
+        this.container.style.lineHeight = '20px'; // Высота строки
+        this.container.style.color = '#ffffff'; // Белый текст как у кнопок WebApp
+        this.container.style.letterSpacing = '0px'; // Убираем межбуквенный интервал
         this.container.style.zIndex = '1000';
-        this.container.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+        this.container.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)'; // Мягкая тень как у кнопок WebApp
         this.container.style.userSelect = 'none';
         this.container.style.pointerEvents = 'none';
+        this.container.style.padding = '0 16px'; // Точные отступы кнопок WebApp
+        this.container.style.transition = 'background-color 0.2s'; // Плавные переходы как у кнопок
+        this.container.style.backdropFilter = 'blur(10px)'; // Размытие фона для эффекта стекла
         
         // Создаем текст таймера
         this.textElement = document.createElement('span');
@@ -59,7 +64,10 @@ export class TelegramTimer {
         document.body.appendChild(this.container);
         
         // Отладочная информация (только при создании)
-        console.log('🎨 [TelegramTimer] HTML элемент создан с прозрачностью:', this.colors.background);
+        console.log('🎨 [TelegramTimer] HTML элемент создан с параметрами кнопок Telegram');
+        
+        // Инициализируем переменные темы Telegram
+        this.initTelegramTheme();
         
         // Изначально скрываем
         this.setVisible(false);
@@ -105,6 +113,27 @@ export class TelegramTimer {
                 this.container.style.left = `${canvasRect.left + this.x - this.width / 2}px`;
                 this.container.style.top = `${canvasRect.top + this.y - this.height / 2}px`;
             }
+        }
+    }
+    
+    initTelegramTheme() {
+        // Инициализируем переменные темы Telegram (только для информации)
+        if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+            const WebApp = window.Telegram.WebApp;
+            const themeParams = WebApp.themeParams;
+            
+            if (themeParams) {
+                console.log('🎨 [TelegramTimer] Тема Telegram обнаружена:', {
+                    buttonColor: themeParams.button_color,
+                    buttonTextColor: themeParams.button_text_color,
+                    bgColor: themeParams.bg_color,
+                    textColor: themeParams.text_color
+                });
+            } else {
+                console.log('🎨 [TelegramTimer] Тема Telegram не найдена, используем стандартные цвета WebApp');
+            }
+        } else {
+            console.log('🎨 [TelegramTimer] Telegram WebApp не найден, используем стандартные цвета WebApp');
         }
     }
     

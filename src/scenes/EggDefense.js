@@ -241,13 +241,13 @@ export class EggDefense extends Phaser.Scene {
         console.log(`📱 [Timer] Timer Y: ${timerY}px`);
         console.log(`📱 [Timer] Screen size: ${this.scale.width}x${this.scale.height}`);
         
-        // Создаем Telegram-стилизованный таймер
+        // Создаем Telegram WebApp-стилизованный таймер с точными параметрами
         this.telegramTimer = new TelegramTimer(
             this,
             this.scale.width / 2,
             timerY,
-            90,  // Ширина
-            40   // Высота
+            70,  // Ширина (точная как у кнопок WebApp)
+            36   // Высота (точная как у кнопок WebApp)
         );
         
         console.log(`📱 [Timer] Telegram-styled timer created at position: ${this.scale.width / 2}, ${timerY}`);
