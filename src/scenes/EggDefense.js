@@ -251,6 +251,7 @@ export class EggDefense extends Phaser.Scene {
         );
         
         console.log(`📱 [Timer] Telegram-styled timer created at position: ${this.scale.width / 2}, ${timerY}`);
+        console.log(`📱 [Timer] Timer object:`, this.telegramTimer);
     }
     
     /**
@@ -279,6 +280,11 @@ export class EggDefense extends Phaser.Scene {
             } else { // Обычное время - белый
                 this.telegramTimer.setColor('#ffffff'); // Белый
             }
+            
+            // Обновляем позицию относительно canvas (только если нужно)
+            if (this.game && this.game.canvas) {
+                this.telegramTimer.updatePosition();
+            }
         } else {
             // Скрываем таймер если игра не активна
             this.telegramTimer.setVisible(false);
@@ -296,6 +302,7 @@ export class EggDefense extends Phaser.Scene {
         
         // Обновляем позицию таймера
         this.telegramTimer.setPosition(this.scale.width / 2, timerY);
+        this.telegramTimer.updatePosition();
     }
     
     /**
@@ -665,11 +672,8 @@ export class EggDefense extends Phaser.Scene {
         }
         
         // Очищаем таймер
-        if (this.timerBackground) {
-            this.timerBackground.destroy();
-        }
-        if (this.timerText) {
-            this.timerText.destroy();
+        if (this.telegramTimer) {
+            this.telegramTimer.destroy();
         }
     }
 }
