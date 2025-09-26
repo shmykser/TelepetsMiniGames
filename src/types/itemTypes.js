@@ -57,7 +57,6 @@ export const ITEMS = {
 
 // Константы для предметов (перенесено из GameSettings.js)
 export const ITEM_CONSTANTS = {
-    ITEM_DEPTH: 100,
     ITEM_SCALE: 0.8,
     ITEM_BODY_SCALE: 0.8,
     AUTO_REMOVE_DELAY: 10000        // Автоудаление предмета через 10 секунд

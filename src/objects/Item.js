@@ -1,5 +1,6 @@
 import { GameObject } from './GameObject.js';
-import { ITEMS, ITEM_TYPES, ITEM_CONSTANTS } from '../types/itemTypes';
+import { ITEMS, ITEM_TYPES } from '../types/itemTypes';
+import { DEPTH_CONSTANTS } from '../settings/GameSettings.js';
 import { GeometryUtils } from '../utils/GeometryUtils.js';
 
 /**
@@ -42,7 +43,7 @@ export class Item extends GameObject {
     setupItemBehavior() {
         // Настройка спрайта
         this.setScale(ITEM_CONSTANTS.ITEM_SCALE);
-        this.setDepth(ITEM_CONSTANTS.ITEM_DEPTH);
+        this.setDepth(DEPTH_CONSTANTS.ITEM);
         
         // Настройка физики
         this.physicsBody.setSize(this.width * ITEM_CONSTANTS.ITEM_BODY_SCALE, this.height * ITEM_CONSTANTS.ITEM_BODY_SCALE);

@@ -8,8 +8,8 @@
 
 // Основные настройки приложения Phaser
 export const PHASER_SETTINGS = {
-    width: 360,
-    height: 640,
+    width: 720,
+    height: 1280,
     backgroundColor: 0x0b1221,
     physics: {
         default: 'arcade',
@@ -21,8 +21,8 @@ export const PHASER_SETTINGS = {
     responsive: {
         minWidth: 320,
         minHeight: 480,
-        maxWidth: 800,
-        maxHeight: 1200
+        maxWidth: 720,
+        maxHeight: 1280
     }
 };
 
@@ -121,6 +121,24 @@ export const UI_CONSTANTS = {
         DEFAULT_PADDING_X: 15,
         DEFAULT_PADDING_Y: 8
     }
+};
+
+// Константы глубины отображения объектов
+export const DEPTH_CONSTANTS = {
+    // Фон (самый задний план)
+    BACKGROUND: -100,
+    
+    // Игровые объекты (от заднего к переднему)
+    DEFENSE: 10,
+    EGG: 20,
+    ENEMY: 30,
+    PROJECTILE: 5,
+    ITEM: 100,
+    
+    // UI элементы (передний план)
+    HEALTH_BAR: 101,
+    UI_ELEMENTS: 1000,
+    TIMER: 1001
 };
 
 

@@ -9,8 +9,9 @@ import { EffectSystem } from '../systems/EffectSystem.js';
 import { EventSystem } from '../systems/EventSystem.js';
 import { AbilitySystem } from '../systems/AbilitySystem.js';
 import { EffectHandler } from '../handlers/EffectHandler.js';
+import { EnemyEffectSystem } from '../systems/EnemyEffectSystem.js';
 import { EVENT_TYPES } from '../types/EventTypes.js';
-import { BACKGROUND_SETTINGS } from '../settings/GameSettings.js';
+import { BACKGROUND_SETTINGS, DEPTH_CONSTANTS } from '../settings/GameSettings.js';
 import { ABILITIES } from '../types/abilityTypes.js';
 import { BackgroundUtils } from '../utils/BackgroundUtils.js';
 import { AbilitiesDisplay } from '../components/AbilitiesDisplay.js';
@@ -37,6 +38,9 @@ export class EggDefense extends Phaser.Scene {
         
         // Настройка UI
         this.setupUI();
+        
+        // Настройка обработчиков клавиш
+        this.setupKeyboardHandlers();
         
         // Запуск игры
         this.startGame();
@@ -68,6 +72,10 @@ export class EggDefense extends Phaser.Scene {
         // Инициализируем системы в классе Enemy
         Enemy.initDropSystems(this, this.egg, this.probabilitySystem, this.abilitySystem);
         Enemy.initEventSystem(this.eventSystem);
+        
+        // Инициализируем систему эффектов для врагов
+        this.enemyEffectSystem = new EnemyEffectSystem(this);
+        Enemy.initEffectSystem(this.enemyEffectSystem);
         
         // Система волн для спавна врагов
         this.waveSystem = new WaveSystem(this, this.probabilitySystem);
@@ -109,6 +117,36 @@ export class EggDefense extends Phaser.Scene {
         
         // Устанавливаем яйцо как цель для волновой системы
         this.waveSystem.setTarget(this.egg);
+        
+        // Настройка обработчиков событий
+        this.setupEventHandlers();
+    }
+
+    /**
+     * Настройка обработчиков событий
+     */
+    setupEventHandlers() {
+        // Обработчик спавна врагов от осы и других спавнеров
+        this.events.on('enemy:spawn', (spawnData) => {
+            if (this.gameObject?.enemyType === 'wasp') {
+                console.log('🐝 [EggDefense] ОСА: Получено событие спавна:', spawnData);
+            }
+            
+            if (spawnData.enemyType && spawnData.x && spawnData.y) {
+                // Создаем врага напрямую, как в тестовой сцене
+                const enemy = this.createEnemy(spawnData.enemyType, spawnData.x, spawnData.y);
+                
+                // Если спавнимый враг - снаряд, и есть цель, устанавливаем её
+                if (spawnData.enemyType === 'projectile' && spawnData.target && enemy && enemy.aiCoordinator) {
+                    if (this.gameObject?.enemyType === 'wasp') {
+                        console.log('🐝 [EggDefense] ОСА: Устанавливаем цель для спавненного снаряда');
+                    }
+                    enemy.aiCoordinator.setTarget(spawnData.target);
+                }
+            }
+        });
+        
+        console.log('🎮 [EggDefense] Обработчики событий настроены');
     }
 
     /**
@@ -119,7 +157,7 @@ export class EggDefense extends Phaser.Scene {
         this.grassBackground = BackgroundUtils.createAnimatedGrassBackground(this, BACKGROUND_SETTINGS);
         
         // Устанавливаем фон на самый нижний слой
-        this.grassBackground.setDepth(-100);
+        this.grassBackground.setDepth(DEPTH_CONSTANTS.BACKGROUND);
         
         // Создание яйца в центре экрана (abilitySystem будет передан позже)
         this.egg = Egg.CreateEgg(
@@ -137,9 +175,24 @@ export class EggDefense extends Phaser.Scene {
     }
 
     /**
+     * Настройка обработчиков клавиш
+     */
+    setupKeyboardHandlers() {
+        // Переключение видимости таблицы способностей по Tab
+        this.input.keyboard.on('keydown-TAB', () => {
+            if (this.abilitiesDisplay) {
+                this.abilitiesDisplay.toggle();
+            }
+        });
+    }
+    
+    /**
      * Настройка UI
      */
     setupUI() {
+        // Создаем таймер в верхней части экрана по центру
+        this.createTimer();
+        
         // Создаем дисплей способностей в правом верхнем углу
         this.abilitiesDisplay = new AbilitiesDisplay(
             this,
@@ -149,7 +202,81 @@ export class EggDefense extends Phaser.Scene {
         );
         
         // Устанавливаем высокую глубину, чтобы было поверх игры
-        this.abilitiesDisplay.setDepth(1000);
+        this.abilitiesDisplay.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS);
+        
+        // Скрываем таблицу способностей по умолчанию
+        this.abilitiesDisplay.hide();
+    }
+    
+    /**
+     * Создание таймера игры
+     */
+    createTimer() {
+        // Создаем фон для таймера (уменьшенный размер)
+        this.timerBackground = this.add.rectangle(
+            this.scale.width / 2,
+            50,
+            80,
+            32,
+            0x000000,
+            0.7
+        );
+        
+        // Создаем текст таймера
+        this.timerText = this.add.text(
+            this.scale.width / 2,
+            50,
+            '10:00',
+            {
+                fontSize: '24px',
+                fill: '#ffffff',
+                fontStyle: 'bold',
+                stroke: '#000000',
+                strokeThickness: 2
+            }
+        ).setOrigin(0.5);
+        
+        // Устанавливаем высокую глубину, чтобы было поверх игры
+        this.timerBackground.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS);
+        this.timerText.setDepth(DEPTH_CONSTANTS.TIMER);
+        
+        // Изначально скрываем таймер до запуска игры
+        this.timerBackground.setVisible(false);
+        this.timerText.setVisible(false);
+    }
+    
+    /**
+     * Обновление таймера
+     */
+    updateTimer() {
+        if (!this.timerText || !this.waveSystem) return;
+        
+        // Показываем таймер только если игра активна
+        if (this.waveSystem.isGameActive) {
+            this.timerBackground.setVisible(true);
+            this.timerText.setVisible(true);
+            
+            const remainingTime = this.waveSystem.getRemainingTime();
+            const minutes = Math.floor(remainingTime / 60000);
+            const seconds = Math.floor((remainingTime % 60000) / 1000);
+            
+            // Форматируем время с ведущими нулями
+            const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            this.timerText.setText(timeString);
+            
+            // Меняем цвет в зависимости от оставшегося времени
+            if (remainingTime <= 60000) { // Последняя минута - красный
+                this.timerText.setFill('#ff0000');
+            } else if (remainingTime <= 180000) { // Последние 3 минуты - желтый
+                this.timerText.setFill('#ffff00');
+            } else { // Обычное время - белый
+                this.timerText.setFill('#ffffff');
+            }
+        } else {
+            // Скрываем таймер если игра не активна
+            this.timerBackground.setVisible(false);
+            this.timerText.setVisible(false);
+        }
     }
 
     /**
@@ -231,6 +358,11 @@ export class EggDefense extends Phaser.Scene {
      * Отображение результата игры
      */
     showGameResult(won) {
+        // Скрываем HUD на экране результата
+        if (this.abilitiesDisplay) {
+            this.abilitiesDisplay.setVisible(false);
+        }
+        
         const stats = this.getGameStats();
         const resultText = won ? 'ПОБЕДА!' : 'ПОРАЖЕНИЕ!';
         const resultColor = won ? '#00ff00' : '#ff0000';
@@ -244,6 +376,7 @@ export class EggDefense extends Phaser.Scene {
             0x000000, 
             0.8
         );
+        resultBg.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS);
         
         const titleText = this.add.text(
             this.scale.width / 2, 
@@ -255,6 +388,7 @@ export class EggDefense extends Phaser.Scene {
                 fontStyle: 'bold'
             }
         ).setOrigin(0.5);
+        titleText.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS + 1);
         
         const statsText = this.add.text(
             this.scale.width / 2, 
@@ -266,6 +400,7 @@ export class EggDefense extends Phaser.Scene {
                 align: 'center'
             }
         ).setOrigin(0.5);
+        statsText.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS + 1);
         
         // Кнопка рестарта
         const restartButton = this.add.rectangle(
@@ -281,8 +416,9 @@ export class EggDefense extends Phaser.Scene {
         })
         .on('pointerover', () => restartButton.setAlpha(0.8))
         .on('pointerout', () => restartButton.setAlpha(1));
+        restartButton.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS + 1);
         
-        this.add.text(
+        const restartText = this.add.text(
             this.scale.width / 2 - 80, 
             this.scale.height / 2 + 50, 
             'РЕСТАРТ', 
@@ -292,6 +428,7 @@ export class EggDefense extends Phaser.Scene {
                 fontStyle: 'bold'
             }
         ).setOrigin(0.5);
+        restartText.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS + 2);
         
         // Кнопка возврата в меню
         const menuButton = this.add.rectangle(
@@ -307,8 +444,9 @@ export class EggDefense extends Phaser.Scene {
         })
         .on('pointerover', () => menuButton.setAlpha(0.8))
         .on('pointerout', () => menuButton.setAlpha(1));
+        menuButton.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS + 1);
         
-        this.add.text(
+        const menuText = this.add.text(
             this.scale.width / 2 + 80, 
             this.scale.height / 2 + 50, 
             'В МЕНЮ', 
@@ -318,13 +456,15 @@ export class EggDefense extends Phaser.Scene {
                 fontStyle: 'bold'
             }
         ).setOrigin(0.5);
+        menuText.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS + 2);
     }
     
     /**
      * Получение статистики игры
      */
     getGameStats() {
-        const gameTime = this.time.now - (this.waveSystem?.gameStartTime || 0);
+        // Используем Date.now() для соответствия с WaveSystem
+        const gameTime = Date.now() - (this.waveSystem?.gameStartTime || 0);
         const minutes = Math.floor(gameTime / 60000);
         const seconds = Math.floor((gameTime % 60000) / 1000);
         
@@ -340,6 +480,10 @@ export class EggDefense extends Phaser.Scene {
      * Пауза игры
      */
     pauseGame() {
+        // Скрываем таблицу способностей при паузе
+        if (this.abilitiesDisplay) {
+            this.abilitiesDisplay.hide();
+        }
         this.scene.pause();
     }
     
@@ -347,6 +491,7 @@ export class EggDefense extends Phaser.Scene {
      * Возобновление игры
      */
     resumeGame() {
+        // Не показываем таблицу автоматически - игрок сам решает через Tab
         this.scene.resume();
     }
     
@@ -389,6 +534,9 @@ export class EggDefense extends Phaser.Scene {
             this.abilitiesDisplay.update(time, delta);
         }
         
+        // Обновляем таймер
+        this.updateTimer();
+        
         // Проверяем условия окончания игры
         this.checkGameEnd();
     }
@@ -406,6 +554,32 @@ export class EggDefense extends Phaser.Scene {
             });
             this.defenses = [];
         }
+    }
+
+    /**
+     * Создание врага определенного типа
+     */
+    createEnemy(enemyType, x, y) {
+        // Создаем врага
+        const enemy = Enemy.CreateEnemy(this, enemyType, x, y);
+        
+        if (enemy) {
+            // Если есть цель (яйцо), устанавливаем её
+            if (this.egg) {
+                enemy.setTarget(this.egg);
+            }
+            
+            // Добавляем в список врагов WaveSystem для правильной интеграции
+            if (this.waveSystem && this.waveSystem.enemies) {
+                this.waveSystem.enemies.push(enemy);
+            }
+            
+            if (enemyType === 'wasp' || enemyType === 'projectile') {
+                console.log(`🐝 [EggDefense] ОСА: Создан враг ${enemyType} в позиции (${x}, ${y})`);
+            }
+        }
+        
+        return enemy;
     }
 
     /**
@@ -448,6 +622,18 @@ export class EggDefense extends Phaser.Scene {
         
         if (this.abilitiesDisplay) {
             this.abilitiesDisplay.destroy();
+        }
+        
+        if (this.enemyEffectSystem) {
+            this.enemyEffectSystem.destroy();
+        }
+        
+        // Очищаем таймер
+        if (this.timerBackground) {
+            this.timerBackground.destroy();
+        }
+        if (this.timerText) {
+            this.timerText.destroy();
         }
     }
 }

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { BaseUIComponent } from './BaseUIComponent.js';
 import { PropertyUtils } from '../utils/PropertyUtils.js';
-import { COLORS } from '../settings/GameSettings.js';
+import { COLORS, DEPTH_CONSTANTS } from '../settings/GameSettings.js';
 /**
  * Универсальный компонент полосы здоровья
  * Может использоваться для врагов, яйца, защиты и любых других объектов
@@ -65,7 +65,7 @@ export class HealthBar extends BaseUIComponent {
         // Добавляем в сцену
         scene.add.existing(this);
         // Устанавливаем высокий depth, чтобы HealthBar был поверх всех объектов
-        this.setDepth(101);
+        this.setDepth(DEPTH_CONSTANTS.HEALTH_BAR);
         // Обновляем отображение
         this.updateHealth();
     }

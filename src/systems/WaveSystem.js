@@ -44,7 +44,8 @@ export class WaveSystem {
      * Запускает игру
      */
     startGame() {
-        this.gameStartTime = this.scene.time.now;
+        // Используем Date.now() вместо this.scene.time.now для корректного времени
+        this.gameStartTime = Date.now();
         this.isGameActive = true;
         this.isGameEnded = false;
         this.currentMinute = 1;
@@ -77,12 +78,21 @@ export class WaveSystem {
             this.spawnTimer = null;
         }
         
+        // Уничтожаем всех врагов при окончании игры (без засчета в статистику)
+        this.enemies.forEach(enemy => {
+            if (enemy && enemy.destroy) {
+                // Устанавливаем флаг, что враг уничтожается принудительно
+                enemy._forceDestroyed = true;
+                enemy.destroy();
+            }
+        });
+        this.enemies = [];
         
         // Эмитим событие окончания игры
         this.scene.events.emit('gameEnded', {
             totalEnemiesSpawned: this.totalEnemiesSpawned,
             totalEnemiesKilled: this.totalEnemiesKilled,
-            gameTime: this.scene.time.now - this.gameStartTime
+            gameTime: Date.now() - this.gameStartTime
         });
     }
     
@@ -318,6 +328,11 @@ export class WaveSystem {
      * Обработчик смерти врага
      */
     onEnemyKilled(enemy) {
+        // Не засчитываем принудительно уничтоженных врагов
+        if (enemy._forceDestroyed) {
+            return;
+        }
+        
         this.totalEnemiesKilled++;
         this.currentEnemiesOnScreen--;
         
@@ -342,7 +357,7 @@ export class WaveSystem {
         if (!this.isGameActive) return;
         
         // Проверяем окончание игры
-        const gameTime = this.scene.time.now - this.gameStartTime;
+        const gameTime = Date.now() - this.gameStartTime;
         if (gameTime >= this.waveSettings.duration) {
             this.stopGame();
             return;
@@ -379,7 +394,7 @@ export class WaveSystem {
     getGameProgress() {
         if (!this.isGameActive) return 0;
         
-        const gameTime = this.scene.time.now - this.gameStartTime;
+        const gameTime = Date.now() - this.gameStartTime;
         return Math.min(1, gameTime / this.waveSettings.duration);
     }
     
@@ -389,7 +404,7 @@ export class WaveSystem {
     getRemainingTime() {
         if (!this.isGameActive) return 0;
         
-        const gameTime = this.scene.time.now - this.gameStartTime;
+        const gameTime = Date.now() - this.gameStartTime;
         return Math.max(0, this.waveSettings.duration - gameTime);
     }
     

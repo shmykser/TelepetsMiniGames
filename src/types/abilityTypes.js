@@ -62,7 +62,7 @@ export const ABILITIES = {
     EGG_AURA: {
         name: 'Аура',
         description: 'Аура вокруг яйца',
-        baseValue: 3,     // 0=заблокирована, 1+=множитель
+        baseValue: 0,     // 0=заблокирована, 1+=множитель
         increase: 1,      // +1 к множителю за уровень
         maxValue: 10,
         icon: '✨'

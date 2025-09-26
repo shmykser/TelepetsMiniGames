@@ -2,15 +2,21 @@ import { GameObject } from './GameObject.js';
 import { enemyTypes } from '../types/enemyTypes';
 import { PropertyUtils } from '../utils/PropertyUtils.js';
 import { GeometryUtils } from '../utils/GeometryUtils.js';
-import { PHYSICS_CONSTANTS, COLORS } from '../settings/GameSettings.js';
+import { PHYSICS_CONSTANTS, COLORS, DEPTH_CONSTANTS } from '../settings/GameSettings.js';
 import { ItemDropSystem } from '../systems/ItemDropSystem.js';
 import { EVENT_TYPES } from '../types/EventTypes.js';
+import { EnemyEffectSystem } from '../systems/EnemyEffectSystem.js';
+import { AICoordinator } from '../systems/core/AICoordinator.js';
+import { SystemConfig } from '../systems/config/SystemConfig.js';
+import { BehaviorAdapter } from '../systems/adapters/BehaviorAdapter.js';
 export class Enemy extends GameObject {
     // Статическая система дропа для всех врагов
     static itemDropSystem = null;
     static probabilitySystem = null;
     // Статическая система событий для всех врагов
     static eventSystem = null;
+    // Статическая система эффектов для всех врагов
+    static effectSystem = null;
 
     constructor(scene, config) {
         const enemyType = config.enemyType || 'unknown';
@@ -18,15 +24,16 @@ export class Enemy extends GameObject {
         // Настройки из типа врага (приоритет у переданных значений)
         const enemyConfig = {
             health: config.health !== undefined ? config.health : enemyData.health,
-            damage: config.damage !== undefined ? config.damage : enemyData.damage,
-            speed: config.speed !== undefined ? config.speed : enemyData.speed, // скорость в пикселях в секунду
-            cooldown: config.cooldown !== undefined ? config.cooldown : enemyData.cooldown, // уже в миллисекундах
-            attackRange: config.attackRange || enemyData.attackRange || PHYSICS_CONSTANTS.ENEMY_ATTACK_RANGE_DEFAULT,
+            damage: config.damage !== undefined ? config.damage : (enemyData.damage || enemyData.attack?.damage),
+            speed: config.speed !== undefined ? config.speed : (enemyData.speed || enemyData.movement?.speed), // скорость в пикселях в секунду
+            cooldown: config.cooldown !== undefined ? config.cooldown : (enemyData.cooldown || enemyData.attack?.cooldown), // уже в миллисекундах
+            attackRange: config.attackRange || enemyData.attackRange || enemyData.attack?.range || PHYSICS_CONSTANTS.ENEMY_ATTACK_RANGE_DEFAULT,
             size: config.size !== undefined ? config.size : enemyData.size, // размер врага
             x: config.x,
             y: config.y,
             texture: config.texture || enemyData.texture, // fallback эмодзи
-            spriteKey: config.spriteKey || enemyData.spriteKey // ключ для спрайта
+            spriteKey: config.spriteKey || enemyData.spriteKey, // ключ для спрайта
+            behaviorParams: enemyData.behaviorParams || {} // Параметры поведения
         };
         super(scene, enemyConfig);
         
@@ -42,20 +49,37 @@ export class Enemy extends GameObject {
         PropertyUtils.defineProperty(this, "_id", undefined);
         PropertyUtils.defineProperty(this, "_size", undefined);
         
+        // Новая система ИИ
+        PropertyUtils.defineProperty(this, "_aiCoordinator", undefined);
+        PropertyUtils.defineProperty(this, "_behaviorAdapter", undefined);
+        PropertyUtils.defineProperty(this, "_useNewAI", true);
+        
         // Инициализация свойств врага
         this._damage = enemyConfig.damage;
         this._speed = enemyConfig.speed;
         this._cooldown = enemyConfig.cooldown;
         this._attackRange = enemyConfig.attackRange;
         this._size = enemyConfig.size;
+        
         this._lastAttackTime = 0;
         this._target = null;
         this._id = `${enemyType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         this._enemyType = enemyType;
         this._enemyData = enemyData;
+        
+        
+        // Инициализация новой системы ИИ
+        this._aiCoordinator = null;
+        this._behaviorAdapter = null;
+        
+        // Система иммунитета к урону
+        this.isImmuneToDamage = false;
 
-        this.physicsBody.setBounce(PHYSICS_CONSTANTS.ENEMY_BOUNCE);
-        this.physicsBody.setDrag(PHYSICS_CONSTANTS.ENEMY_DRAG_X, PHYSICS_CONSTANTS.ENEMY_DRAG_Y);
+        this.body.setBounce(PHYSICS_CONSTANTS.ENEMY_BOUNCE);
+        this.body.setDrag(PHYSICS_CONSTANTS.ENEMY_DRAG_X, PHYSICS_CONSTANTS.ENEMY_DRAG_Y);
+        
+        // Инициализируем новую систему ИИ
+        this.setupNewAI(enemyType);
         
         // Отправляем событие появления врага
         if (Enemy.eventSystem) {
@@ -76,6 +100,23 @@ export class Enemy extends GameObject {
         get id() { return this._id; }
         get enemyType() { return this._enemyType; }
         get enemyData() { return this._enemyData; }
+        get canFly() { return this._enemyData?.canFly || false; }
+        
+        // Методы для совместимости с новой системой ИИ
+        setVelocity(x, y) {
+            if (this.body) {
+                this.body.setVelocity(x, y);
+            } else if (this.physicsBody) {
+                this.physicsBody.setVelocity(x, y);
+            }
+        }
+        
+        stopMovement() {
+            this.setVelocity(0, 0);
+        }
+        
+        // Совместимость с IGameObject - используем прямое обращение к physicsBody
+        
         // Сеттеры для врагов
         set damage(value) { this._damage = Math.max(0, value); }
         set speed(value) { this._speed = Math.max(0, value); }
@@ -104,64 +145,19 @@ export class Enemy extends GameObject {
         if (!this._isAlive || !this.scene)
             return;
         
-        // Если есть цель (яйцо), движемся к ней
-        if (this._target && this._target._isAlive) {
-            this.moveToTarget();
-            // Обновляем HealthBar при движении врага
-            this.updateHealthBar();
-            return;
+        // Обновляем новую систему ИИ
+        if (this._useNewAI && this._aiCoordinator) {
+            this._aiCoordinator.update(_time, _delta);
+        } else {
+            // Fallback к базовому поведению
+            console.log(`⚠️ [Enemy] ${this.enemyType} использует базовое поведение. Новая ИИ:`, this._useNewAI ? 'включена, но координатор отсутствует' : 'отключена');
+            super.update(_time, _delta);
         }
         
-        // Вызываем родительский update для базовой логики
-        super.update(_time, _delta);
+        // Обновляем HealthBar при движении врага
+        this.updateHealthBar();
     }
     
-    /**
-     * Движется к цели (яйцу) с определенной скоростью через Phaser Physics
-     */
-    moveToTarget() {
-        if (!this._target || !this._target._isAlive || !this._isAlive) {
-            this.stopMovement();
-            return;
-        }
-        
-        // Вычисляем расстояние до цели
-        const distance = GeometryUtils.distance(this.x, this.y, this._target.x, this._target.y);
-        
-        // Если цель в радиусе атаки, останавливаемся и атакуем
-        if (distance <= this.attackRange) {
-            this.stopMovement();
-            this.attack(this._target);
-            return;
-        }
-        
-        // Стандартное линейное движение
-        this.moveToTargetLinear();
-    }
-    
-    /**
-     * Стандартное линейное движение к цели
-     */
-    moveToTargetLinear() {
-        // Вычисляем направление к цели
-        const direction = new Phaser.Math.Vector2(
-            this._target.x - this.x,
-            this._target.y - this.y
-        ).normalize();
-        
-        // Устанавливаем скорость через Phaser Physics
-        const actualSpeed = this.speed; // скорость уже в пикселях в секунду
-        const velocityX = direction.x * actualSpeed;
-        const velocityY = direction.y * actualSpeed;
-        
-        this.physicsBody.setVelocity(velocityX, velocityY);
-        
-        // Поворачиваем спрайт в направлении движения (опционально)
-        if (velocityX !== 0 || velocityY !== 0) {
-            const angle = GeometryUtils.angle(0, 0, velocityX, velocityY) * (180 / Math.PI);
-            this.setRotation(angle * (Math.PI / 180));
-        }
-    }
     
     // Неиспользуемые методы движения удалены
     
@@ -180,6 +176,8 @@ export class Enemy extends GameObject {
         const attackTarget = target || this._target;
         if (!attackTarget || !attackTarget.isAlive)
             return false;
+            
+        
         const distance = GeometryUtils.distance(this.x, this.y, attackTarget.x, attackTarget.y);
         if (distance > this.attackRange)
             return false;
@@ -201,25 +199,59 @@ export class Enemy extends GameObject {
         return true;
     }
     performBasicAttack(target) {
-        // Базовая атака
-        target.takeDamage(this.damage);
-        this.emit('attack', target, this.damage);
+        // Базовая атака - только если цель имеет метод takeDamage
+        if (target && typeof target.takeDamage === 'function') {
+            target.takeDamage(this.damage);
+            this.emit('attack', target, this.damage);
+        } else {
+            // Если цель не может получать урон, просто логируем атаку
+            console.log(`⚔️ [Enemy] ${this.enemyType} атакует цель, но она не может получать урон`);
+            this.emit('attack', target, this.damage);
+        }
     }
 
     
     // Метод для работы с целями
     setTarget(target) {
         this.target = target;
+        this._target = target; // Устанавливаем и приватное свойство для совместимости
     }
     
 
     /**
-     * Переопределяем takeDamage для добавления эффектов
+     * Переопределяем takeDamage для добавления эффектов и иммунитета
      */
     takeDamage(damage) {
+        // Проверяем иммунитет к урону
+        if (this.isImmuneToDamage) {
+            // Эмитим событие заблокированного урона для визуального эффекта
+            if (Enemy.eventSystem) {
+                Enemy.eventSystem.emit(EVENT_TYPES.ENEMY_DAMAGE, {
+                    enemy: this,
+                    damage: 0, // Заблокированный урон
+                    intensity: 0.1, // Слабый эффект для показа блокировки
+                    blocked: true // Флаг заблокированного урона
+                });
+            }
+            return false; // Урон заблокирован
+        }
+        
         // Вызываем родительский метод
         super.takeDamage(damage);
         
+        // Применяем эффект урона
+        if (Enemy.effectSystem) {
+            Enemy.effectSystem.applyEffect('damage', this, {
+                damage: damage,
+                color: 0xff4444
+            });
+        }
+        
+        // Передаем урон в AICoordinator для стратегии стелса
+        if (this._aiCoordinator) {
+            this._aiCoordinator.takeDamage(damage, this.scene.time.now);
+        }
+
         // Отправляем событие получения урона
         if (Enemy.eventSystem) {
             const intensity = damage / this.maxHealth;
@@ -229,12 +261,39 @@ export class Enemy extends GameObject {
                 intensity: Math.min(intensity, 1.0)
             });
         }
+        
+        return true; // Урон нанесен
+    }
+    
+    /**
+     * Устанавливает иммунитет к урону
+     * @param {boolean} immune - Иммунитет включен/выключен
+     */
+    setDamageImmunity(immune) {
+        this.isImmuneToDamage = immune;
+    }
+    
+    /**
+     * Проверяет, имеет ли враг иммунитет к урону
+     * @returns {boolean}
+     */
+    hasDamageImmunity() {
+        return this.isImmuneToDamage;
     }
     
     /**
      * Переопределяем die() для обработки дропа предметов и эффектов
      */
     die() {
+        // Применяем эффект взрыва при смерти
+        if (Enemy.effectSystem) {
+            Enemy.effectSystem.applyEffect('explosion', this, {
+                color: 0xff4444,
+                size: this.width,
+                particleCount: 6
+            });
+        }
+        
         // Отправляем событие смерти
         if (Enemy.eventSystem) {
             Enemy.eventSystem.emit(EVENT_TYPES.ENEMY_DEATH, {
@@ -264,8 +323,210 @@ export class Enemy extends GameObject {
         }
     }
 
+    // ========== СИСТЕМА ПОВЕДЕНИЙ ==========
+    
+    /**
+     * Настройка новой системы ИИ
+     * @param {string} enemyType - Тип врага
+     */
+    setupNewAI(enemyType) {
+        try {
+            // Создаем конфигурацию для AI координатора
+            const config = new SystemConfig([
+                this._enemyData,
+                this._enemyData.behaviorParams || {},
+                {
+                    attackType: this.getAttackType(),
+                    movement: this.getMovementConfig(),
+                    attack: this.getAttackConfig(),
+                    recovery: this.getRecoveryConfig(),
+                    collision: this.getCollisionConfig(),
+                    pathfinding: this.getPathfindingConfig()
+                }
+            ]);
+
+            // Создаем AI координатор
+            this._aiCoordinator = new AICoordinator(this, config);
+            
+            console.log(`✅ [Enemy] ${enemyType} использует новую систему ИИ`);
+        } catch (error) {
+            console.error(`❌ [Enemy] Ошибка инициализации новой системы ИИ для ${enemyType}:`, error);
+            this._useNewAI = false;
+        }
+    }
+    
+    /**
+     * Получение типа атаки
+     * @returns {string}
+     */
+    getAttackType() {
+        // Проверяем тип атаки из конфигурации
+        if (this._enemyData.attack && this._enemyData.attack.strategy) {
+            const strategy = this._enemyData.attack.strategy;
+            console.log(`🎯 [Enemy] ${this.enemyType} найден блок attack со стратегией: ${strategy}`);
+            // Поддерживаем все типы стратегий
+            if (['simple', 'singleUse', 'area', 'spawn'].includes(strategy)) {
+                return strategy;
+            }
+            // Fallback для неизвестных стратегий
+            console.log(`⚠️ [Enemy] ${this.enemyType} неизвестная стратегия: ${strategy}, используем fallback: simple`);
+            return 'simple';
+        }
+        console.log(`⚠️ [Enemy] ${this.enemyType} нет блока attack, используем по умолчанию: simple`);
+        return 'simple'; // По умолчанию простая атака
+    }
+
+    /**
+     * Получение конфигурации движения
+     * @returns {Object}
+     */
+    getMovementConfig() {
+        const config = {
+            speed: this._speed,
+            strategy: this._enemyData.movement?.strategy || 'linear',
+            ...this._enemyData.movement
+        };
+        
+        
+        return config;
+    }
+
+    /**
+     * Получение конфигурации атаки
+     * @returns {Object}
+     */
+    getAttackConfig() {
+        const config = {
+            damage: this._damage,
+            attackRange: this._attackRange,
+            cooldown: this._cooldown,
+            strategy: this.getAttackType()
+        };
+
+        // Добавляем параметры атаки из enemyData
+        if (this._enemyData.attack) {
+            Object.assign(config, this._enemyData.attack);
+        }
+
+
+        return config;
+    }
+
+    /**
+     * Получение конфигурации восстановления
+     * @returns {Object}
+     */
+    getRecoveryConfig() {
+        return this._enemyData.recovery || {};
+    }
+
+    /**
+     * Получение конфигурации коллизий
+     * @returns {Object}
+     */
+    getCollisionConfig() {
+        return {
+            collisionEnabled: true,
+            collisionLayers: ['ENEMIES', 'OBSTACLES'],
+            worldBoundsCollision: true
+        };
+    }
+
+    /**
+     * Получение конфигурации поиска пути
+     * @returns {Object}
+     */
+    getPathfindingConfig() {
+        return {
+            algorithm: 'astar',
+            allowDiagonal: true,
+            dontCrossCorners: true,
+            ignoreGroundObstacles: this.canFly || false
+        };
+    }
+    
+    /**
+     * Установка цели для ИИ
+     * @param {Object} target - Цель
+     */
+    setTarget(target) {
+        this._target = target;
+        
+        if (this._aiCoordinator) {
+            this._aiCoordinator.setTarget(target);
+        }
+    }
+    
+    /**
+     * Получение цели
+     * @returns {Object|null}
+     */
+    getTarget() {
+        return this._target;
+    }
+    
+    /**
+     * Получение состояния ИИ
+     * @returns {Object}
+     */
+    getAIState() {
+        if (this._aiCoordinator) {
+            return this._aiCoordinator.getAIState();
+        }
+        
+        return {
+            isActive: false,
+            state: 'legacy',
+            currentTarget: this._target,
+            systems: {}
+        };
+    }
+    
+    /**
+     * Включение/выключение новой системы ИИ
+     * @param {boolean} enabled - Включена ли новая ИИ
+     */
+    setNewAIEnabled(enabled) {
+        this._useNewAI = enabled;
+        
+        if (enabled && !this._aiCoordinator) {
+            this.setupNewAI(this._enemyType);
+        }
+    }
+    
+    /**
+     * Получение информации о системах
+     * @returns {Object}
+     */
+    getSystemsInfo() {
+        return {
+            useNewAI: this._useNewAI,
+            aiCoordinator: this._aiCoordinator ? 'active' : 'inactive',
+            behaviorAdapter: this._behaviorAdapter ? 'active' : 'inactive',
+            enemyType: this._enemyType,
+            movementStrategy: this._enemyData.movement?.strategy || 'linear'
+        };
+    }
+    
     // Уничтожение
     destroy() {
+        // Уничтожаем AI координатор
+        if (this._aiCoordinator) {
+            this._aiCoordinator.destroy();
+            this._aiCoordinator = null;
+        }
+        
+        // Уничтожаем адаптер поведения
+        if (this._behaviorAdapter) {
+            this._behaviorAdapter.destroy();
+            this._behaviorAdapter = null;
+        }
+        
+        // Удаляем все эффекты врага
+        if (Enemy.effectSystem && this.id) {
+            Enemy.effectSystem.removeEnemyEffects(this.id);
+        }
+        
         super.destroy();
     }
     /**
@@ -284,6 +545,13 @@ export class Enemy extends GameObject {
     }
     
     /**
+     * Статический метод для инициализации системы эффектов
+     */
+    static initEffectSystem(effectSystem) {
+        Enemy.effectSystem = effectSystem;
+    }
+    
+    /**
      * Статический метод для создания врага с полной настройкой
      * Создает врага, настраивает графику, применяет усиление и создает HealthBar
      */
@@ -292,7 +560,7 @@ export class Enemy extends GameObject {
         
         // Применяем усиление к характеристикам
         const enhancedHealth = enemyData.health * enhancementMultiplier;
-        const enhancedDamage = enemyData.damage * enhancementMultiplier;
+        const enhancedDamage = (enemyData.damage || enemyData.attack?.damage) * enhancementMultiplier;
         const enhancedSize = enemyData.size * enhancementMultiplier;
         
         // Создаем врага с усиленными характеристиками
@@ -301,7 +569,8 @@ export class Enemy extends GameObject {
             ...enemyData, // Сначала все базовые данные из enemyTypes
             health: enhancedHealth, // Переопределяем усиленными значениями
             damage: enhancedDamage,
-            size: enhancedSize
+            size: enhancedSize,
+            behaviorParams: enemyData.behaviorParams // Явно передаем параметры поведения
         });
         
         // Настраиваем размер на основе усиленного размера
@@ -309,7 +578,7 @@ export class Enemy extends GameObject {
         enemy.setScale(enemySize / PHYSICS_CONSTANTS.DEFAULT_TEXTURE_SIZE);
         
         // Устанавливаем глубину отрисовки (поверх защиты)
-        enemy.setDepth(30);
+        enemy.setDepth(DEPTH_CONSTANTS.ENEMY);
         
         // Создаем полосу здоровья
         enemy.createHealthBar({

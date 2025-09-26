@@ -1,4 +1,5 @@
 import { BackgroundUtils } from '../utils/BackgroundUtils.js';
+import { DEPTH_CONSTANTS } from '../settings/GameSettings.js';
 
 export class MenuScene extends Phaser.Scene {
     constructor() {
@@ -27,7 +28,7 @@ export class MenuScene extends Phaser.Scene {
             tileSize: 64, // Размер тайла травы
             animate: false // Без анимации в меню для лучшей производительности
         });
-        this.grassBackground.setDepth(-100);
+        this.grassBackground.setDepth(DEPTH_CONSTANTS.BACKGROUND);
         
         // Добавляем темный оверлей для лучшей читаемости текста
         this.add.rectangle(width / 2, height / 2, width, height, 0x2c3e50).setAlpha(0.3).setDepth(-50);
@@ -124,8 +125,23 @@ export class MenuScene extends Phaser.Scene {
             align: 'center'
         }).setOrigin(0.5);
         
+        // Кнопка тестирования поведений
+        const behaviorsButtonY = gesturesButtonY + 65;
+        const behaviorsButton = this.add.rectangle(width / 2, behaviorsButtonY, 200, 45, 0x2ecc71)
+            .setInteractive()
+            .on('pointerdown', () => {
+                this.scene.start('TestBehaviors');
+            });
+        
+        this.add.text(width / 2, behaviorsButtonY, 'ТЕСТ ПОВЕДЕНИЙ', {
+            fontSize: buttonFontSize,
+            fill: '#ffffff',
+            fontStyle: 'bold',
+            align: 'center'
+        }).setOrigin(0.5);
+        
         // Кнопка перезагрузки ассетов
-        const reloadButtonY = gesturesButtonY + 65;
+        const reloadButtonY = behaviorsButtonY + 65;
         const reloadButton = this.add.rectangle(width / 2, reloadButtonY, 200, 45, 0xe67e22)
             .setInteractive()
             .on('pointerdown', () => {
@@ -214,6 +230,14 @@ export class MenuScene extends Phaser.Scene {
                 gesturesButton.setScale(1);
             });
             
+            behaviorsButton.on('pointerover', () => {
+                behaviorsButton.setScale(1.05);
+            });
+            
+            behaviorsButton.on('pointerout', () => {
+                behaviorsButton.setScale(1);
+            });
+            
             reloadButton.on('pointerover', () => {
                 reloadButton.setScale(1.05);
             });
@@ -257,6 +281,13 @@ export class MenuScene extends Phaser.Scene {
                 gesturesButton.setScale(0.95);
                 this.time.delayedCall(100, () => {
                     gesturesButton.setScale(1);
+                });
+            });
+            
+            behaviorsButton.on('pointerdown', () => {
+                behaviorsButton.setScale(0.95);
+                this.time.delayedCall(100, () => {
+                    behaviorsButton.setScale(1);
                 });
             });
             

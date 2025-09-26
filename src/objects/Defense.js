@@ -1,7 +1,7 @@
 import { GameObject } from './GameObject.js';
 import { defenseTypes } from '../types/defenseTypes';
 import { PropertyUtils } from '../utils/PropertyUtils.js';
-import { PHYSICS_CONSTANTS, COLORS } from '../settings/GameSettings.js';
+import { PHYSICS_CONSTANTS, COLORS, DEPTH_CONSTANTS } from '../settings/GameSettings.js';
 
 export class Defense extends GameObject {
     constructor(scene, config) {
@@ -56,7 +56,7 @@ export class Defense extends GameObject {
         defense.setScale(defenseSize / PHYSICS_CONSTANTS.DEFAULT_TEXTURE_SIZE);
         
         // Устанавливаем глубину отрисовки
-        defense.setDepth(10);
+        defense.setDepth(DEPTH_CONSTANTS.DEFENSE);
         
         // Создаем полосу здоровья (если у защиты есть здоровье)
         if (defenseData.health > 0) {

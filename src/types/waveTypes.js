@@ -4,11 +4,16 @@
  * Каждая минута добавляет новые типы врагов
  */
 export const enemyTypesByMinute = {
-    5: ['ant', 'fly'],
-    2: ['ant', 'fly', 'mosquito'],
-    3: ['ant', 'beetle', 'mosquito', 'fly', 'bee'],
-    4: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'bee', 'butterfly'],
-    1: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly']
+    1: ['ant', 'fly'],
+    2: ['ant', 'fly', 'mosquito', 'flea'],
+    3: ['ant', 'beetle', 'mosquito', 'fly', 'bee', 'slug', 'flea'],
+    4: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'bee', 'butterfly', 'snail', 'slug', 'mole', 'flea'],
+    5: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'flea'],
+    6: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'flea'],
+    7: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'flea'],
+    8: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'flea'],
+    9: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'flea'],
+    10: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'flea']
 };
 
 /**
@@ -24,7 +29,15 @@ export const enemyWeights = {
     rhinoceros: 2,
     bee: 8,
     butterfly: 6,
-    dragonfly: 4
+    dragonfly: 4,
+    snail: 5,
+    wasp: 3,
+    slug: 8,           // Слизень - средняя частота
+    mole: 4,           // Крот - редкий, но опасный
+    spiderQueen: 1,    // Самка паука - очень редкий босс
+    flea: 12          // Блоха - частая, быстрая
+    //unknown: 0         // Неизвестный - не должен появляться
+    // projectile не включен - спавнится только другими врагами
 };
 
 /**
@@ -33,7 +46,7 @@ export const enemyWeights = {
 export const WAVE_SETTINGS = {
     duration: 10 * 60 * 1000,        // 10 минут в миллисекундах
     waveDuration: 60 * 1000,         // 1 минута на волну
-    maxWaves: 10                     // Максимальное количество волн
+    maxWaves: 10                     // Максимальное количество волн (обновлено для новых врагов)
 };
 
 /**
@@ -41,11 +54,11 @@ export const WAVE_SETTINGS = {
  */
 export const SPAWN_SETTINGS = {
     // Основные настройки спавна
-    baseRate: 5000,              // 5 секунд между спавнами в начале
-    minRate: 500,                // 0.5 секунды в конце игры
+    baseRate: 3000,              // 3 секунд между спавнами в начале
+    minRate: 100,                // 0.5 секунды в конце игры
     rateMultiplier: 0.9,         // Коэффициент ускорения спавна
     maxEnemiesOnScreen: 50,      // Максимум врагов на экране
-    enemiesPerSpawn: 5,          // Количество врагов создаваемых за раз
+    enemiesPerSpawn: 1,          // Количество врагов создаваемых за раз
     randomFactor: {
         min: 0.8,                // Минимальный коэффициент случайности задержки
         max: 1.2                 // Максимальный коэффициент случайности задержки
@@ -57,7 +70,7 @@ export const SPAWN_SETTINGS = {
  */
 export const SPAWN_CONSTANTS = {
     RETRY_DELAY: 500,                    // Задержка при достижении лимита врагов
-    SPAWN_MARGIN: 0,                    // Отступ от края экрана для спавна
+    SPAWN_MARGIN: 50,                    // Отступ от края экрана для спавна
     SPAWN_SIDES: 3,                      // Количество сторон для спавна (0-3)
     SPAWN_RATE_MULTIPLIER: 10,           // Множитель для ускорения спавна
     HEALTH_MULTIPLIER: 5,                // Множитель для здоровья врагов

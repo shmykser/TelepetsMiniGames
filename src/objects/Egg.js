@@ -1,5 +1,5 @@
 import { GameObject } from './GameObject.js';
-import { PHYSICS_CONSTANTS, COLORS } from '../settings/GameSettings.js';
+import { PHYSICS_CONSTANTS, COLORS, DEPTH_CONSTANTS } from '../settings/GameSettings.js';
 export class Egg extends GameObject {
     // Яйцо - статичный объект без вылупления
     constructor(scene, config, abilitySystem = null) {
@@ -315,7 +315,7 @@ export class Egg extends GameObject {
         egg.setScale(eggSize / PHYSICS_CONSTANTS.DEFAULT_TEXTURE_SIZE);
         
         // Устанавливаем глубину отрисовки
-        egg.setDepth(20);
+        egg.setDepth(DEPTH_CONSTANTS.EGG);
 
         // Создаем полосу здоровья
         egg.createHealthBar({

@@ -238,6 +238,20 @@ export class AbilitiesDisplay extends Phaser.GameObjects.Container {
     }
     
     /**
+     * Скрывает дисплей
+     */
+    hide() {
+        this.visible = false;
+    }
+    
+    /**
+     * Показывает дисплей
+     */
+    show() {
+        this.visible = true;
+    }
+    
+    /**
      * Устанавливает позицию дисплея
      */
     setDisplayPosition(x, y) {
