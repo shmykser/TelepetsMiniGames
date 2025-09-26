@@ -24,7 +24,7 @@ export const enemyWeights = {
     ant: 20,
     beetle: 10,
     mosquito: 6,
-    fly: 4,
+    fly: 12,
     spider: 2,
     rhinoceros: 2,
     bee: 8,

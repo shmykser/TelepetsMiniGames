@@ -18,6 +18,9 @@ export class StealthStrategy {
         this.lastDamageTime = 0;
         this.trailPoints = [];
         this.isActive = true;
+        
+        // Сразу скрываем объект при создании
+        this.hide();
     }
 
     /**

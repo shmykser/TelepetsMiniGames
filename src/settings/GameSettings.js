@@ -87,28 +87,90 @@ export const COLORS = {
 };
 
 
-// Константы для UI компонентов
+// ========== TELEGRAM WEBAPP UI СТИЛИ ==========
+
+// Основные стили в стиле Telegram WebApp
+export const TELEGRAM_UI_STYLES = {
+    // Цвета
+    colors: {
+        primary: '#2481cc',           // Основной цвет Telegram
+        primaryDark: '#1e6bb8',       // Темнее для hover
+        text: '#ffffff',              // Белый текст
+        textSecondary: '#8e8e93',     // Вторичный текст
+        background: 'rgba(0, 0, 0, 0.15)',  // Полупрозрачный фон
+        backgroundHover: 'rgba(0, 0, 0, 0.25)', // Фон при hover
+        border: 'rgba(255, 255, 255, 0.2)',    // Полупрозрачная граница
+        shadow: 'rgba(0, 0, 0, 0.15)',         // Тень
+        success: '#34c759',           // Зеленый для успеха
+        warning: '#ff9500',           // Оранжевый для предупреждения
+        error: '#ff3b30'              // Красный для ошибки
+    },
+    
+    // Размеры
+    sizes: {
+        borderRadius: '8px',          // Скругление углов
+        borderRadiusSmall: '6px',     // Маленькое скругление
+        borderRadiusLarge: '12px',    // Большое скругление
+        padding: '0 16px',            // Стандартные отступы
+        paddingSmall: '0 12px',       // Маленькие отступы
+        paddingLarge: '0 20px',       // Большие отступы
+        height: '36px',               // Стандартная высота кнопок
+        heightSmall: '28px',          // Маленькая высота
+        heightLarge: '44px',          // Большая высота
+        minWidth: '60px'              // Минимальная ширина
+    },
+    
+    // Шрифты
+    fonts: {
+        family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        size: '14px',                 // Стандартный размер
+        sizeSmall: '12px',            // Маленький размер
+        sizeLarge: '16px',            // Большой размер
+        weight: '500',                // Средний вес
+        weightBold: '600',            // Жирный вес
+        lineHeight: '20px'            // Высота строки
+    },
+    
+    // Эффекты
+    effects: {
+        transition: 'all 0.2s ease-in-out',  // Плавные переходы
+        backdropFilter: 'blur(10px)',        // Размытие фона
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)', // Тень
+        boxShadowHover: '0 4px 12px rgba(0, 0, 0, 0.2)', // Тень при hover
+        textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)' // Тень текста
+    },
+    
+    // Z-index слои
+    zIndex: {
+        base: 1000,                   // Базовый слой
+        modal: 2000,                  // Модальные окна
+        tooltip: 3000,                // Подсказки
+        notification: 4000            // Уведомления
+    }
+};
+
+// Константы для UI компонентов (обновленные)
 export const UI_CONSTANTS = {
     BUTTON: {
         DEFAULT_WIDTH: 200,
         DEFAULT_HEIGHT: 50,
-        DEFAULT_FONT_SIZE: '16px',
-        DEFAULT_FONT_FAMILY: 'Arial',
-        DEFAULT_BORDER_RADIUS: 5,
-        DEFAULT_PADDING: 10,
+        DEFAULT_FONT_SIZE: TELEGRAM_UI_STYLES.fonts.size,
+        DEFAULT_FONT_FAMILY: TELEGRAM_UI_STYLES.fonts.family,
+        DEFAULT_BORDER_RADIUS: TELEGRAM_UI_STYLES.sizes.borderRadius,
+        DEFAULT_PADDING: TELEGRAM_UI_STYLES.sizes.padding,
         DEFAULT_HOVER_SCALE: 1.05,
         DEFAULT_CLICK_SCALE: 0.95,
-        DEFAULT_BACKGROUND_COLOR: 0x4a4a4a,
-        DEFAULT_TEXT_COLOR: '#ffffff'
+        DEFAULT_BACKGROUND_COLOR: TELEGRAM_UI_STYLES.colors.background,
+        DEFAULT_TEXT_COLOR: TELEGRAM_UI_STYLES.colors.text
     },
     DAMAGE_INDICATOR: {
         DEFAULT_DURATION: 1000,
         DEFAULT_DRIFT_DISTANCE: 50,
         DEFAULT_FONT_SIZE: '18px',
-        DEFAULT_COLOR: '#ff0000',
-        DEFAULT_STROKE_COLOR: '#ffffff',
+        DEFAULT_COLOR: TELEGRAM_UI_STYLES.colors.error,
+        DEFAULT_STROKE_COLOR: TELEGRAM_UI_STYLES.colors.text,
         DEFAULT_STROKE_THICKNESS: 2,
-        DEFAULT_FONT_FAMILY: 'Arial',
+        DEFAULT_FONT_FAMILY: TELEGRAM_UI_STYLES.fonts.family,
         DEFAULT_FONT_STYLE: 'bold',
         DEFAULT_APPEAR_DURATION: 200,
         DEFAULT_PULSE_DURATION: 150,
@@ -120,6 +182,26 @@ export const UI_CONSTANTS = {
         DEFAULT_CRITICAL_TIME: 30000, // 30 секунд
         DEFAULT_PADDING_X: 15,
         DEFAULT_PADDING_Y: 8
+    },
+    ABILITIES_DISPLAY: {
+        DEFAULT_WIDTH: 200,
+        DEFAULT_HEIGHT: 150,
+        DEFAULT_BACKGROUND_COLOR: TELEGRAM_UI_STYLES.colors.background,
+        DEFAULT_TEXT_COLOR: TELEGRAM_UI_STYLES.colors.text,
+        DEFAULT_FONT_SIZE: TELEGRAM_UI_STYLES.fonts.sizeSmall,
+        DEFAULT_FONT_FAMILY: TELEGRAM_UI_STYLES.fonts.family,
+        DEFAULT_BORDER_RADIUS: TELEGRAM_UI_STYLES.sizes.borderRadius,
+        DEFAULT_PADDING: '12px'
+    },
+    RESULTS_TABLE: {
+        DEFAULT_WIDTH: 350,
+        DEFAULT_HEIGHT: 200,
+        DEFAULT_BACKGROUND_COLOR: TELEGRAM_UI_STYLES.colors.background,
+        DEFAULT_TEXT_COLOR: TELEGRAM_UI_STYLES.colors.text,
+        DEFAULT_FONT_SIZE: TELEGRAM_UI_STYLES.fonts.size,
+        DEFAULT_FONT_FAMILY: TELEGRAM_UI_STYLES.fonts.family,
+        DEFAULT_BORDER_RADIUS: TELEGRAM_UI_STYLES.sizes.borderRadiusLarge,
+        DEFAULT_PADDING: '20px'
     }
 };
 

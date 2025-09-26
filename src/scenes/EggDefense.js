@@ -16,7 +16,7 @@ import { ABILITIES } from '../types/abilityTypes.js';
 import { BackgroundUtils } from '../utils/BackgroundUtils.js';
 import { SafeAreaUtils } from '../utils/SafeAreaUtils.js';
 import { TelegramTimer } from '../components/TelegramTimer.js';
-import { AbilitiesDisplay } from '../components/AbilitiesDisplay.js';
+import { HTMLResultsTable } from '../components/HTMLResultsTable.js';
 
 /**
  * Основная игровая сцена EggDefense
@@ -46,6 +46,8 @@ export class EggDefense extends Phaser.Scene {
         
         // Настройка обработчика изменения размера экрана
         this.setupResizeHandler();
+        
+        // HTML отображение способностей удалено
         
         // Запуск игры
         this.startGame();
@@ -183,12 +185,7 @@ export class EggDefense extends Phaser.Scene {
      * Настройка обработчиков клавиш
      */
     setupKeyboardHandlers() {
-        // Переключение видимости таблицы способностей по Tab
-        this.input.keyboard.on('keydown-TAB', () => {
-            if (this.abilitiesDisplay) {
-                this.abilitiesDisplay.toggle();
-            }
-        });
+        // Обработчик Tab удален (таблица способностей удалена)
     }
     
     /**
@@ -200,7 +197,7 @@ export class EggDefense extends Phaser.Scene {
             this.updateUIPositions();
         });
     }
-    
+
     /**
      * Настройка UI
      */
@@ -214,18 +211,7 @@ export class EggDefense extends Phaser.Scene {
         const abilitiesX = SafeAreaUtils.getSafeRightPosition(this.scale.width, this.scale.width - 100, 200);
         const abilitiesY = SafeAreaUtils.getSafeTopPosition(100, 100);
         
-        this.abilitiesDisplay = new AbilitiesDisplay(
-            this,
-            abilitiesX,
-            abilitiesY,
-            this.abilitySystem // Передаем систему способностей
-        );
-        
-        // Устанавливаем высокую глубину, чтобы было поверх игры
-        this.abilitiesDisplay.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS);
-        
-        // Скрываем таблицу способностей по умолчанию
-        this.abilitiesDisplay.hide();
+        // HTML отображение способностей будет создано в конце create()
     }
     
     /**
@@ -311,13 +297,6 @@ export class EggDefense extends Phaser.Scene {
     updateUIPositions() {
         // Обновляем позицию таймера
         this.updateTimerPosition();
-        
-        // Обновляем позицию дисплея способностей
-        if (this.abilitiesDisplay) {
-            const abilitiesX = SafeAreaUtils.getSafeRightPosition(this.scale.width, this.scale.width - 100, 200);
-            const abilitiesY = SafeAreaUtils.getSafeTopPosition(100, 100);
-            this.abilitiesDisplay.setPosition(abilitiesX, abilitiesY);
-        }
     }
 
     /**
@@ -523,10 +502,6 @@ export class EggDefense extends Phaser.Scene {
      * Пауза игры
      */
     pauseGame() {
-        // Скрываем таблицу способностей при паузе
-        if (this.abilitiesDisplay) {
-            this.abilitiesDisplay.hide();
-        }
         this.scene.pause();
     }
     
@@ -572,10 +547,7 @@ export class EggDefense extends Phaser.Scene {
             this.waveSystem.updateEnemies(time, delta);
         }
         
-        // Обновляем дисплей способностей
-        if (this.abilitiesDisplay) {
-            this.abilitiesDisplay.update(time, delta);
-        }
+        // Дисплей способностей удален
         
         // Обновляем таймер
         this.updateTimer();
@@ -663,9 +635,7 @@ export class EggDefense extends Phaser.Scene {
             this.effectSystem.clearAllEffects();
         }
         
-        if (this.abilitiesDisplay) {
-            this.abilitiesDisplay.destroy();
-        }
+        // HTML отображение способностей удалено
         
         if (this.enemyEffectSystem) {
             this.enemyEffectSystem.destroy();
