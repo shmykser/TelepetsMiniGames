@@ -450,7 +450,33 @@ export class TestBehaviors extends Phaser.Scene {
             
             console.log(`🎮 [TestBehaviors] Создан враг: ${enemyType} в позиции (${x}, ${y})`);
             console.log(`🎮 [TestBehaviors] Враг имеет цель:`, enemy.target ? 'Да' : 'Нет');
-            console.log(`🎮 [TestBehaviors] Активное поведение:`, enemy._activeBehavior ? enemy._activeBehavior.constructor.name : 'Нет');
+            console.log(`🎮 [TestBehaviors] Враг видимый:`, enemy.visible ? 'Да' : 'Нет');
+            console.log(`🎮 [TestBehaviors] Враг альфа:`, enemy.alpha);
+            console.log(`🎮 [TestBehaviors] Враг масштаб:`, enemy.scaleX, enemy.scaleY);
+            console.log(`🎮 [TestBehaviors] Враг глубина:`, enemy.depth);
+            
+            // Проверяем новую систему ИИ
+            if (enemy._aiCoordinator) {
+                console.log(`🎮 [TestBehaviors] AI Координатор:`, enemy._aiCoordinator.constructor.name);
+                console.log(`🎮 [TestBehaviors] AI Активен:`, enemy._aiCoordinator.isActive ? 'Да' : 'Нет');
+                console.log(`🎮 [TestBehaviors] AI Состояние:`, enemy._aiCoordinator.getState());
+                
+                // Проверяем стратегию движения
+                const movementSystem = enemy._aiCoordinator.getSystem('movement');
+                if (movementSystem && movementSystem.strategy) {
+                    console.log(`🎮 [TestBehaviors] Стратегия движения:`, movementSystem.strategy.constructor.name);
+                    if (enemyType === 'butterfly' && movementSystem.strategy.getState) {
+                        console.log(`🦋 [TestBehaviors] Состояние бабочки:`, movementSystem.strategy.getState());
+                    }
+                } else {
+                    console.log(`⚠️ [TestBehaviors] Система движения не найдена или стратегия отсутствует`);
+                }
+            } else if (enemy._activeBehavior) {
+                console.log(`🎮 [TestBehaviors] Активное поведение:`, enemy._activeBehavior.constructor.name);
+            } else {
+                console.log(`❌ [TestBehaviors] AI Координатор не создан для ${enemyType}`);
+                console.log(`🎮 [TestBehaviors] Использует новую ИИ:`, enemy._useNewAI ? 'Да' : 'Нет');
+            }
         }
     }
     

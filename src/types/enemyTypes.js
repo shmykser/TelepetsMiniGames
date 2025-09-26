@@ -201,13 +201,22 @@ export const enemyTypes = {
         defaultSize: '64x64',
         detectionRange: 150,
         movement: {
-            strategy: 'flying',
-            speed: 40,
-            rotationSpeed: 0.05,
-            amplitude: 25,
-            oscillationSpeed: 0.03,
-            targetAttraction: 0.7,
-            attackRange: 20
+            strategy: 'butterfly',
+            speed: 25,                    // Уменьшил скорость с 30 до 25 для более медленного движения
+            attackRange: 20,
+            // Параметры порхания
+            flutterAmplitude: 20,        // Уменьшил амплитуду с 40 до 20 для более плавного порхания
+            flutterFrequency: 0.1,      // Уменьшил частоту с 0.3 до 0.1 для более медленного порхания
+            flutterSpeed: 0.05,         // Уменьшил скорость изменения с 0.1 до 0.05 для плавности
+            // Параметры случайности
+            randomness: 0.1,             // Уменьшил случайность с 0.3 до 0.1 для более предсказуемого движения
+            directionChangeInterval: 4000, // Увеличил интервал с 2000 до 4000 мс для более плавных переходов
+            directionChangeChance: 0.02,   // Уменьшил вероятность смены с 0.1 до 0.02 для стабильности
+            
+            // Параметры притяжения к цели
+            targetAttraction: 0.8,        // Увеличил притяжение с 0.7 до 0.8 для более целенаправленного движения
+            minDistanceToTarget: 40,      // Уменьшил минимальное расстояние с 50 до 40 для более точного подхода
+            directionTransitionSpeed: 0.01 // Уменьшил скорость перехода с 0.02 до 0.01 для более плавных поворотов
         },
         attack: {
             strategy: 'simple',
@@ -581,5 +590,7 @@ export const enemyTypes = {
             allowDiagonal: true,
             ignoreGroundObstacles: false
         }
-    }
+    },
+    
+    // Бабочка - порхающий полет с синусоидальными колебаниям
 };
