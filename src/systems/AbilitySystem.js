@@ -20,6 +20,7 @@ export class AbilitySystem {
             LUCK: ABILITIES.LUCK.baseValue,                 // Удача
             EGG_AURA: ABILITIES.EGG_AURA.baseValue,         // Аура (множитель)
             EGG_EXPLOSION: ABILITIES.EGG_EXPLOSION.baseValue, // Взрыв яйца (множитель)
+            EGG_RECOVERY: ABILITIES.EGG_RECOVERY.baseValue, // Регенерация яйца
             PIT: ABILITIES.PIT.baseValue,                   // Количество ям на поле
             SHOVEL_COUNT: ABILITIES.SHOVEL_COUNT.baseValue  // Количество доступных лопат
         };
@@ -150,6 +151,14 @@ export class AbilitySystem {
     }
 
     /**
+     * Получает текущую регенерацию яйца (HP в секунду)
+     * @returns {number}
+     */
+    getEggRecovery() {
+        return this.abilities.EGG_RECOVERY;
+    }
+
+    /**
      * Получает здоровье ямы из defenseTypes
      * @returns {number}
      */
@@ -210,6 +219,7 @@ export class AbilitySystem {
             luck: this.getLuck(),
             pitCount: this.getPitCount(),
             shovelCount: this.getShovelCount(),
+            eggRecovery: this.getEggRecovery(),
             aura: this.getAura(),
             auraDamage: this.getAuraDamage(),
             eggExplosion: this.getEggExplosion(),
@@ -233,6 +243,7 @@ export class AbilitySystem {
             LUCK: ABILITIES.LUCK.baseValue,
             EGG_AURA: ABILITIES.EGG_AURA.baseValue,
             EGG_EXPLOSION: ABILITIES.EGG_EXPLOSION.baseValue,
+            EGG_RECOVERY: ABILITIES.EGG_RECOVERY.baseValue,
             PIT: ABILITIES.PIT.baseValue,
             SHOVEL_COUNT: ABILITIES.SHOVEL_COUNT.baseValue
         };

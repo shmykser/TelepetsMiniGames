@@ -2,6 +2,8 @@
  * Централизованная система вероятности
  * Управляет всеми случайными событиями в игре
  */
+
+// Удален импорт enemyDropLists.js - теперь используется новая система дропа
 export class ProbabilitySystem {
     constructor(scene) {
         this.scene = scene;
@@ -149,30 +151,13 @@ export class ProbabilitySystem {
     
     /**
      * Проверка вероятности дропа предмета
+     * @deprecated Используйте ItemDropSystem.dropRandomItem() вместо этого метода
      * @param {string} enemyType - Тип врага (для модификации шанса)
      * @returns {boolean} true если предмет должен дропнуться
      */
     rollItemDrop(enemyType = 'default') {
-        // Базовый шанс
-        let baseChance = this.getCurrentChance('itemDrop');
-        
-        // Модификаторы в зависимости от типа врага
-        const enemyModifiers = {
-            'ant': 1.2,        // Муравьи чаще дропают
-            'beetle': 1.5,     // Жуки еще чаще
-            'rhinoceros': 2.0, // Носороги дропают очень часто
-            'spider': 1.8,     // Пауки часто дропают
-            'mosquito': 0.5,   // Комары редко дропают
-            'fly': 0.7,        // Мухи редко дропают
-            'bee': 1.1,        // Пчелы чуть чаще
-            'butterfly': 0.3,  // Бабочки очень редко дропают
-            'dragonfly': 1.3   // Стрекозы часто дропают
-        };
-        
-        const modifier = enemyModifiers[enemyType] || 1.0;
-        const finalChance = Math.min(baseChance * modifier, 50); // Максимум 50%
-        
-        return this.rollEvent('itemDrop', finalChance);
+        console.warn('[ProbabilitySystem] rollItemDrop() устарел, используйте ItemDropSystem.dropRandomItem()');
+        return false; // Всегда возвращаем false, так как логика перенесена
     }
     
     /**

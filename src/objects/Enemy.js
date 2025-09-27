@@ -320,13 +320,12 @@ export class Enemy extends GameObject {
      * Обработка дропа предметов при смерти
      */
     handleItemDrop() {
-        if (Enemy.itemDropSystem && Enemy.probabilitySystem) {
-            // Проверяем вероятность дропа через ProbabilitySystem
-            const shouldDrop = Enemy.probabilitySystem.rollItemDrop(this.enemyType);
+        if (Enemy.itemDropSystem) {
+            // Получаем текущую минуту игры из сцены
+            const gameMinute = this.scene.waveSystem ? this.scene.waveSystem.getCurrentMinute() : 1;
             
-            if (shouldDrop) {
-                Enemy.itemDropSystem.dropRandomItem(this.x, this.y);
-            }
+            // Используем новую систему дропа с учетом удачи, времени и модификаторов
+            Enemy.itemDropSystem.dropRandomItem(this.x, this.y, this.enemyType, gameMinute);
         }
     }
 

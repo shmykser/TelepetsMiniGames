@@ -1,3 +1,5 @@
+import { ITEM_TYPES } from './itemTypes.js';
+
 export const enemyTypes = {
     unknown: {
         name: 'Неизвестный',
@@ -8,6 +10,7 @@ export const enemyTypes = {
         spriteKey: 'ant',
         defaultSize: '64x64',
         detectionRange: 150,
+        dropList: [ITEM_TYPES.HEART, ITEM_TYPES.PATCH], // Базовый список
         movement: {
             strategy: 'linear',
             speed: 70,
@@ -38,6 +41,7 @@ export const enemyTypes = {
         spriteKey: 'ant',
         defaultSize: '32x32',
         detectionRange: 150,
+        dropList: [ITEM_TYPES.PATCH], // Клевер и пластырь
         movement: {
             strategy: 'linear',
             speed: 60,
@@ -68,6 +72,7 @@ export const enemyTypes = {
         spriteKey: 'ladybug',
         defaultSize: '64x64',
         detectionRange: 150,
+        dropList: [ITEM_TYPES.PATCH, ITEM_TYPES.DOUBLEPATCH, ITEM_TYPES.HEART], // Клевер, пластырь, двойной пластырь
         movement: {
             strategy: 'linear',
             speed: 50,
@@ -98,6 +103,7 @@ export const enemyTypes = {
         spriteKey: 'rhinoceros',
         defaultSize: '128x128',
         detectionRange: 150,
+        dropList: [ITEM_TYPES.HEART, ITEM_TYPES.ALOE, ITEM_TYPES.DOUBLEPATCH], // Сердце, двойной пластырь, лопата
         movement: {
             strategy: 'inertia',
             speed: 5,              // стартовая скорость
@@ -136,6 +142,7 @@ export const enemyTypes = {
         spriteKey: 'spider',
         defaultSize: '64x64',
         detectionRange: 150,
+        dropList: [ITEM_TYPES.PATCH], // Сердце, двойной пластырь, клевер
         movement: {
             strategy: 'linear',
             speed: 50,
@@ -166,6 +173,7 @@ export const enemyTypes = {
         spriteKey: 'bee',
         defaultSize: '64x64',
         detectionRange: 150,
+        dropList: [ITEM_TYPES.PATCH], // Сердце, клевер
         movement: {
             strategy: 'flying',
             speed: 60,
@@ -200,6 +208,7 @@ export const enemyTypes = {
         spriteKey: 'butterfly',
         defaultSize: '64x64',
         detectionRange: 150,
+        dropList: [ITEM_TYPES.CLOVER], // Только клевер - очень редкий дроп
         movement: {
             strategy: 'butterfly',
             speed: 25,                    // Уменьшил скорость с 30 до 25 для более медленного движения
@@ -243,6 +252,7 @@ export const enemyTypes = {
         spriteKey: 'dragonfly',
         defaultSize: '64x64',
         detectionRange: 250,
+        dropList: [ITEM_TYPES.PATCH], // Клевер, пластырь
         movement: {
             strategy: 'linear',
             speed: 180,
@@ -274,6 +284,7 @@ export const enemyTypes = {
         spriteKey: 'bee',
         defaultSize: '64x64',
         detectionRange: 400,
+        dropList: [ITEM_TYPES.PATCH, ITEM_TYPES.DOUBLEPATCH], // Пластырь, двойной пластырь
         movement: {
             strategy: 'orbital',
             speed: 120,
@@ -314,6 +325,7 @@ export const enemyTypes = {
         spriteKey: 'snail',
         defaultSize: '64x64',
         detectionRange: 200,
+        dropList: [ITEM_TYPES.HEART, ITEM_TYPES.PATCH, ITEM_TYPES.DOUBLEPATCH], // Сердце, пластырь
         movement: {
             strategy: 'linear',
             speed: 30,
@@ -351,6 +363,7 @@ export const enemyTypes = {
         spriteKey: 'snail',
         defaultSize: '64x64',
         detectionRange: 120,
+        dropList: [ITEM_TYPES.HEART, ITEM_TYPES.PATCH, ITEM_TYPES.DOUBLEPATCH], // Сердце, пластырь, двойной пластырь
         movement: {
             strategy: 'shell',
             speed: 20,
@@ -392,6 +405,7 @@ export const enemyTypes = {
         spriteKey: 'spider',
         defaultSize: '128x128',
         detectionRange: 200,
+        dropList: [ITEM_TYPES.HEART, ITEM_TYPES.DOUBLEPATCH, ITEM_TYPES.CLOVER], // Сердце, двойной пластырь, клевер
         movement: {
             strategy: 'linear',
             speed: 25,
@@ -423,6 +437,7 @@ export const enemyTypes = {
         spriteKey: 'mole',
         defaultSize: '64x64',
         detectionRange: 180,
+        dropList: [ITEM_TYPES.SHOVEL], // Только лопата - подземный житель
         movement: {
             strategy: 'randomPoint',
             speed: 40,
@@ -465,6 +480,7 @@ export const enemyTypes = {
         spriteKey: 'mosquito',
         defaultSize: '64x64',
         detectionRange: 120,
+        dropList: [ITEM_TYPES.PATCH], // Только пластырь - маленький вредный
         movement: {
             strategy: 'flying',
             speed: 40,
@@ -499,6 +515,7 @@ export const enemyTypes = {
         spriteKey: 'flea',
         defaultSize: '32x32',
         detectionRange: 100,
+        dropList: [ITEM_TYPES.PATCH], // Только пластырь
         movement: {
             strategy: 'jumping',
             speed: 200,                   // Скорость прыжка
@@ -536,6 +553,7 @@ export const enemyTypes = {
         spriteKey: 'fly',
         defaultSize: '64x64',
         detectionRange: 150,
+        dropList: [ITEM_TYPES.PATCH], // Только пластырь
         movement: {         
             strategy: 'jittery',
             speed: 80,                     // Базовая скорость движения
@@ -569,6 +587,7 @@ export const enemyTypes = {
         spriteKey: 'bomb',
         defaultSize: '64x64',
         detectionRange: 300,
+        dropList: [], // Не дропает предметы
         movement: {
             strategy: 'linear',
             speed: 150,

@@ -138,6 +138,18 @@ export class Item extends GameObject {
                     }
                 }
                 break;
+                
+            case ITEM_TYPES.ALOE:
+                // Эффект: увеличение регенерации яйца
+                if (this.abilitySystem) {
+                    const upgraded = this.abilitySystem.upgradeAbility('EGG_RECOVERY');
+                    if (upgraded) {
+                        console.log(`🌿 [Item] Алоэ увеличило регенерацию: ${this.abilitySystem.getEggRecovery()} HP/сек`);
+                    } else {
+                        console.log(`🌿 [Item] Регенерация уже на максимуме (достигнут максимум)`);
+                    }
+                }
+                break;
         }
         
         // Эмитим событие активации

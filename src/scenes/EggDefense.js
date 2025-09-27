@@ -26,11 +26,20 @@ export class EggDefense extends Phaser.Scene {
     constructor() {
         super({ key: 'EggDefense' });
         this.isGameEnded = false;
+        this.isGameStarted = false;
+        this.isPaused = false;
+        this.focusChangeTimeout = null;
+        this.resultsTable = null;
+        this.resultsTableRestartHandler = null;
+        this.resultsTableMenuHandler = null;
+        this.gameStartTime = null;
     }
 
     create() {
-        // Сбрасываем флаг окончания игры для корректного рестарта
+        // Сбрасываем флаги для корректного рестарта
         this.isGameEnded = false;
+        this.isPaused = false;
+        this.gameStartTime = null;
         
         // Создание игровых объектов
         this.createGameObjects();
@@ -38,7 +47,7 @@ export class EggDefense extends Phaser.Scene {
         // Инициализация игровых систем
         this.initGameSystems();
         
-        // Настройка UI
+        // Настройка UI (без таймера)
         this.setupUI();
         
         // Настройка обработчиков клавиш
@@ -47,10 +56,12 @@ export class EggDefense extends Phaser.Scene {
         // Настройка обработчика изменения размера экрана
         this.setupResizeHandler();
         
+        // Настройка обработчиков фокуса для паузы
+        this.setupFocusHandlers();
+        
         // HTML отображение способностей удалено
         
-        // Запуск игры
-        this.startGame();
+        // НЕ запускаем игру автоматически - только когда пользователь нажмет "ИГРАТЬ"
     }
 
     /**
@@ -202,9 +213,6 @@ export class EggDefense extends Phaser.Scene {
      * Настройка UI
      */
     setupUI() {
-        // Создаем таймер в верхней части экрана по центру
-        this.createTimer();
-        
         // Создаем дисплей способностей в правом верхнем углу с учетом safe-area
         const safeAreaRight = SafeAreaUtils.getSafeAreaRight();
         const safeAreaTop = SafeAreaUtils.getSafeAreaTop();
@@ -222,11 +230,6 @@ export class EggDefense extends Phaser.Scene {
         const safeAreaTop = SafeAreaUtils.getSafeAreaTop();
         const timerY = SafeAreaUtils.getSafeTopPosition(30, 40);
         
-        // Отладочная информация
-        console.log(`📱 [Timer] Safe Area Top: ${safeAreaTop}px`);
-        console.log(`📱 [Timer] Timer Y: ${timerY}px`);
-        console.log(`📱 [Timer] Screen size: ${this.scale.width}x${this.scale.height}`);
-        
         // Создаем Telegram WebApp-стилизованный таймер с точными параметрами
         this.telegramTimer = new TelegramTimer(
             this,
@@ -235,16 +238,15 @@ export class EggDefense extends Phaser.Scene {
             70,  // Ширина (точная как у кнопок WebApp)
             36   // Высота (точная как у кнопок WebApp)
         );
-        
-        console.log(`📱 [Timer] Telegram-styled timer created at position: ${this.scale.width / 2}, ${timerY}`);
-        console.log(`📱 [Timer] Timer object:`, this.telegramTimer);
     }
     
     /**
      * Обновление таймера
      */
     updateTimer() {
-        if (!this.telegramTimer || !this.waveSystem) return;
+        if (!this.telegramTimer || !this.waveSystem || !this.isGameStarted) {
+            return;
+        }
         
         // Показываем таймер только если игра активна
         if (this.waveSystem.isGameActive) {
@@ -281,7 +283,7 @@ export class EggDefense extends Phaser.Scene {
      * Обновление позиции таймера при изменении размера экрана
      */
     updateTimerPosition() {
-        if (!this.telegramTimer) return;
+        if (!this.telegramTimer || !this.isGameStarted) return;
         
         // Вычисляем новую безопасную позицию
         const timerY = SafeAreaUtils.getSafeTopPosition(30, 40);
@@ -295,14 +297,37 @@ export class EggDefense extends Phaser.Scene {
      * Обновление позиции UI элементов при изменении размера экрана
      */
     updateUIPositions() {
-        // Обновляем позицию таймера
-        this.updateTimerPosition();
+        // Обновляем позицию таймера только если игра началась
+        if (this.isGameStarted) {
+            this.updateTimerPosition();
+        }
     }
 
+    /**
+     * Запуск игры из меню
+     */
+    startGameFromMenu() {
+        this.isGameStarted = true;
+        
+        // Безопасно получаем время начала игры
+        if (this.scene?.time?.now !== undefined) {
+            this.gameStartTime = this.scene.time.now;
+            console.log('🎮 [EggDefense] gameStartTime установлен:', this.gameStartTime);
+        } else {
+            console.warn('🎮 [EggDefense] scene.time.now недоступен, используем Date.now()');
+            this.gameStartTime = Date.now();
+        }
+        
+        this.startGame();
+    }
+    
     /**
      * Запуск игры
      */
     startGame() {
+        // Создаем таймер только при старте игры
+        this.createTimer();
+        
         // Отправляем событие начала игры
         this.eventSystem.emit(EVENT_TYPES.GAME_START, {
             scene: this
@@ -336,7 +361,7 @@ export class EggDefense extends Phaser.Scene {
      * Проверка окончания игры
      */
     checkGameEnd() {
-        if (this.isGameEnded) return;
+        if (this.isGameEnded || !this.isGameStarted) return;
         
         const timeUp = this.waveSystem.getRemainingTime() <= 0;
         const eggDestroyed = !this.egg || this.egg.health <= 0;
@@ -385,110 +410,102 @@ export class EggDefense extends Phaser.Scene {
             this.abilitiesDisplay.setVisible(false);
         }
         
+        // Удаляем старый компонент результатов если он есть
+        if (this.resultsTable) {
+            this.resultsTable.destroy();
+            this.resultsTable = null;
+        }
+        
         const stats = this.getGameStats();
         const resultText = won ? 'ПОБЕДА!' : 'ПОРАЖЕНИЕ!';
-        const resultColor = won ? '#00ff00' : '#ff0000';
         
-        // Создаем результирующий экран
-        const resultBg = this.add.rectangle(
-            this.scale.width / 2, 
-            this.scale.height / 2, 
-            this.scale.width - 40, 
-            250, 
-            0x000000, 
-            0.8
+        // Создаем новый HTML компонент результатов
+        this.resultsTable = new HTMLResultsTable(
+            this,
+            this.scale.width / 2,
+            this.scale.height / 2,
+            {
+                title: resultText,
+                data: {
+                    enemiesKilled: stats.enemiesKilled,
+                    time: stats.gameTimeText
+                }
+            }
         );
-        resultBg.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS);
         
-        const titleText = this.add.text(
-            this.scale.width / 2, 
-            this.scale.height / 2 - 70, 
-            resultText, 
-            {
-                fontSize: '32px',
-                fill: resultColor,
-                fontStyle: 'bold'
+        // Удаляем старые обработчики если они есть
+        if (this.resultsTableRestartHandler) {
+            document.removeEventListener('resultsTable:restart', this.resultsTableRestartHandler);
+        }
+        if (this.resultsTableMenuHandler) {
+            document.removeEventListener('resultsTable:menu', this.resultsTableMenuHandler);
+        }
+        
+        // Создаем новые обработчики событий
+        this.resultsTableRestartHandler = () => {
+            console.log('🎮 [EggDefense] Рестарт игры из результатов');
+            // Удаляем компонент результатов перед рестартом
+            if (this.resultsTable) {
+                this.resultsTable.destroy();
+                this.resultsTable = null;
             }
-        ).setOrigin(0.5);
-        titleText.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS + 1);
+            // Небольшая задержка для корректного удаления компонента
+            setTimeout(() => {
+                this.scene.restart();
+            }, 50);
+        };
         
-        const statsText = this.add.text(
-            this.scale.width / 2, 
-            this.scale.height / 2 - 20, 
-            `Убито врагов: ${stats.enemiesKilled}\nВремя: ${stats.gameTimeText}`, 
-            {
-                fontSize: '18px',
-                fill: '#ffffff',
-                align: 'center'
+        this.resultsTableMenuHandler = () => {
+            console.log('🎮 [EggDefense] Переход в меню из результатов');
+            // Удаляем компонент результатов перед переходом в меню
+            if (this.resultsTable) {
+                this.resultsTable.destroy();
+                this.resultsTable = null;
             }
-        ).setOrigin(0.5);
-        statsText.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS + 1);
+            // Небольшая задержка для корректного удаления компонента
+            setTimeout(() => {
+                this.scene.start('MenuScene');
+            }, 50);
+        };
         
-        // Кнопка рестарта
-        const restartButton = this.add.rectangle(
-            this.scale.width / 2 - 80, 
-            this.scale.height / 2 + 50, 
-            140, 
-            40, 
-            0x27ae60
-        )
-        .setInteractive()
-        .on('pointerdown', () => {
-            this.restartGame();
-        })
-        .on('pointerover', () => restartButton.setAlpha(0.8))
-        .on('pointerout', () => restartButton.setAlpha(1));
-        restartButton.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS + 1);
-        
-        const restartText = this.add.text(
-            this.scale.width / 2 - 80, 
-            this.scale.height / 2 + 50, 
-            'РЕСТАРТ', 
-            {
-                fontSize: '16px',
-                fill: '#ffffff',
-                fontStyle: 'bold'
-            }
-        ).setOrigin(0.5);
-        restartText.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS + 2);
-        
-        // Кнопка возврата в меню
-        const menuButton = this.add.rectangle(
-            this.scale.width / 2 + 80, 
-            this.scale.height / 2 + 50, 
-            140, 
-            40, 
-            0xe74c3c
-        )
-        .setInteractive()
-        .on('pointerdown', () => {
-            this.scene.start('MenuScene');
-        })
-        .on('pointerover', () => menuButton.setAlpha(0.8))
-        .on('pointerout', () => menuButton.setAlpha(1));
-        menuButton.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS + 1);
-        
-        const menuText = this.add.text(
-            this.scale.width / 2 + 80, 
-            this.scale.height / 2 + 50, 
-            'В МЕНЮ', 
-            {
-                fontSize: '16px',
-                fill: '#ffffff',
-                fontStyle: 'bold'
-            }
-        ).setOrigin(0.5);
-        menuText.setDepth(DEPTH_CONSTANTS.UI_ELEMENTS + 2);
+        // Добавляем обработчики
+        document.addEventListener('resultsTable:restart', this.resultsTableRestartHandler);
+        document.addEventListener('resultsTable:menu', this.resultsTableMenuHandler);
     }
     
     /**
      * Получение статистики игры
      */
     getGameStats() {
-        // Используем Date.now() для соответствия с WaveSystem
-        const gameTime = Date.now() - (this.waveSystem?.gameStartTime || 0);
+        // Отладочная информация
+        console.log('🎮 [GameStats] scene.time.now:', this.scene?.time?.now);
+        console.log('🎮 [GameStats] waveSystem exists:', !!this.waveSystem);
+        console.log('🎮 [GameStats] waveSystem.gameStartTime:', this.waveSystem?.gameStartTime);
+        console.log('🎮 [GameStats] waveSystem.duration:', this.waveSystem?.waveSettings?.duration);
+        console.log('🎮 [GameStats] waveSystem.remainingTime:', this.waveSystem?.getRemainingTime?.());
+        
+        let gameTime = 0;
+        
+        // Используем расчет времени из WaveSystem (как в старом компоненте)
+        if (this.waveSystem && this.waveSystem.gameStartTime > 0) {
+            // Вычисляем прошедшее время: общая длительность - оставшееся время
+            const totalDuration = this.waveSystem.waveSettings.duration; // Общая длительность игры в мс
+            const remainingTime = this.waveSystem.getRemainingTime(); // Оставшееся время в мс
+            gameTime = Math.max(0, totalDuration - remainingTime); // Прошедшее время
+            
+            console.log('🎮 [GameStats] totalDuration:', totalDuration);
+            console.log('🎮 [GameStats] remainingTime:', remainingTime);
+            console.log('🎮 [GameStats] calculated gameTime:', gameTime);
+        } else {
+            // Fallback на старый метод если WaveSystem недоступен
+            console.warn('🎮 [GameStats] WaveSystem недоступен, используем fallback');
+            gameTime = this.scene?.time?.now || 0;
+        }
+        
         const minutes = Math.floor(gameTime / 60000);
         const seconds = Math.floor((gameTime % 60000) / 1000);
+        
+        console.log('🎮 [GameStats] Final gameTime:', gameTime, 'Formatted:', `${minutes}:${seconds.toString().padStart(2, '0')}`);
         
         return {
             enemiesKilled: this.waveSystem?.totalEnemiesKilled || 0,
@@ -502,15 +519,12 @@ export class EggDefense extends Phaser.Scene {
      * Пауза игры
      */
     pauseGame() {
+        if (this.isPaused || this.isGameEnded) return;
+        
+        this.isPaused = true;
         this.scene.pause();
-    }
-    
-    /**
-     * Возобновление игры
-     */
-    resumeGame() {
-        // Не показываем таблицу автоматически - игрок сам решает через Tab
-        this.scene.resume();
+        
+        console.log('🎮 [Game] Игра поставлена на паузу');
     }
     
     /**
@@ -549,8 +563,10 @@ export class EggDefense extends Phaser.Scene {
         
         // Дисплей способностей удален
         
-        // Обновляем таймер
-        this.updateTimer();
+        // Обновляем таймер только если игра началась - ВРЕМЕННО ОТКЛЮЧЕНО
+        if (this.isGameStarted) {
+            this.updateTimer();
+        }
         
         // Проверяем условия окончания игры
         this.checkGameEnd();
@@ -601,6 +617,12 @@ export class EggDefense extends Phaser.Scene {
      * Очистка при уничтожении сцены
      */
     destroy() {
+        // Очищаем timeout для фокуса
+        if (this.focusChangeTimeout) {
+            clearTimeout(this.focusChangeTimeout);
+            this.focusChangeTimeout = null;
+        }
+        
         // Очищаем EventSystem
         if (this.eventSystem) {
             this.eventSystem.clear();
@@ -645,5 +667,87 @@ export class EggDefense extends Phaser.Scene {
         if (this.telegramTimer) {
             this.telegramTimer.destroy();
         }
+        
+        // Уничтожаем результаты таблицу
+        if (this.resultsTable) {
+            this.resultsTable.destroy();
+        }
+        
+        // Удаляем обработчики событий результатов таблицы
+        if (this.resultsTableRestartHandler) {
+            document.removeEventListener('resultsTable:restart', this.resultsTableRestartHandler);
+            this.resultsTableRestartHandler = null;
+        }
+        
+        if (this.resultsTableMenuHandler) {
+            document.removeEventListener('resultsTable:menu', this.resultsTableMenuHandler);
+            this.resultsTableMenuHandler = null;
+        }
+    }
+    
+    /**
+     * Настройка обработчиков фокуса для паузы игры
+     */
+    setupFocusHandlers() {
+        // Используем только window events для более надежной работы
+        if (typeof window !== 'undefined') {
+            window.addEventListener('blur', () => {
+                console.log('🎮 [Focus] Window blur event triggered');
+                
+                // Очищаем предыдущий timeout
+                if (this.focusChangeTimeout) {
+                    clearTimeout(this.focusChangeTimeout);
+                }
+                
+                // Добавляем небольшую задержку для избежания множественных срабатываний
+                this.focusChangeTimeout = setTimeout(() => {
+                    if (this.isGameStarted && !this.isGameEnded && !this.isPaused) {
+                        console.log('🎮 [Focus] Pausing game due to window blur');
+                        this.pauseGame();
+                    }
+                }, 100);
+            });
+            
+            window.addEventListener('focus', () => {
+                console.log('🎮 [Focus] Window focus event triggered');
+                console.log('🎮 [Focus] Debug - isGameStarted:', this.isGameStarted);
+                console.log('🎮 [Focus] Debug - isGameEnded:', this.isGameEnded);
+                console.log('🎮 [Focus] Debug - isPaused:', this.isPaused);
+                
+                // Очищаем предыдущий timeout
+                if (this.focusChangeTimeout) {
+                    clearTimeout(this.focusChangeTimeout);
+                }
+                
+                // Добавляем небольшую задержку для избежания множественных срабатываний
+                this.focusChangeTimeout = setTimeout(() => {
+                    if (this.isGameStarted && !this.isGameEnded && this.isPaused) {
+                        console.log('🎮 [Focus] Resuming game due to window focus');
+                        this.resumeGame();
+                    } else {
+                        console.log('🎮 [Focus] Cannot resume - conditions not met');
+                    }
+                }, 100);
+            });
+        }
+    }
+    
+    /**
+     * Возобновление игры
+     */
+    resumeGame() {
+        if (!this.isPaused || this.isGameEnded) return;
+        
+        this.isPaused = false;
+        
+        // Возобновляем Phaser сцену
+        this.scene.resume();
+        
+        // Возобновляем волновую систему
+        if (this.waveSystem) {
+            this.waveSystem.resumeGame();
+        }
+        
+        console.log('🎮 [Game] Игра возобновлена');
     }
 }

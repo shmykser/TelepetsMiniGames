@@ -1,5 +1,6 @@
 import { Item } from '../objects/Item.js';
-import { ITEM_TYPES, ITEMS } from '../types/itemTypes';
+import { ITEM_TYPES, ITEMS, ENEMY_DROP_MODIFIERS } from '../types/itemTypes.js';
+import { enemyTypes } from '../types/enemyTypes.js';
 
 /**
  * Система дропа предметов
@@ -19,36 +20,67 @@ export class ItemDropSystem {
     
     
     /**
-     * Создание случайного предмета
+     * Создание случайного предмета для конкретного врага
+     * @param {number} x - X координата
+     * @param {number} y - Y координата
+     * @param {string} enemyType - Тип врага
+     * @param {number} gameMinute - Текущая минута игры
+     * @returns {Item|null} Созданный предмет или null
      */
-    dropRandomItem(x, y) {
-        const availableItems = this.getAvailableItems();
-        if (availableItems.length === 0) {
-            return;
+    dropRandomItem(x, y, enemyType = 'unknown', gameMinute = 1) {
+        const enemyConfig = enemyTypes[enemyType];
+        if (!enemyConfig || !enemyConfig.dropList || enemyConfig.dropList.length === 0) {
+            console.log(`🎁 [ItemDropSystem] У врага ${enemyType} нет доступных предметов для дропа`);
+            return null;
         }
         
-        const randomItem = Phaser.Utils.Array.GetRandom(availableItems);
+        const playerLuck = this.abilitySystem ? this.abilitySystem.getLuck() : 5;
         
-        // Создаем предмет через статический метод Item
-        const item = Item.CreateItem(this.scene, x, y, randomItem, this.abilitySystem);
+        // Проверяем каждый предмет из списка врага
+        for (const itemType of enemyConfig.dropList) {
+            if (this.checkItemDrop(playerLuck, itemType, enemyType, gameMinute)) {
+                console.log(`🎁 [ItemDropSystem] Враг ${enemyType} дропает предмет: ${itemType}`);
+                return Item.CreateItem(this.scene, x, y, itemType, this.abilitySystem);
+            }
+        }
         
-        return item;
+        return null; // Ничего не выпало
     }
     
     /**
-     * Получение доступных предметов для дропа
+     * Проверка вероятности дропа конкретного предмета
+     * @param {number} playerLuck - Удача игрока (5-30)
+     * @param {string} itemType - Тип предмета
+     * @param {string} enemyType - Тип врага
+     * @param {number} gameMinute - Текущая минута игры
+     * @returns {boolean} true если предмет должен выпасть
      */
-    getAvailableItems() {
-        const items = [ITEM_TYPES.HEART, ITEM_TYPES.PATCH, ITEM_TYPES.DOUBLEPATCH, ITEM_TYPES.SHOVEL]; // Сердце, пластырь и лопата всегда доступны
-        
-        // Клевер выпадает только если везение <= максимального
-        const currentLuck = this.abilitySystem ? this.abilitySystem.getLuck() : 5;
-        if (currentLuck <= 25) { // Максимальная удача для дропа клевера
-            items.push(ITEM_TYPES.CLOVER);
+    checkItemDrop(playerLuck, itemType, enemyType, gameMinute) {
+        const itemConfig = ITEMS[itemType];
+        if (!itemConfig) {
+            console.warn(`[ItemDropSystem] Неизвестный тип предмета: ${itemType}`);
+            return false;
         }
         
-        return items;
+        const itemDropChance = itemConfig.dropChance;
+        const timeModifier = 1 + (gameMinute - 1) * 0.1; // +10% за минуту
+        const enemyModifier = ENEMY_DROP_MODIFIERS[enemyType] || 1.0;
+        
+        const finalChance = (playerLuck / 100) * itemDropChance * timeModifier * enemyModifier;
+        
+        // Ограничиваем максимальную вероятность до 75%
+        const cappedChance = Math.min(finalChance, 0.75);
+        
+        const roll = Math.random();
+        const success = roll < cappedChance;
+        
+        if (success) {
+            console.log(`🎲 [ItemDropSystem] ${itemType}: удача=${playerLuck}, предмет=${(itemDropChance*100).toFixed(1)}%, время=${(timeModifier*100).toFixed(1)}%, враг=${(enemyModifier*100).toFixed(1)}%, итого=${(cappedChance*100).toFixed(1)}%`);
+        }
+        
+        return success;
     }
+    
     
     /**
      * Обработка создания предмета (событие)

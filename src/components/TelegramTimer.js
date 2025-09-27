@@ -13,7 +13,7 @@ export class TelegramTimer extends BaseHTMLComponent {
             height,
             backgroundColor: TELEGRAM_UI_STYLES.colors.background,
             textColor: TELEGRAM_UI_STYLES.colors.text,
-            fontSize: TELEGRAM_UI_STYLES.fonts.size,
+            fontSize: '12px', // Увеличиваем в 2 раза (5.6px * 2)
             fontFamily: TELEGRAM_UI_STYLES.fonts.family,
             fontWeight: TELEGRAM_UI_STYLES.fonts.weight,
             borderRadius: TELEGRAM_UI_STYLES.sizes.borderRadius,
@@ -22,6 +22,10 @@ export class TelegramTimer extends BaseHTMLComponent {
         };
         
         super(scene, x, y, config);
+        
+        // Инициализируем текущие значения для оптимизации
+        this.currentColor = null;
+        this.currentText = null;
         
         this.createTextElement();
         this.initTelegramTheme();
@@ -39,11 +43,27 @@ export class TelegramTimer extends BaseHTMLComponent {
     }
     
     /**
+     * Установить текст таймера
+     * @param {string} text - Текст
+     */
+    setText(text) {
+        // Оптимизация: не обновляем текст, если он уже установлен
+        if (this.currentText !== text && this.textElement) {
+            this.currentText = text;
+            this.textElement.textContent = text;
+        }
+    }
+    
+    /**
      * Установить цвет текста
      * @param {string} color - Цвет
      */
     setColor(color) {
-        this.setTextColor(color);
+        // Оптимизация: не обновляем цвет, если он уже установлен
+        if (this.currentColor !== color) {
+            this.currentColor = color;
+            this.setTextColor(color);
+        }
     }
     
     /**

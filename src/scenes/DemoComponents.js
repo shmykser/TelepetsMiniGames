@@ -1,8 +1,8 @@
-import { Button } from '../components/Button.js';
+import { HTMLButton } from '../components/HTMLButton.js';
+import { HTMLResultsTable } from '../components/HTMLResultsTable.js';
+import { TelegramTimer } from '../components/TelegramTimer.js';
 import { HealthBar } from '../components/HealthBar.js';
-import { GameTimer } from '../components/GameTimer.js';
 import { DamageIndicator } from '../components/DamageIndicator.js';
-import { ResultsTable, createResultsTable } from '../components/ResultsTable.js';
 import { UI_THEME } from '../utils/UITheme.js';
 
 /**
@@ -79,15 +79,15 @@ export class DemoComponents extends Phaser.Scene {
         navBg.strokeRoundedRect(50, navY - 30, navWidth, 60, 10);
         
         // Кнопка "Назад"
-        this.backButton = new Button(this, 120, navY, {
+        this.backButton = new HTMLButton(this, 120, navY, {
             width: 100,
             height: 40,
             text: '◀ Назад',
-            backgroundColor: 0x4a4a6a,
+            backgroundColor: '#4a4a6a',
             textColor: '#ffffff',
             fontSize: '16px'
         });
-        this.backButton.onButtonClick = () => this.previousDemo();
+        this.backButton.setOnClick(() => this.previousDemo());
         
         // Информация о текущем демо
         this.demoInfo = this.add.text(
@@ -104,26 +104,26 @@ export class DemoComponents extends Phaser.Scene {
         this.demoInfo.setOrigin(0.5, 0.5);
         
         // Кнопка "Вперед"
-        this.nextButton = new Button(this, this.scale.width - 120, navY, {
+        this.nextButton = new HTMLButton(this, this.scale.width - 120, navY, {
             width: 100,
             height: 40,
             text: 'Вперед ▶',
-            backgroundColor: 0x4a4a6a,
+            backgroundColor: '#4a4a6a',
             textColor: '#ffffff',
             fontSize: '16px'
         });
-        this.nextButton.onButtonClick = () => this.nextDemo();
+        this.nextButton.setOnClick(() => this.nextDemo());
         
         // Кнопка "В меню"
-        this.menuButton = new Button(this, this.scale.width / 2, navY + 60, {
+        this.menuButton = new HTMLButton(this, this.scale.width / 2, navY + 60, {
             width: 150,
             height: 40,
             text: '🏠 В меню',
-            backgroundColor: 0x2d5a27,
+            backgroundColor: '#2d5a27',
             textColor: '#ffffff',
             fontSize: '16px'
         });
-        this.menuButton.onButtonClick = () => this.scene.start('MenuScene');
+        this.menuButton.setOnClick(() => this.scene.start('MenuScene'));
     }
 
     getDemoTitle(demoType) {
@@ -177,15 +177,12 @@ export class DemoComponents extends Phaser.Scene {
             'Время': '3:25'
         };
         
-        this.resultsTable1 = new ResultsTable(this, centerX, centerY, {
+        this.resultsTable1 = new HTMLResultsTable(this, centerX, centerY, {
             title: 'Тест',
             data: simpleData,
             width: 300,
             height: 150,
-            backgroundColor: 0x8B0000,
-            backgroundAlpha: 0.9,
-            borderColor: 0xFF6B6B,
-            titleColor: '#FFB6C1',
+            backgroundColor: 'rgba(139, 0, 0, 0.9)',
             textColor: '#FFE4E1'
         });
         
@@ -217,65 +214,52 @@ export class DemoComponents extends Phaser.Scene {
         const buttonStyles = [
             {
                 text: 'Основная кнопка',
-                backgroundColor: 0x4CAF50,
+                backgroundColor: '#4CAF50',
                 textColor: '#ffffff',
                 y: centerY - 100
             },
             {
                 text: 'Предупреждение',
-                backgroundColor: 0xFF9800,
+                backgroundColor: '#FF9800',
                 textColor: '#ffffff',
                 y: centerY - 50
             },
             {
                 text: 'Опасность',
-                backgroundColor: 0xF44336,
+                backgroundColor: '#F44336',
                 textColor: '#ffffff',
                 y: centerY
             },
             {
                 text: 'Информация',
-                backgroundColor: 0x2196F3,
+                backgroundColor: '#2196F3',
                 textColor: '#ffffff',
                 y: centerY + 50
             },
             {
                 text: 'Вторичная',
-                backgroundColor: 0x9E9E9E,
+                backgroundColor: '#9E9E9E',
                 textColor: '#ffffff',
                 y: centerY + 100
             }
         ];
         
         buttonStyles.forEach((style, index) => {
-            const button = new Button(this, centerX, style.y, {
+            const button = new HTMLButton(this, centerX, style.y, {
                 width: 200,
                 height: 45,
                 text: style.text,
                 backgroundColor: style.backgroundColor,
                 textColor: style.textColor,
                 fontSize: '16px',
-                borderRadius: 8
+                borderRadius: '8px'
             });
             
-            button.onButtonClick = () => {
+            button.setOnClick(() => {
                 this.showButtonFeedback(button, style.text);
-            };
+            });
             
             this.components.push(button);
-            
-            // Анимация появления
-            button.setAlpha(0);
-            button.setScale(0.8);
-            this.tweens.add({
-                targets: button,
-                alpha: 1,
-                scaleX: 1,
-                scaleY: 1,
-                duration: 300,
-                delay: index * 100,
-                ease: 'Back.easeOut'
-            });
         });
     }
 
@@ -380,68 +364,52 @@ export class DemoComponents extends Phaser.Scene {
         const centerY = this.scale.height / 2;
         
         // Таймер обратного отсчета
-        this.gameTimer = new GameTimer(this, centerX, centerY - 50, {
-            timeLimit: 30,
-            backgroundColor: 0x1a1a2e,
-            color: '#ffffff',
-            fontSize: '24px',
-            borderColor: 0x4a4a6a,
-            borderWidth: 2,
-            showProgress: true
-        });
+        this.gameTimer = new TelegramTimer(this, centerX, centerY - 50, 200, 36);
+        this.gameTimer.setText('30:00');
         
         this.components.push(this.gameTimer);
         
         // Кнопки управления
-        const startButton = new Button(this, centerX - 120, centerY + 50, {
+        const startButton = new HTMLButton(this, centerX - 120, centerY + 50, {
             width: 100,
             height: 40,
             text: 'Старт',
-            backgroundColor: 0x4CAF50,
+            backgroundColor: '#4CAF50',
             textColor: '#ffffff'
         });
-        startButton.onButtonClick = () => {
-            this.gameTimer.start(30);
-        };
+        startButton.setOnClick(() => {
+            // Для TelegramTimer используем простой таймер
+            this.startTimerDemo();
+        });
         
-        const pauseButton = new Button(this, centerX, centerY + 50, {
+        const pauseButton = new HTMLButton(this, centerX, centerY + 50, {
             width: 100,
             height: 40,
             text: 'Стоп',
-            backgroundColor: 0xFF9800,
+            backgroundColor: '#FF9800',
             textColor: '#ffffff'
         });
-        pauseButton.onButtonClick = () => {
-            this.gameTimer.stop();
-        };
+        pauseButton.setOnClick(() => {
+            this.stopTimerDemo();
+        });
         
-        const resetButton = new Button(this, centerX + 120, centerY + 50, {
+        const resetButton = new HTMLButton(this, centerX + 120, centerY + 50, {
             width: 100,
             height: 40,
             text: 'Перезапуск',
-            backgroundColor: 0xF44336,
+            backgroundColor: '#F44336',
             textColor: '#ffffff'
         });
-        resetButton.onButtonClick = () => {
-            this.gameTimer.start(30);
-        };
+        resetButton.setOnClick(() => {
+            this.resetTimerDemo();
+        });
         
         this.components.push(startButton, pauseButton, resetButton);
         
-        // Анимация появления
-        this.components.forEach((component, index) => {
-            component.setAlpha(0);
-            component.setScale(0.8);
-            this.tweens.add({
-                targets: component,
-                alpha: 1,
-                scaleX: 1,
-                scaleY: 1,
-                duration: 400,
-                delay: index * 150,
-                ease: 'Back.easeOut'
-            });
-        });
+        // Инициализация таймера
+        this.timerDemoTime = 30;
+        this.timerDemoActive = false;
+        this.timerDemoEvent = null;
     }
 
     showDamageDemo() {
@@ -504,6 +472,13 @@ export class DemoComponents extends Phaser.Scene {
     }
 
     clearComponents() {
+        // Останавливаем таймер демо если активен
+        if (this.timerDemoEvent) {
+            this.timerDemoEvent.destroy();
+            this.timerDemoEvent = null;
+        }
+        this.timerDemoActive = false;
+        
         this.components.forEach(component => {
             if (component && component.destroy) {
                 component.destroy();
@@ -529,5 +504,48 @@ export class DemoComponents extends Phaser.Scene {
                 component.update();
             }
         });
+        
+        // Обновляем позиции HTML компонентов
+        this.components.forEach(component => {
+            if (component && component.updatePosition) {
+                component.updatePosition();
+            }
+        });
+    }
+    
+    // Методы управления таймером
+    startTimerDemo() {
+        if (this.timerDemoActive) return;
+        
+        this.timerDemoActive = true;
+        this.timerDemoEvent = this.time.addEvent({
+            delay: 1000,
+            callback: () => {
+                this.timerDemoTime--;
+                const minutes = Math.floor(this.timerDemoTime / 60);
+                const seconds = this.timerDemoTime % 60;
+                this.gameTimer.setText(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+                
+                if (this.timerDemoTime <= 0) {
+                    this.stopTimerDemo();
+                }
+            },
+            callbackScope: this,
+            loop: true
+        });
+    }
+    
+    stopTimerDemo() {
+        if (this.timerDemoEvent) {
+            this.timerDemoEvent.destroy();
+            this.timerDemoEvent = null;
+        }
+        this.timerDemoActive = false;
+    }
+    
+    resetTimerDemo() {
+        this.stopTimerDemo();
+        this.timerDemoTime = 30;
+        this.gameTimer.setText('30:00');
     }
 }

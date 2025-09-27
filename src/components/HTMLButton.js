@@ -9,9 +9,9 @@ export class HTMLButton extends BaseHTMLComponent {
     constructor(scene, x, y, config = {}) {
         const defaultConfig = {
             text: 'Button',
-            width: 120,
-            height: 36,
-            backgroundColor: TELEGRAM_UI_STYLES.colors.primary,
+            width: 60,
+            height: 18,
+            backgroundColor: TELEGRAM_UI_STYLES.colors.background,
             textColor: TELEGRAM_UI_STYLES.colors.text,
             fontSize: TELEGRAM_UI_STYLES.fonts.size,
             fontFamily: TELEGRAM_UI_STYLES.fonts.family,
@@ -40,6 +40,16 @@ export class HTMLButton extends BaseHTMLComponent {
         this.textElement = document.createElement('span');
         this.textElement.textContent = this.text;
         this.textElement.style.textShadow = TELEGRAM_UI_STYLES.effects.textShadow;
+        this.textElement.style.textAlign = 'center';
+        this.textElement.style.width = '100%';
+        this.textElement.style.height = '100%';
+        this.textElement.style.display = 'flex';
+        this.textElement.style.alignItems = 'center';
+        this.textElement.style.justifyContent = 'center';
+        this.textElement.style.lineHeight = '1.2';
+        //this.textElement.style.whiteSpace = 'nowrap';
+        this.textElement.style.overflow = 'hidden';
+        this.textElement.style.textOverflow = 'ellipsis';
         
         this.container.appendChild(this.textElement);
     }
@@ -56,7 +66,7 @@ export class HTMLButton extends BaseHTMLComponent {
         
         // Hover эффекты
         this.container.addEventListener('mouseenter', () => {
-            this.container.style.backgroundColor = TELEGRAM_UI_STYLES.colors.primaryDark;
+            this.container.style.backgroundColor = TELEGRAM_UI_STYLES.colors.backgroundHover;
             this.container.style.boxShadow = TELEGRAM_UI_STYLES.effects.boxShadowHover;
             this.container.style.transform = 'scale(1.02)';
         });

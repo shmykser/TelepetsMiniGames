@@ -24,8 +24,8 @@ export class BaseHTMLComponent {
      */
     getDefaultConfig() {
         return {
-            width: 200,
-            height: 36,
+            width: 100,
+            height: 18,
             backgroundColor: TELEGRAM_UI_STYLES.colors.background,
             textColor: TELEGRAM_UI_STYLES.colors.text,
             fontSize: TELEGRAM_UI_STYLES.fonts.size,

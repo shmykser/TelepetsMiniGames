@@ -28,7 +28,7 @@ const config = {
         }
     },
     physics: PHASER_SETTINGS.physics,
-    scene: [PreloadScene, MenuScene, EggDefense, TestEffects, SpriteTestScene, DemoComponents, TestGestures, TestBehaviors],
+    scene: [PreloadScene, MenuScene, TestEffects, SpriteTestScene, DemoComponents, TestGestures, TestBehaviors],
     render: {
         pixelArt: false,
         antialias: true

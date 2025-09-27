@@ -106,29 +106,29 @@ export const TELEGRAM_UI_STYLES = {
         error: '#ff3b30'              // Красный для ошибки
     },
     
-    // Размеры
+    // Размеры (уменьшены в 2 раза)
     sizes: {
-        borderRadius: '8px',          // Скругление углов
-        borderRadiusSmall: '6px',     // Маленькое скругление
-        borderRadiusLarge: '12px',    // Большое скругление
-        padding: '0 16px',            // Стандартные отступы
-        paddingSmall: '0 12px',       // Маленькие отступы
-        paddingLarge: '0 20px',       // Большие отступы
-        height: '36px',               // Стандартная высота кнопок
-        heightSmall: '28px',          // Маленькая высота
-        heightLarge: '44px',          // Большая высота
-        minWidth: '60px'              // Минимальная ширина
+        borderRadius: '4px',          // Скругление углов
+        borderRadiusSmall: '3px',     // Маленькое скругление
+        borderRadiusLarge: '6px',     // Большое скругление
+        padding: '0 8px',             // Стандартные отступы
+        paddingSmall: '0 6px',        // Маленькие отступы
+        paddingLarge: '0 10px',       // Большие отступы
+        height: '18px',               // Стандартная высота кнопок
+        heightSmall: '14px',          // Маленькая высота
+        heightLarge: '22px',          // Большая высота
+        minWidth: '30px'              // Минимальная ширина
     },
     
-    // Шрифты
+    // Шрифты (уменьшены в 2 раза + еще на 20%)
     fonts: {
         family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-        size: '14px',                 // Стандартный размер
-        sizeSmall: '12px',            // Маленький размер
-        sizeLarge: '16px',            // Большой размер
+        size: '5.6px',                // Стандартный размер (7px * 0.8)
+        sizeSmall: '4.8px',           // Маленький размер (6px * 0.8)
+        sizeLarge: '6.4px',           // Большой размер (8px * 0.8)
         weight: '500',                // Средний вес
         weightBold: '600',            // Жирный вес
-        lineHeight: '20px'            // Высота строки
+        lineHeight: '1.2'             // Межстрочный интервал (относительный)
     },
     
     // Эффекты

@@ -44,8 +44,8 @@ export class WaveSystem {
      * Запускает игру
      */
     startGame() {
-        // Используем Date.now() вместо this.scene.time.now для корректного времени
-        this.gameStartTime = Date.now();
+        // Используем this.scene.time.now для корректной работы с паузой Phaser
+        this.gameStartTime = this.scene.time.now;
         this.isGameActive = true;
         this.isGameEnded = false;
         this.currentMinute = 1;
@@ -92,8 +92,20 @@ export class WaveSystem {
         this.scene.events.emit('gameEnded', {
             totalEnemiesSpawned: this.totalEnemiesSpawned,
             totalEnemiesKilled: this.totalEnemiesKilled,
-            gameTime: Date.now() - this.gameStartTime
+            gameTime: this.scene.time.now - this.gameStartTime
         });
+    }
+    
+    /**
+     * Возобновляет игру после паузы
+     */
+    resumeGame() {
+        if (!this.isGameActive || this.isGameEnded) return;
+        
+        // Возобновляем спавн врагов
+        this.startSpawning();
+        
+        console.log('🌊 [WaveSystem] Игра возобновлена');
     }
     
     /**
@@ -357,7 +369,7 @@ export class WaveSystem {
         if (!this.isGameActive) return;
         
         // Проверяем окончание игры
-        const gameTime = Date.now() - this.gameStartTime;
+        const gameTime = this.scene.time.now - this.gameStartTime;
         if (gameTime >= this.waveSettings.duration) {
             this.stopGame();
             return;
@@ -394,7 +406,7 @@ export class WaveSystem {
     getGameProgress() {
         if (!this.isGameActive) return 0;
         
-        const gameTime = Date.now() - this.gameStartTime;
+        const gameTime = this.scene.time.now - this.gameStartTime;
         return Math.min(1, gameTime / this.waveSettings.duration);
     }
     
@@ -404,8 +416,15 @@ export class WaveSystem {
     getRemainingTime() {
         if (!this.isGameActive) return 0;
         
-        const gameTime = Date.now() - this.gameStartTime;
+        const gameTime = this.scene.time.now - this.gameStartTime;
         return Math.max(0, this.waveSettings.duration - gameTime);
+    }
+    
+    /**
+     * Получает текущую минуту игры
+     */
+    getCurrentMinute() {
+        return this.currentMinute;
     }
     
     /**

@@ -33,6 +33,9 @@ export class Egg extends GameObject {
         this.auraEffect = null;
         this.auraTimer = null;
         this.auraGlow = null; // Ссылка на визуальный эффект ауры
+        
+        // Инициализация регенерации
+        this.recoveryTimer = null;
     }
     setupEggPhysics() {
         // Яйцо статично - не может двигаться
@@ -85,6 +88,11 @@ export class Egg extends GameObject {
         return this.abilitySystem ? this.abilitySystem.getEggExplosionCooldown() : 50000;
     }
     
+    // Геттер для регенерации из системы способностей
+    get eggRecovery() {
+        return this.abilitySystem ? this.abilitySystem.getEggRecovery() : 0;
+    }
+    
     
     
     
@@ -106,6 +114,11 @@ export class Egg extends GameObject {
         if (eventData.abilityType === 'EGG_EXPLOSION') {
             this.updateEggExplosion();
         }
+        
+        // Обновляем регенерацию при изменении способностей
+        if (eventData.abilityType === 'EGG_RECOVERY') {
+            this.updateRecovery();
+        }
     }
     
     /**
@@ -122,6 +135,70 @@ export class Egg extends GameObject {
         // Если есть способность взрыва, запускаем ауру для визуализации готовности
         if (this.eggExplosion > 0) {
             this.updateAura();
+        }
+    }
+    
+    /**
+     * Обновляет состояние регенерации
+     */
+    updateRecovery() {
+        if (this.eggRecovery > 0) {
+            this.startRecovery();
+        } else {
+            this.stopRecovery();
+        }
+    }
+    
+    /**
+     * Запускает регенерацию яйца
+     */
+    startRecovery() {
+        if (this.recoveryTimer) return; // Уже активна
+        
+        // Запускаем таймер регенерации каждую секунду
+        this.recoveryTimer = this.scene.time.addEvent({
+            delay: 1000, // Каждую секунду
+            callback: () => this.processRecovery(),
+            callbackScope: this,
+            loop: true
+        });
+        
+        console.log(`🌿 [Egg] Регенерация активирована: ${this.eggRecovery} HP/сек`);
+    }
+    
+    /**
+     * Останавливает регенерацию яйца
+     */
+    stopRecovery() {
+        if (this.recoveryTimer) {
+            this.recoveryTimer.destroy();
+            this.recoveryTimer = null;
+            console.log(`🌿 [Egg] Регенерация деактивирована`);
+        }
+    }
+    
+    /**
+     * Обрабатывает восстановление здоровья яйца
+     */
+    processRecovery() {
+        if (!this.isAlive || this.health >= this.maxHealth) {
+            return; // Яйцо мертво или здоровье полное
+        }
+        
+        const oldHealth = this.health;
+        this.health = Math.min(this.maxHealth, this.health + this.eggRecovery);
+        const actualRecovery = this.health - oldHealth;
+        
+        if (actualRecovery > 0) {
+            console.log(`🌿 [Egg] Регенерация: +${actualRecovery} HP (${oldHealth} → ${this.health})`);
+            
+            // Создаем визуальный эффект регенерации
+            if (this.scene.effectSystem) {
+                this.scene.effectSystem.applyEffect('heal', this, 1, {
+                    color: 0x00ff00,
+                    radius: 30
+                });
+            }
         }
     }
     
@@ -393,6 +470,7 @@ export class Egg extends GameObject {
         
         // Останавливаем все способности
         this.stopAbility('aura');
+        this.stopRecovery();
         
         // Очищаем ссылку на систему способностей
         this.abilitySystem = null;
