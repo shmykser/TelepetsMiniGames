@@ -150,6 +150,12 @@ export class Item extends GameObject {
                     }
                 }
                 break;
+                
+        case ITEM_TYPES.HONEY:
+            // Эффект: замедление времени для всех врагов
+            console.log('🍯 [Item] Обрабатываем мёд...');
+            this.activateHoneyEffect();
+            break;
         }
         
         // Эмитим событие активации
@@ -157,6 +163,49 @@ export class Item extends GameObject {
             itemType: this.itemType,
             effect: increaseAmount
         });
+    }
+    
+    /**
+     * Активирует эффект мёда - замедление времени
+     */
+    activateHoneyEffect() {
+        const itemData = ITEMS[this.itemType];
+        const duration = itemData.duration || 10000; // 10 секунд из конфигурации
+        
+        console.log(`🍯 [Item] Мёд активирует замедление времени на ${duration}мс`);
+        
+        // Замедляем время для всех систем Phaser
+        this.scene.time.timeScale = 5;           // События времени (0.5 = в 2 раза медленнее)
+        this.scene.tweens.timeScale = 5;         // Твины
+        this.scene.anims.globalTimeScale = 5;    // Анимации
+        
+        // Физика (если есть)
+        if (this.scene.physics && this.scene.physics.world) {
+            this.scene.physics.world.timeScale = 5;
+        }
+        
+        console.log('🍯 [Item] timeScale установлен:', this.scene.time.timeScale);
+        console.log('🍯 [Item] tweens.timeScale:', this.scene.tweens.timeScale);
+        console.log('🍯 [Item] anims.globalTimeScale:', this.scene.anims.globalTimeScale);
+        if (this.scene.physics && this.scene.physics.world) {
+            console.log('🍯 [Item] physics.world.timeScale:', this.scene.physics.world.timeScale);
+        }
+        
+        // Сохраняем ссылку на сцену для колбэка
+        const scene = this.scene;
+        
+        // Используем setTimeout вместо delayedCall, чтобы избежать влияния timeScale
+        setTimeout(() => {
+            scene.time.timeScale = 1.0;
+            scene.tweens.timeScale = 1.0;
+            scene.anims.globalTimeScale = 1.0;
+            
+            if (scene.physics && scene.physics.world) {
+                scene.physics.world.timeScale = 1.0;
+            }
+            
+            console.log('🍯 [Item] Время восстановлено к нормальной скорости');
+        }, duration);
     }
     
     /**
@@ -234,6 +283,7 @@ export class Item extends GameObject {
         
         super.destroy();
     }
+    
     
     /**
      * Статический метод для создания предмета с полной настройкой

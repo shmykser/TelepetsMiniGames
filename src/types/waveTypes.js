@@ -4,16 +4,16 @@
  * Каждая минута добавляет новые типы врагов
  */
 export const enemyTypesByMinute = {
-    1: ['ant', 'fly'],
+    1: ['hive'],
     2: ['ant', 'fly', 'mosquito', 'flea'],
     3: ['ant', 'beetle', 'mosquito', 'fly', 'bee', 'slug', 'flea'],
     4: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'bee', 'butterfly', 'snail', 'slug', 'mole', 'flea'],
     5: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'flea'],
     6: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'flea'],
     7: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'flea'],
-    8: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'flea'],
-    9: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'flea'],
-    10: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'flea']
+    8: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'hive', 'flea'],
+    9: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'hive', 'flea'],
+    10: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'hive', 'flea']
 };
 
 /**
@@ -35,6 +35,7 @@ export const enemyWeights = {
     slug: 8,           // Слизень - средняя частота
     mole: 4,           // Крот - редкий, но опасный
     spiderQueen: 1,    // Самка паука - очень редкий босс
+    hive: 2,           // Улей - редкий, но опасный спавнер
     flea: 12          // Блоха - частая, быстрая
     //unknown: 0         // Неизвестный - не должен появляться
     // projectile не включен - спавнится только другими врагами

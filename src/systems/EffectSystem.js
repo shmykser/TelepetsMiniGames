@@ -138,6 +138,12 @@ export class EffectSystem {
                 baseIntensity: 2.0,
                 duration: 2000
             },
+            launchEffect: {
+                baseScale: 0.3,
+                duration: 1000,
+                ease: 'Power2.easeOut',
+                alpha: { from: 0, to: 1 }
+            },
 
             // ЧАСТИЦЫ И УСИЛЕНИЯ
             particles: {
@@ -284,6 +290,10 @@ export class EffectSystem {
             // Аура
             case 'auraGlow':
                 return this.createAuraGlowEffect(target, config);
+
+            // Эффект вылета
+            case 'launchEffect':
+                return this.createLaunchEffect(target, config);
 
             default:
                 console.warn(`Unknown effect type: ${effectType}`);
@@ -697,6 +707,34 @@ export class EffectSystem {
         return tween;
     }
 
+    createLaunchEffect(target, config) {
+        const baseScale = config.baseScale || 0.3;
+        const duration = config.duration || 1000;
+        const ease = config.ease || 'Power2.easeOut';
+        
+        // Применяем масштабирование и прозрачность для эффекта вылета
+        const tween = this.scene.tweens.add({
+            targets: target,
+            scaleX: { from: 0.5, to: 1.0 + baseScale },
+            scaleY: { from: 0.5, to: 1.0 + baseScale },
+            alpha: { from: 0, to: 1 },
+            duration: duration,
+            ease: ease,
+            onComplete: () => {
+                // Возвращаем нормальный размер
+                this.scene.tweens.add({
+                    targets: target,
+                    scaleX: 1.0,
+                    scaleY: 1.0,
+                    duration: 300,
+                    ease: 'Power2.easeOut'
+                });
+            }
+        });
+        
+        return tween;
+    }
+
     // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
 
     /**
@@ -757,7 +795,7 @@ export class EffectSystem {
             'shake', 'flash', 'pulse', 'rotation', 'fadeIn', 'fadeOut',
             'scale', 'move', 'damage', 'explosion', 'flicker', 'glow',
             'wave', 'burstMovement', 'chaosMovement', 'particles', 'blast',
-            'auraGlow'
+            'auraGlow', 'launchEffect'
         ];
     }
 

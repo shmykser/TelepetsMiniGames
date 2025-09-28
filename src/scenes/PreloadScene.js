@@ -50,7 +50,7 @@ export class PreloadScene extends Phaser.Scene {
         // Список типов врагов из enemyTypes.js
         const enemyTypes = [
             'ant', 'bee', 'butterfly', 'dragonfly', 'fly', 
-            'ladybug', 'mosquito', 'rhinoceros', 'spider'
+            'ladybug', 'mosquito', 'rhinoceros', 'spider', 'hive'
         ];
         
         // Размеры спрайтов
@@ -68,7 +68,7 @@ export class PreloadScene extends Phaser.Scene {
     }
 
     loadItemSprites() {
-        const itemTypes = ['heart', 'clover', 'patch', 'doublepatch', 'shovel', 'aloe']; // все предметы со спрайтами
+        const itemTypes = ['heart', 'clover', 'patch', 'doublepatch', 'shovel', 'aloe', 'honey']; // все предметы со спрайтами
         const sizes = ['32x32', '64x64', '128x128'];
         
         itemTypes.forEach(itemType => {

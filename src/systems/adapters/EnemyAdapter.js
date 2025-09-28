@@ -45,7 +45,8 @@ export class EnemyAdapter extends IGameObject {
                 movement: this.getMovementConfig(enemyData),
                 attack: this.getAttackConfig(enemyData),
                 collision: this.getCollisionConfig(enemyData),
-                pathfinding: this.getPathfindingConfig(enemyData)
+                pathfinding: this.getPathfindingConfig(enemyData),
+                damageSpawn: this.getDamageSpawnConfig(enemyData)
             }
         ]);
     }
@@ -186,6 +187,13 @@ export class EnemyAdapter extends IGameObject {
             isInitialized: this.isInitialized,
             config: this._config
         };
+    }
+
+    /**
+     * Получение конфигурации спавна при уроне
+     */
+    getDamageSpawnConfig(enemyData) {
+        return enemyData.damageSpawn || null;
     }
 
     /**

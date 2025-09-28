@@ -63,13 +63,15 @@ export class SpawnAttackStrategy {
      * @param {number} time - Текущее время
      */
     performSpawn(time) {
-        const spawnCount = this.config.get('spawnCount', 2);
+        const minSpawnCount = this.config.get('minSpawnCount', 1);
+        const maxSpawnCount = this.config.get('maxSpawnCount', 5);
+        const spawnCount = Math.floor(Math.random() * (maxSpawnCount - minSpawnCount + 1)) + minSpawnCount;
         const spawnRange = this.config.get('spawnRange', 100);
         const spawnType = this.config.get('spawnType', 'spider');
         const spawnDirection = this.config.get('spawnDirection', 'circle');
-
+        
         if (this.gameObject.enemyType === 'wasp') {
-            console.log(`🐝 [SpawnAttackStrategy] ОСА: Параметры спавна - count: ${spawnCount}, range: ${spawnRange}, type: ${spawnType}, direction: ${spawnDirection}`);
+            console.log(`🐝 [SpawnAttackStrategy] ОСА: Параметры спавна - count: ${spawnCount} (${minSpawnCount}-${maxSpawnCount}), range: ${spawnRange}, type: ${spawnType}, direction: ${spawnDirection}`);
         }
 
         for (let i = 0; i < spawnCount; i++) {

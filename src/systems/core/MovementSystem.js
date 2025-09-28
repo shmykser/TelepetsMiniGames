@@ -7,6 +7,7 @@ import { InertiaMovementStrategy } from '../strategies/movement/InertiaMovementS
 import { JitteryMovementStrategy } from '../strategies/movement/JitteryMovementStrategy.js';
 import { JumpingMovementStrategy } from '../strategies/movement/JumpingMovementStrategy.js';
 import { ButterflyMovementStrategy } from '../strategies/movement/ButterflyMovementStrategy.js';
+import { StaticMovementStrategy } from '../strategies/movement/StaticMovementStrategy.js';
 
 /**
  * Универсальная система движения для игровых объектов
@@ -64,6 +65,9 @@ export class MovementSystem extends ISystem {
                 break;
             case 'butterfly':
                 this.strategy = new ButterflyMovementStrategy(this.gameObject, this.config);
+                break;
+            case 'static':
+                this.strategy = new StaticMovementStrategy(this.gameObject, this.config);
                 break;
             default:
                 this.strategy = null;

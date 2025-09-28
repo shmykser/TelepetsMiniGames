@@ -10,7 +10,7 @@ export const enemyTypes = {
         spriteKey: 'ant',
         defaultSize: '64x64',
         detectionRange: 150,
-        dropList: [ITEM_TYPES.HEART, ITEM_TYPES.PATCH], // Базовый список
+        dropList: [ITEM_TYPES.HEART, ITEM_TYPES.PATCH], // Базовый список + мёд
         movement: {
             strategy: 'linear',
             speed: 70,
@@ -41,7 +41,7 @@ export const enemyTypes = {
         spriteKey: 'ant',
         defaultSize: '32x32',
         detectionRange: 150,
-        dropList: [ITEM_TYPES.PATCH], // Клевер и пластырь
+        dropList: [], //ничего не дропается
         movement: {
             strategy: 'linear',
             speed: 60,
@@ -72,7 +72,7 @@ export const enemyTypes = {
         spriteKey: 'ladybug',
         defaultSize: '64x64',
         detectionRange: 150,
-        dropList: [ITEM_TYPES.PATCH, ITEM_TYPES.DOUBLEPATCH, ITEM_TYPES.HEART], // Клевер, пластырь, двойной пластырь
+        dropList: [], // Клевер, пластырь, двойной пластырь
         movement: {
             strategy: 'linear',
             speed: 50,
@@ -103,7 +103,7 @@ export const enemyTypes = {
         spriteKey: 'rhinoceros',
         defaultSize: '128x128',
         detectionRange: 150,
-        dropList: [ITEM_TYPES.HEART, ITEM_TYPES.ALOE, ITEM_TYPES.DOUBLEPATCH], // Сердце, двойной пластырь, лопата
+        dropList: [ITEM_TYPES.ALOE, ITEM_TYPES.DOUBLEPATCH], // Сердце, двойной пластырь, лопата
         movement: {
             strategy: 'inertia',
             speed: 5,              // стартовая скорость
@@ -173,7 +173,7 @@ export const enemyTypes = {
         spriteKey: 'bee',
         defaultSize: '64x64',
         detectionRange: 150,
-        dropList: [ITEM_TYPES.PATCH], // Сердце, клевер
+        dropList: [], // Сердце, клевер
         movement: {
             strategy: 'flying',
             speed: 60,
@@ -199,6 +199,7 @@ export const enemyTypes = {
             ignoreGroundObstacles: true
         }
     },
+    
     butterfly: {
         name: 'Бабочка',
         health: 8,
@@ -252,7 +253,7 @@ export const enemyTypes = {
         spriteKey: 'dragonfly',
         defaultSize: '64x64',
         detectionRange: 250,
-        dropList: [ITEM_TYPES.PATCH], // Клевер, пластырь
+        dropList: [], // Клевер, пластырь
         movement: {
             strategy: 'linear',
             speed: 180,
@@ -284,7 +285,7 @@ export const enemyTypes = {
         spriteKey: 'bee',
         defaultSize: '64x64',
         detectionRange: 400,
-        dropList: [ITEM_TYPES.PATCH, ITEM_TYPES.DOUBLEPATCH], // Пластырь, двойной пластырь
+        dropList: [ITEM_TYPES.PATCH], // Пластырь, двойной пластырь
         movement: {
             strategy: 'orbital',
             speed: 120,
@@ -299,7 +300,8 @@ export const enemyTypes = {
             damage: 0,
             range: 300,
             spawnInterval: 3000,
-            spawnCount: 1,
+            minSpawnCount: 1,
+            maxSpawnCount: 1,
             spawnRange: 10,
             spawnType: 'projectile',
             spawnDirection: 'target',
@@ -325,7 +327,7 @@ export const enemyTypes = {
         spriteKey: 'snail',
         defaultSize: '64x64',
         detectionRange: 200,
-        dropList: [ITEM_TYPES.HEART, ITEM_TYPES.PATCH, ITEM_TYPES.DOUBLEPATCH], // Сердце, пластырь
+        dropList: [], // ничего не дропается
         movement: {
             strategy: 'linear',
             speed: 30,
@@ -363,7 +365,7 @@ export const enemyTypes = {
         spriteKey: 'snail',
         defaultSize: '64x64',
         detectionRange: 120,
-        dropList: [ITEM_TYPES.HEART, ITEM_TYPES.PATCH, ITEM_TYPES.DOUBLEPATCH], // Сердце, пластырь, двойной пластырь
+        dropList: [ITEM_TYPES.HEART, ITEM_TYPES.ALOE], // Сердце, пластырь, двойной пластырь
         movement: {
             strategy: 'shell',
             speed: 20,
@@ -405,7 +407,7 @@ export const enemyTypes = {
         spriteKey: 'spider',
         defaultSize: '128x128',
         detectionRange: 200,
-        dropList: [ITEM_TYPES.HEART, ITEM_TYPES.DOUBLEPATCH, ITEM_TYPES.CLOVER], // Сердце, двойной пластырь, клевер
+        dropList: [ITEM_TYPES.HEART, ITEM_TYPES.DOUBLEPATCH], // Сердце, двойной пластырь, клевер
         movement: {
             strategy: 'linear',
             speed: 25,
@@ -414,7 +416,8 @@ export const enemyTypes = {
         attack: {
             strategy: 'spawn',
             spawnInterval: 5000,
-            spawnCount: 2,
+            minSpawnCount: 1,
+            maxSpawnCount: 5,
             spawnRange: 100,
             spawnType: 'spider'
         },
@@ -457,7 +460,8 @@ export const enemyTypes = {
             spawnType: 'projectile',
             spawnDirection: 'target',
             spawnInterval: 3000,
-            spawnCount: 1,
+            minSpawnCount: 1,
+            maxSpawnCount: 1,
             spawnRange: 10,
             conditionalSpawn: true
         },
@@ -480,7 +484,7 @@ export const enemyTypes = {
         spriteKey: 'mosquito',
         defaultSize: '64x64',
         detectionRange: 120,
-        dropList: [ITEM_TYPES.PATCH], // Только пластырь - маленький вредный
+        dropList: [], 
         movement: {
             strategy: 'flying',
             speed: 40,
@@ -515,7 +519,7 @@ export const enemyTypes = {
         spriteKey: 'flea',
         defaultSize: '32x32',
         detectionRange: 100,
-        dropList: [ITEM_TYPES.PATCH], // Только пластырь
+        dropList: [],
         movement: {
             strategy: 'jumping',
             speed: 200,                   // Скорость прыжка
@@ -553,7 +557,7 @@ export const enemyTypes = {
         spriteKey: 'fly',
         defaultSize: '64x64',
         detectionRange: 150,
-        dropList: [ITEM_TYPES.PATCH], // Только пластырь
+        dropList: [], // Только пластырь
         movement: {         
             strategy: 'jittery',
             speed: 80,                     // Базовая скорость движения
@@ -595,10 +599,53 @@ export const enemyTypes = {
         },
         attack: {
             strategy: 'singleUse',
-            damage: 10,
+            damage: 1,
             range: 50,
             explosionRadius: 80,
-            explosionDamage: 30
+            explosionDamage: 0
+        },
+        collision: {
+            enabled: true,
+            layers: ['ENEMIES', 'OBSTACLES']
+        },
+        pathfinding: {
+            algorithm: 'astar',
+            allowDiagonal: true,
+            ignoreGroundObstacles: false
+        }
+    },
+    hive: {
+        name: 'Улей',
+        health: 50,
+        canFly: false,
+        size: 4,
+        texture: '🏠',
+        spriteKey: 'hive',
+        defaultSize: '128x128',
+        detectionRange: 300,
+        dropList: [ITEM_TYPES.HONEY], // Сердце, алоэ и мёд - ценные ресурсы улья
+        movement: {
+            strategy: 'static', // Неподвижный улей
+            speed: 0,
+            rotationSpeed: 0
+        },
+        attack: {
+            strategy: 'spawn', // Регулярный спавн ос
+            spawnInterval: 8000, // Каждые 8 секунд
+            minSpawnCount: 1,
+            maxSpawnCount: 3,
+            spawnRange: 80,
+            spawnType: 'wasp',
+            spawnDirection: 'circle'
+        },
+        damageSpawn: {
+            strategy: 'damageSpawn', // Спавн ос при получении урона
+            spawnType: 'bee',
+            minSpawnCount: 0,
+            maxSpawnCount: 1,
+            spawnRange: 60,
+            launchForce: 250, // Сила выталкивания ос
+            launchAngleSpread: Math.PI / 2 // Разброс углов 90 градусов
         },
         collision: {
             enabled: true,

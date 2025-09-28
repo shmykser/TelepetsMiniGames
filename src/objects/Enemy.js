@@ -252,6 +252,11 @@ export class Enemy extends GameObject {
             this._aiCoordinator.takeDamage(damage, this.scene.time.now);
         }
 
+        // Обрабатываем спавн при уроне (для улья)
+        if (this.damageSpawnStrategy) {
+            this.damageSpawnStrategy.onDamageReceived(damage, this.lastDamageSource);
+        }
+
         // Отправляем событие получения урона
         if (Enemy.eventSystem) {
             const intensity = damage / this.maxHealth;
@@ -347,12 +352,16 @@ export class Enemy extends GameObject {
                     attack: this.getAttackConfig(),
                     recovery: this.getRecoveryConfig(),
                     collision: this.getCollisionConfig(),
-                    pathfinding: this.getPathfindingConfig()
+                    pathfinding: this.getPathfindingConfig(),
+                    damageSpawn: this.getDamageSpawnConfig()
                 }
             ]);
 
             // Создаем AI координатор
             this._aiCoordinator = new AICoordinator(this, config);
+            
+            // Инициализируем стратегию спавна при уроне (для улья)
+            this.setupDamageSpawnStrategy();
         } catch (error) {
             console.error(`❌ [Enemy] Ошибка инициализации новой системы ИИ для ${enemyType}:`, error);
             this._useNewAI = false;
@@ -444,6 +453,36 @@ export class Enemy extends GameObject {
             dontCrossCorners: true,
             ignoreGroundObstacles: this.canFly || false
         };
+    }
+
+    /**
+     * Получение конфигурации спавна при уроне
+     * @returns {Object|null}
+     */
+    getDamageSpawnConfig() {
+        return this._enemyData.damageSpawn || null;
+    }
+
+    /**
+     * Настройка стратегии спавна при уроне
+     */
+    setupDamageSpawnStrategy() {
+        const damageSpawnConfig = this.getDamageSpawnConfig();
+        if (damageSpawnConfig && damageSpawnConfig.strategy === 'damageSpawn') {
+            try {
+                // Динамически импортируем стратегию
+                import('../systems/strategies/damage/DamageSpawnStrategy.js').then(module => {
+                    this.damageSpawnStrategy = new module.DamageSpawnStrategy(this, {
+                        get: (key, defaultValue) => damageSpawnConfig[key] || defaultValue
+                    });
+                    console.log(`🏠 [Enemy] Стратегия спавна при уроне инициализирована для ${this.enemyType}`);
+                }).catch(error => {
+                    console.error(`❌ [Enemy] Ошибка загрузки DamageSpawnStrategy:`, error);
+                });
+            } catch (error) {
+                console.error(`❌ [Enemy] Ошибка инициализации стратегии спавна при уроне:`, error);
+            }
+        }
     }
     
     /**

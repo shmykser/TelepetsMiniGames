@@ -90,7 +90,7 @@ export const ABILITIES = {
     LUCK: {
         name: 'Удача',
         description: 'Влияет на дроп предметов из врагов',
-        baseValue: 5,
+        baseValue: 100,
         increase: 5,      // +5 удача за уровень
         maxValue: 30,
         icon: '🍀'

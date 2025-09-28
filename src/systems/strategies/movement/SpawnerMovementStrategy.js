@@ -16,7 +16,8 @@ export class SpawnerMovementStrategy {
         
         // Параметры спавна
         this.spawnInterval = config.get('spawnInterval', 5000); // Интервал спавна (мс)
-        this.spawnCount = config.get('spawnCount', 2); // Количество врагов за раз
+        this.minSpawnCount = config.get('minSpawnCount', 1); // Минимальное количество врагов за раз
+        this.maxSpawnCount = config.get('maxSpawnCount', 5); // Максимальное количество врагов за раз
         this.spawnRange = config.get('spawnRange', 100); // Радиус спавна
         this.spawnType = config.get('spawnType', 'spider'); // Тип спавнимого врага
         this.spawnDirection = config.get('spawnDirection', 'circle'); // Направление спавна: 'circle' или 'target'
@@ -60,8 +61,11 @@ export class SpawnerMovementStrategy {
         this.isSpawning = true;
         this.lastSpawnTime = time;
         
+        // Вычисляем случайное количество врагов для спавна
+        const spawnCount = Math.floor(Math.random() * (this.maxSpawnCount - this.minSpawnCount + 1)) + this.minSpawnCount;
+        
         // Спавним врагов
-        for (let i = 0; i < this.spawnCount; i++) {
+        for (let i = 0; i < spawnCount; i++) {
             let spawnX, spawnY;
             
             if (this.spawnDirection === 'target' && this.gameObject.aiCoordinator && this.gameObject.aiCoordinator.currentTarget) {
@@ -73,7 +77,7 @@ export class SpawnerMovementStrategy {
                 spawnY = this.gameObject.y + Math.sin(angleToTarget) * this.spawnRange;
             } else {
                 // Круговой спавн (для самки паука)
-                const angle = (Math.PI * 2 * i) / this.spawnCount;
+                const angle = (Math.PI * 2 * i) / spawnCount;
                 const distance = Math.random() * this.spawnRange;
                 
                 spawnX = this.gameObject.x + Math.cos(angle) * distance;
@@ -98,7 +102,7 @@ export class SpawnerMovementStrategy {
                 enemy: this.gameObject,
                 x: this.gameObject.x,
                 y: this.gameObject.y,
-                count: this.spawnCount
+                count: spawnCount
             });
         }
         

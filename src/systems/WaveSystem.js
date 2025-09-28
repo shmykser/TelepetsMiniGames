@@ -44,8 +44,15 @@ export class WaveSystem {
      * Запускает игру
      */
     startGame() {
-        // Используем this.scene.time.now для корректной работы с паузой Phaser
-        this.gameStartTime = this.scene.time.now;
+        // Безопасно получаем время начала игры
+        if (this.scene?.time?.now !== undefined) {
+            this.gameStartTime = this.scene.time.now;
+            console.log('🎮 [WaveSystem] gameStartTime установлен из scene.time.now:', this.gameStartTime);
+        } else {
+            console.warn('🎮 [WaveSystem] scene.time.now недоступен, используем Date.now()');
+            this.gameStartTime = Date.now();
+        }
+        
         this.isGameActive = true;
         this.isGameEnded = false;
         this.currentMinute = 1;
@@ -74,7 +81,7 @@ export class WaveSystem {
         
         // Останавливаем спавн
         if (this.spawnTimer) {
-            this.spawnTimer.destroy();
+            clearTimeout(this.spawnTimer);
             this.spawnTimer = null;
         }
         
@@ -124,17 +131,19 @@ export class WaveSystem {
         // Проверяем лимит врагов на экране
         if (this.currentEnemiesOnScreen >= this.spawnSettings.maxEnemiesOnScreen) {
             // Если достигли лимита, ждем немного и пробуем снова
-            this.spawnTimer = this.scene.time.delayedCall(SPAWN_CONSTANTS.RETRY_DELAY, this.scheduleNextSpawn);
+            this.spawnTimer = setTimeout(() => {
+                this.scheduleNextSpawn();
+            }, SPAWN_CONSTANTS.RETRY_DELAY);
             return;
         }
         
         // Вычисляем задержку до следующего спавна
         const delay = this.calculateSpawnDelay();
         
-        this.spawnTimer = this.scene.time.delayedCall(delay, () => {
+        this.spawnTimer = setTimeout(() => {
             this.spawnEnemyBatch();
             this.scheduleNextSpawn();
-        });
+        }, delay);
     }
     
     /**
@@ -368,8 +377,11 @@ export class WaveSystem {
     update() {
         if (!this.isGameActive) return;
         
+        // Безопасно получаем текущее время
+        const currentTime = this.scene?.time?.now !== undefined ? this.scene.time.now : Date.now();
+        const gameTime = currentTime - this.gameStartTime;
+        
         // Проверяем окончание игры
-        const gameTime = this.scene.time.now - this.gameStartTime;
         if (gameTime >= this.waveSettings.duration) {
             this.stopGame();
             return;
@@ -406,7 +418,9 @@ export class WaveSystem {
     getGameProgress() {
         if (!this.isGameActive) return 0;
         
-        const gameTime = this.scene.time.now - this.gameStartTime;
+        // Безопасно получаем текущее время
+        const currentTime = this.scene?.time?.now !== undefined ? this.scene.time.now : Date.now();
+        const gameTime = currentTime - this.gameStartTime;
         return Math.min(1, gameTime / this.waveSettings.duration);
     }
     
@@ -416,7 +430,9 @@ export class WaveSystem {
     getRemainingTime() {
         if (!this.isGameActive) return 0;
         
-        const gameTime = this.scene.time.now - this.gameStartTime;
+        // Безопасно получаем текущее время
+        const currentTime = this.scene?.time?.now !== undefined ? this.scene.time.now : Date.now();
+        const gameTime = currentTime - this.gameStartTime;
         return Math.max(0, this.waveSettings.duration - gameTime);
     }
     

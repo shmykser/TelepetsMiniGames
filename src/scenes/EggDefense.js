@@ -33,13 +33,19 @@ export class EggDefense extends Phaser.Scene {
         this.resultsTableRestartHandler = null;
         this.resultsTableMenuHandler = null;
         this.gameStartTime = null;
+        
     }
 
     create() {
+        console.log('🎮 [EggDefense] create() вызван');
+        
         // Сбрасываем флаги для корректного рестарта
         this.isGameEnded = false;
         this.isPaused = false;
         this.gameStartTime = null;
+        this.isGameStarted = false; // Важно! Сбрасываем флаг начала игры
+        
+        console.log('🎮 [EggDefense] Флаги сброшены - isGameStarted:', this.isGameStarted);
         
         // Создание игровых объектов
         this.createGameObjects();
@@ -154,6 +160,32 @@ export class EggDefense extends Phaser.Scene {
                 // Создаем врага напрямую, как в тестовой сцене
                 const enemy = this.createEnemy(spawnData.enemyType, spawnData.x, spawnData.y);
                 
+                
+                // Применяем эффект вылета если есть launchEffect
+                if (spawnData.launchEffect && spawnData.launchEffect.enabled && enemy && this.effectSystem) {
+                    console.log(`🏠 [EggDefense] Применяем эффект вылета для ${spawnData.enemyType}`);
+                    
+                    // Применяем визуальный эффект вылета
+                    this.effectSystem.applyEffect('launchEffect', enemy, 1.0, {
+                        duration: spawnData.launchEffect.duration || 1000
+                    });
+                    
+                    // Применяем физическое выталкивание
+                    if (enemy.body && spawnData.launchEffect.angle && spawnData.launchEffect.force) {
+                        const forceX = Math.cos(spawnData.launchEffect.angle) * spawnData.launchEffect.force;
+                        const forceY = Math.sin(spawnData.launchEffect.angle) * spawnData.launchEffect.force;
+                        
+                        enemy.body.setVelocity(forceX, forceY);
+                        
+                        // Через некоторое время останавливаем выталкивание
+                        this.time.delayedCall(spawnData.launchEffect.duration || 1000, () => {
+                            if (enemy && enemy.body) {
+                                enemy.body.setVelocity(0, 0);
+                            }
+                        });
+                    }
+                }
+                
                 // Если спавнимый враг - снаряд, и есть цель, устанавливаем её
                 if (spawnData.enemyType === 'projectile' && spawnData.target && enemy && enemy.aiCoordinator) {
                     if (this.gameObject?.enemyType === 'wasp') {
@@ -163,6 +195,8 @@ export class EggDefense extends Phaser.Scene {
                 }
             }
         });
+        
+        // Обработчик эффекта мёда - замедление всех врагов
         
         console.log('🎮 [EggDefense] Обработчики событий настроены');
     }
@@ -307,6 +341,10 @@ export class EggDefense extends Phaser.Scene {
      * Запуск игры из меню
      */
     startGameFromMenu() {
+        console.log('🎮 [EggDefense] startGameFromMenu() вызван');
+        console.log('🎮 [EggDefense] isGameStarted до:', this.isGameStarted);
+        console.log('🎮 [EggDefense] waveSystem существует:', !!this.waveSystem);
+        
         this.isGameStarted = true;
         
         // Безопасно получаем время начала игры
@@ -318,13 +356,17 @@ export class EggDefense extends Phaser.Scene {
             this.gameStartTime = Date.now();
         }
         
+        console.log('🎮 [EggDefense] Вызываем startGame()...');
         this.startGame();
     }
-    
+
     /**
      * Запуск игры
      */
     startGame() {
+        console.log('🎮 [EggDefense] startGame() вызван');
+        console.log('🎮 [EggDefense] waveSystem существует:', !!this.waveSystem);
+        
         // Создаем таймер только при старте игры
         this.createTimer();
         
@@ -334,7 +376,9 @@ export class EggDefense extends Phaser.Scene {
         });
         
         // Запускаем волновую систему
+        console.log('🎮 [EggDefense] Запускаем waveSystem.startGame()...');
         this.waveSystem.startGame();
+        console.log('🎮 [EggDefense] waveSystem.gameStartTime после startGame:', this.waveSystem.gameStartTime);
     }
 
     /**
@@ -346,6 +390,7 @@ export class EggDefense extends Phaser.Scene {
             this.waveSystem.enemies, 
             this.defenses // Передаем реальный массив защитных объектов
         );
+        
         
         // Обрабатываем жест
         const success = this.gestureActionSystem.handleGesture(gesture);
@@ -367,6 +412,7 @@ export class EggDefense extends Phaser.Scene {
         const eggDestroyed = !this.egg || this.egg.health <= 0;
         
         if (timeUp || eggDestroyed) {
+            console.log('🎮 [GameEnd] Game ending! timeUp:', timeUp, 'eggDestroyed:', eggDestroyed);
             this.gameOver(timeUp && !eggDestroyed);
         }
     }
@@ -376,6 +422,7 @@ export class EggDefense extends Phaser.Scene {
      */
     gameOver(won = false) {
         this.isGameEnded = true;
+        
         
         // Отправляем событие окончания игры
         this.eventSystem.emit(EVENT_TYPES.GAME_END, {
@@ -422,8 +469,8 @@ export class EggDefense extends Phaser.Scene {
         // Создаем новый HTML компонент результатов
         this.resultsTable = new HTMLResultsTable(
             this,
-            this.scale.width / 2,
-            this.scale.height / 2,
+            this.scale.width / 2, 
+            this.scale.height / 2, 
             {
                 title: resultText,
                 data: {
@@ -444,6 +491,12 @@ export class EggDefense extends Phaser.Scene {
         // Создаем новые обработчики событий
         this.resultsTableRestartHandler = () => {
             console.log('🎮 [EggDefense] Рестарт игры из результатов');
+            console.log('🎮 [EggDefense] Состояние перед рестартом:');
+            console.log('🎮 [EggDefense] - isGameStarted:', this.isGameStarted);
+            console.log('🎮 [EggDefense] - isGameEnded:', this.isGameEnded);
+            console.log('🎮 [EggDefense] - waveSystem существует:', !!this.waveSystem);
+            console.log('🎮 [EggDefense] - waveSystem.gameStartTime:', this.waveSystem?.gameStartTime);
+            
             // Удаляем компонент результатов перед рестартом
             if (this.resultsTable) {
                 this.resultsTable.destroy();
@@ -451,6 +504,7 @@ export class EggDefense extends Phaser.Scene {
             }
             // Небольшая задержка для корректного удаления компонента
             setTimeout(() => {
+                console.log('🎮 [EggDefense] Выполняем scene.restart()...');
                 this.scene.restart();
             }, 50);
         };
@@ -464,7 +518,7 @@ export class EggDefense extends Phaser.Scene {
             }
             // Небольшая задержка для корректного удаления компонента
             setTimeout(() => {
-                this.scene.start('MenuScene');
+            this.scene.start('MenuScene');
             }, 50);
         };
         
@@ -732,6 +786,8 @@ export class EggDefense extends Phaser.Scene {
         }
     }
     
+    
+    
     /**
      * Возобновление игры
      */
@@ -750,4 +806,5 @@ export class EggDefense extends Phaser.Scene {
         
         console.log('🎮 [Game] Игра возобновлена');
     }
+    
 }

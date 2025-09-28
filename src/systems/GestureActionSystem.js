@@ -62,6 +62,7 @@ export class GestureActionSystem {
             );
             
             if (item) {
+                console.log('🍯 [GestureAction] Найден предмет для сбора:', item.itemType);
                 return {
                     type: TARGET_TYPES.ITEM,
                     object: item,
@@ -257,6 +258,8 @@ export class GestureActionSystem {
         if (!item || item.isCollected) {
             return false;
         }
+        
+        console.log('🍯 [GestureAction] Собираем предмет:', item.itemType);
         
         // Активируем эффект предмета
         item.activate();
