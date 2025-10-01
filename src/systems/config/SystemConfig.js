@@ -36,7 +36,20 @@ export class SystemConfig {
             // 2. Затем проверяем источники в обратном порядке (последний источник имеет приоритет)
             for (let i = this.sources.length - 1; i >= 0; i--) {
                 const source = this.sources[i];
-                if (source && source.hasOwnProperty(key)) {
+                if (!source) continue;
+
+                // Поддержка источников типа SystemConfig
+                if (typeof source.get === 'function') {
+                    const nestedValue = source.get(key, undefined);
+                    if (nestedValue !== undefined) {
+                        value = nestedValue;
+                        break;
+                    }
+                    continue;
+                }
+
+                // Обычные plain-объекты
+                if (Object.prototype.hasOwnProperty.call(source, key)) {
                     value = source[key];
                     break;
                 }

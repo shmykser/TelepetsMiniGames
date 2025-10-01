@@ -1,4 +1,4 @@
-import { GeometryUtils } from '../../../utils/GeometryUtils.js';
+import { GeometryUtils } from '../../utils/GeometryUtils.js';
 
 /**
  * Стратегия движения под землей (крот)
@@ -12,7 +12,10 @@ export class BurrowMovementStrategy {
         const movementConfig = config.get('movement', {});
         
         this.speed = movementConfig.speed || config.get('speed', 80);
-        this.attackRange = movementConfig.attackRange || config.get('attackRange', 45);
+        
+        // Получаем базовый радиус ТОЛЬКО из attack.range
+        const attackConfig = config.get('attack', {});
+        this.attackRange = attackConfig.range || 0;
         
         // Параметры подземного движения
         this.burrowDepth = config.get('burrowDepth', 20); // Глубина под землей
@@ -105,18 +108,10 @@ export class BurrowMovementStrategy {
      * @returns {boolean}
      */
     isTargetReached(target) {
-        // Под землей не можем атаковать
-        if (this.isUnderground) {
-            return false;
-        }
-        
-        const distance = GeometryUtils.distance(
-            this.gameObject.x, 
-            this.gameObject.y, 
-            target.x, 
-            target.y
-        );
-        return distance <= this.attackRange;
+        if (!target || !this.gameObject) return false;
+        const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, target.x, target.y);
+        const effectiveRange = GeometryUtils.effectiveAttackRange(this.gameObject, target, this.attackRange);
+        return distance <= effectiveRange;
     }
 
     /**

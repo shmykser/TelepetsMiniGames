@@ -48,7 +48,6 @@ export const PHYSICS_CONSTANTS = {
     // Размеры объектов
     DEFAULT_TEXTURE_SIZE: 32,
     BASE_ENEMY_SIZE: 10,
-    EGG_SIZE: 20,
     
     // Сопротивление для яйца
     EGG_DRAG: 1000,
@@ -62,7 +61,7 @@ export const PHYSICS_CONSTANTS = {
     ENEMY_BOUNCE: 0.1,
     ENEMY_DRAG_X: 50,
     ENEMY_DRAG_Y: 50,
-    ENEMY_ATTACK_RANGE_DEFAULT: 40,
+    ENEMY_ATTACK_RANGE_DEFAULT: 10,
     
     // Базовые константы для всех объектов
     DEFAULT_BOUNCE: 0.2,

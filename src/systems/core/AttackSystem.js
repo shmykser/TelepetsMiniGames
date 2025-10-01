@@ -17,7 +17,8 @@ export class AttackSystem extends ISystem {
         // Получаем конфигурацию атаки
         const attackConfig = this.config.get('attack', {});
         this.attackCooldown = attackConfig.cooldown || this.getConfigValue('cooldown', 1000);
-        this.attackRange = attackConfig.range || this.getConfigValue('attackRange', 30);
+        // Радиус атаки берем ТОЛЬКО из attack.range
+        this.attackRange = attackConfig.range || 0;
         this.damage = attackConfig.damage || this.getConfigValue('damage', 10);
         this.attackType = this.getConfigValue('attackType', 'singleUse');
         
@@ -37,6 +38,11 @@ export class AttackSystem extends ISystem {
         if (strategyClass) {
             this.strategy = new strategyClass(this.gameObject, this.config);
         } else {
+            // Фоллбек: отсутствующая стратегия
+            if (this.strategyType && this.strategyType !== 'none') {
+                console.warn(`AttackSystem: неизвестная стратегия '${this.strategyType}', переключаюсь на 'simple'`);
+            }
+            this.strategy = new SimpleAttackStrategy(this.gameObject, this.config);
         }
     }
 
@@ -46,7 +52,7 @@ export class AttackSystem extends ISystem {
             case 'simple':
                 return SimpleAttackStrategy; // Простая стратегия атаки
             case 'area':
-                return null; // AreaAttackStrategy
+                return null; // TODO: реализовать AreaAttackStrategy
             case 'spawn':
                 return SpawnAttackStrategy; // Стратегия спавна
             case 'singleUse':
@@ -144,8 +150,9 @@ export class AttackSystem extends ISystem {
         }
 
         const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, this.currentTarget.x, this.currentTarget.y);
-        const inRange = distance <= this.attackRange;
-        return inRange;
+        // Используем такой же расчет, как и в движении: половины реальных спрайтов + baseRange (может быть отрицательным)
+        const effectiveRange = GeometryUtils.effectiveAttackRange(this.gameObject, this.currentTarget, this.attackRange);
+        return distance <= effectiveRange;
     }
 
     /**
@@ -306,8 +313,9 @@ export class AttackSystem extends ISystem {
      * @param {number} range - Радиус
      */
     setAttackRange(range) {
-        this.attackRange = Math.max(0, range);
-        this.config.setOverride('attackRange', this.attackRange);
+        // Разрешаем отрицательные значения для визуального наложения
+        this.attackRange = range;
+        this.config.setOverride('range', this.attackRange);
     }
 
     /**

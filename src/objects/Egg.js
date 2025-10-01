@@ -388,8 +388,11 @@ export class Egg extends GameObject {
         }, abilitySystem);
 
         // Настраиваем размер яйца
-        const eggSize = PHYSICS_CONSTANTS.EGG_SIZE;
-        egg.setScale(eggSize / PHYSICS_CONSTANTS.DEFAULT_TEXTURE_SIZE);
+        // Масштабируем по фактическому размеру спрайта яйца (используя исходный размер текстуры)
+        if (egg.texture && egg.texture.getSourceImage && PHYSICS_CONSTANTS.DEFAULT_TEXTURE_SIZE) {
+            // Если у спрайта уже задана ширина, сохраняем текущий scale, иначе приводим к 1:1 по текстуре
+            egg.setScale(1);
+        }
         
         // Устанавливаем глубину отрисовки
         egg.setDepth(DEPTH_CONSTANTS.EGG);
@@ -402,7 +405,7 @@ export class Egg extends GameObject {
             showDigits: true, 
             showWhenFull: true,
             showWhenEmpty: true,
-            offsetY: -(eggSize / 2 + PHYSICS_CONSTANTS.EGG_HEALTH_BAR_OFFSET),
+            offsetY: -(egg.displayWidth / 2 + PHYSICS_CONSTANTS.EGG_HEALTH_BAR_OFFSET),
             offsetX: 0,
             colors: {
                 background: COLORS.BLACK,

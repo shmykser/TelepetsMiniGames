@@ -2,7 +2,6 @@ import { MovementSystem } from './MovementSystem.js';
 import { AttackSystem } from './AttackSystem.js';
 import { CollisionSystem } from './CollisionSystem.js';
 import { PathfindingSystem } from './PathfindingSystem.js';
-import { RecoverySystem } from '../RecoverySystem.js';
 import { SystemConfig } from '../config/SystemConfig.js';
 import { StealthStrategy } from '../strategies/stealth/StealthStrategy.js';
 import { BurrowStealthStrategy } from '../strategies/stealth/BurrowStealthStrategy.js';
@@ -67,16 +66,12 @@ export class AICoordinator {
             this.config
         ]);
 
-        // Создаем recoveryConfig напрямую из основного конфига
-        const recoveryConfig = this.config;
-
         // Создаем системы только если gameObject существует
         if (this.gameObject) {
             this.systems.set('movement', new MovementSystem(this.gameObject, movementConfig));
             this.systems.set('attack', new AttackSystem(this.gameObject, attackConfig));
             this.systems.set('collision', new CollisionSystem(this.gameObject, collisionConfig));
             this.systems.set('pathfinding', new PathfindingSystem(this.gameObject, pathfindingConfig));
-            this.systems.set('recovery', new RecoverySystem(this.gameObject, recoveryConfig));
         }
     }
 

@@ -1,4 +1,5 @@
 import { GESTURE_ACTIONS, TARGET_TYPES, TARGET_SETTINGS } from '../types/gestureTypes';
+import { EVENT_TYPES } from '../types/eventTypes.js';
 import { GeometryUtils } from '../utils/GeometryUtils.js';
 import { Defense } from '../objects/Defense.js';
 import { Enemy } from '../objects/Enemy.js';
@@ -11,11 +12,53 @@ export class GestureActionSystem {
     constructor(scene, enemies, defenses, egg = null, itemDropSystem = null, abilitySystem = null) {
         this.scene = scene;
         this.enemies = enemies;
-        this.defenses = defenses;
+        this.defenses = defenses || (scene && scene.defenses) || [];
         this.egg = egg;
         this.itemDropSystem = itemDropSystem;
         this.abilitySystem = abilitySystem;
-        
+        // Периодически обновляем эффект сахара, чтобы новые враги тоже притягивались
+        if (this.scene && this.scene.time) {
+            this._sugarRefreshTimer = this.scene.time.addEvent({
+                delay: 300,
+                loop: true,
+                callback: () => { this.updateSugarEffects(); this.updatePitEffects(); },
+                callbackScope: this
+            });
+        }
+        // Также подписываемся на спавн врагов, чтобы мгновенно проверять их попадание в радиус
+        if (this.scene && this.scene.events) {
+            this.scene.events.on(EVENT_TYPES.ENEMY_SPAWN, (payload) => {
+                const spawned = payload?.enemy;
+                if (!spawned) return;
+                // Добавляем врага в локальный список, если его там нет
+                const arr = this.getEnemiesArray();
+                if (!arr.includes(spawned)) {
+                    // Если используем локальный массив, добавим туда
+                    if (arr === this.enemies) {
+                        this.enemies.push(spawned);
+                    }
+                }
+                // Обрабатываем для всех активных сахаров
+                const sugars = this.getSugarsArray();
+                sugars.forEach(s => this.updateSingleSugarEffect(s));
+            });
+        }
+    }
+
+    /**
+     * Возвращает актуальный массив врагов (из waveSystem, если доступен)
+     */
+    getEnemiesArray() {
+        const wsEnemies = this.scene?.waveSystem?.enemies;
+        return Array.isArray(wsEnemies) ? wsEnemies : this.enemies;
+    }
+
+    /**
+     * Возвращает актуальный массив сахаров из сцены
+     */
+    getSugarsArray() {
+        const list = this.scene?.defenses || this.defenses || [];
+        return list.filter(d => d && d.defenseType === 'sugar' && d.isAlive);
     }
     
     /**
@@ -100,7 +143,7 @@ export class GestureActionSystem {
         
         // Проверяем врагов (приоритет 2)
         let foundEnemy = null;
-        for (const enemy of this.enemies) {
+        for (const enemy of this.getEnemiesArray()) {
             if (!enemy.isAlive) {
                 continue;
             }
@@ -193,7 +236,7 @@ export class GestureActionSystem {
                     return true;
                     
                 case 'explosion':
-                    return true;
+                    return this.createSugar(gesture.x, gesture.y);
                     
                 case 'freeze_enemy':
                     return true;
@@ -260,9 +303,16 @@ export class GestureActionSystem {
         }
         
         console.log('🍯 [GestureAction] Собираем предмет:', item.itemType);
+        if (item.itemType === 'shovel') {
+            console.log(`🪓 [DEBUG] collectItem: лопат до сбора: ${this.abilitySystem.getShovelCount()}`);
+        }
         
         // Активируем эффект предмета
         item.activate();
+        
+        if (item.itemType === 'shovel') {
+            console.log(`🪓 [DEBUG] collectItem: лопат после сбора: ${this.abilitySystem.getShovelCount()}`);
+        }
         
         // Собираем предмет
         const result = item.collect();
@@ -282,6 +332,214 @@ export class GestureActionSystem {
         if (this.itemDropSystem !== Enemy.itemDropSystem) {
             this.itemDropSystem = Enemy.itemDropSystem;
         }
+        
+        // Обновляем эффекты сахара для новых врагов
+        this.updateSugarEffects();
+    }
+    
+    /**
+     * Обновляет эффекты сахара - отслеживает новых врагов в радиусе
+     */
+    updateSugarEffects() {
+        // Находим все сахары на поле
+        const sugars = this.getSugarsArray();
+        
+        sugars.forEach(sugar => {
+            this.updateSingleSugarEffect(sugar);
+        });
+    }
+
+    /**
+     * Обновляет эффекты ям - мгновенное взаимодействие с врагами
+     */
+    updatePitEffects() {
+        if (!this.scene || !this.scene.defenses) return;
+        const pits = this.scene.defenses.filter(d => d && d.isAlive && d.defenseType === 'pit');
+        pits.forEach(pit => this.updateSinglePitEffect(pit));
+    }
+
+    /**
+     * Инициализирует базовые параметры визуала ямы для корректного масштабирования
+     * @param {Object} pit
+     */
+    initPitVisual(pit) {
+        if (!pit) return;
+        if (pit._pitBaseInitialized) return;
+        const baseHealth = pit._defenseData?.health ?? pit.health ?? 1;
+        const baseRadius = pit._defenseData?.radius ?? 100;
+        pit._pitBaseHealth = Math.max(1, baseHealth);
+        pit._pitBaseRadius = Math.max(1, baseRadius);
+        pit._pitBaseScaleX = pit.scaleX || 1;
+        pit._pitBaseScaleY = pit.scaleY || 1;
+        pit._pitBaseInitialized = true;
+        this.updatePitVisual(pit);
+    }
+
+    /**
+     * Пересчитывает радиус и визуальный размер ямы в зависимости от текущего здоровья
+     * @param {Object} pit
+     */
+    updatePitVisual(pit) {
+        if (!pit) return;
+        if (!pit._pitBaseInitialized) this.initPitVisual(pit);
+        const health = Math.max(0, pit.health || 0);
+        const baseHealth = pit._pitBaseHealth || 1;
+        const baseRadius = pit._pitBaseRadius || 100;
+        const scaleFactor = Math.max(0.1, health / baseHealth);
+        const newRadius = baseRadius * scaleFactor;
+        if (pit._defenseData) pit._defenseData.radius = newRadius;
+        // Абсолютный скейл относительно базового
+        pit.setScale(pit._pitBaseScaleX * scaleFactor, pit._pitBaseScaleY * scaleFactor);
+        // Обновим отладочную окружность, если есть
+        if (pit._debugCircle) {
+            const g = pit._debugCircle;
+            g.clear();
+            g.lineStyle(2, 0xaa5500, 0.8);
+            g.strokeCircle(pit.x, pit.y, newRadius);
+        }
+    }
+
+    /**
+     * Обновляет один объект ямы: ищет врагов в радиусе, выполняет мгновенное "взаимное вычитание" здоровья
+     * @param {Object} pit
+     */
+    updateSinglePitEffect(pit) {
+        if (!pit || !pit.isAlive) return;
+        this.initPitVisual(pit);
+
+        const radius = Math.max(0, pit._defenseData?.radius || 0);
+        if (radius <= 0) return;
+
+        // Визуальный радиус (для диагностики)
+        if (!pit._debugCircle && this.scene?.add) {
+            pit._debugCircle = this.scene.add.graphics();
+            pit._debugCircle.setDepth(5);
+            pit._debugCircle.setAlpha(0.25);
+        }
+        if (pit._debugCircle) {
+            const g = pit._debugCircle;
+            g.clear();
+            g.lineStyle(2, 0xaa5500, 0.8);
+            g.strokeCircle(pit.x, pit.y, radius);
+        }
+
+           const allEnemiesInRadius = GeometryUtils.findObjectsInRadius(
+               this.getEnemiesArray(),
+               pit.x,
+               pit.y,
+               radius,
+               (enemy) => enemy && enemy.isAlive && enemy.aiCoordinator
+           );
+           
+           // Фильтруем только нелетающих врагов
+           const enemies = allEnemiesInRadius.filter(enemy => !enemy.canFly);
+           
+           if (allEnemiesInRadius.length > 0) {
+               console.log(`🕳️ [DEBUG] Врагов в радиусе ямы: ${allEnemiesInRadius.length} (летающих: ${allEnemiesInRadius.filter(e => e.canFly).length}, нелетающих: ${enemies.length})`);
+           }
+
+        if (enemies.length === 0) return;
+
+        // Для каждой цели выполним мгновенное взаимодействие
+        enemies.forEach(enemy => {
+            if (!pit.isAlive || !enemy.isAlive) return;
+            const enemyHealth = Math.max(0, enemy.health ?? 0);
+            const pitHealth = Math.max(0, pit.health ?? 0);
+            if (pitHealth <= 0) return;
+
+            if (pitHealth > enemyHealth) {
+                // Яма сильнее: враг уничтожается, яма теряет здоровье врага
+                if (enemy.takeDamage) {
+                    enemy.takeDamage(enemyHealth);
+                } else {
+                    enemy.isAlive = false;
+                }
+                pit.health = pitHealth - enemyHealth;
+                this.updatePitVisual(pit);
+            } else if (pitHealth < enemyHealth) {
+                // Враг сильнее: враг теряет здоровье ямы, яма уничтожается
+                if (enemy.takeDamage) {
+                    enemy.takeDamage(pitHealth);
+                }
+                pit.health = 0;
+                this.updatePitVisual(pit);
+                // Уничтожаем яму
+                if (pit.destroy) {
+                    if (pit._debugCircle) { pit._debugCircle.destroy(); pit._debugCircle = null; }
+                    pit.destroy();
+                }
+            } else {
+                // Равные: оба уничтожаются
+                if (enemy.takeDamage) {
+                    enemy.takeDamage(enemyHealth);
+                } else {
+                    enemy.isAlive = false;
+                }
+                pit.health = 0;
+                this.updatePitVisual(pit);
+                if (pit.destroy) {
+                    if (pit._debugCircle) { pit._debugCircle.destroy(); pit._debugCircle = null; }
+                    pit.destroy();
+                }
+            }
+        });
+    }
+    
+    /**
+     * Обновляет эффект одного сахара
+     * @param {Object} sugar - Объект сахара
+     */
+    updateSingleSugarEffect(sugar) {
+        const radius = this.getSugarRadiusPx(sugar);
+        
+        // Находим всех живых врагов в радиусе
+        const enemiesInRange = GeometryUtils.findObjectsInRadius(
+            this.getEnemiesArray(),
+            sugar.x,
+            sugar.y,
+            radius,
+            (enemy) => enemy && enemy.isAlive && enemy.aiCoordinator
+        );
+        
+        // Логируем только если есть враги в радиусе (чтобы не спамить)
+        if (enemiesInRange.length > 0) {
+            console.log(`🍩 [Sugar] UPDATE: найдено ${enemiesInRange.length} врагов в радиусе ${radius}px`);
+        }
+        
+        // Переключаем цели врагов, которые еще не атакуют этот сахар
+        enemiesInRange.forEach(enemy => {
+            // Проверяем, не атакует ли уже этот сахар
+            if (enemy._target !== sugar && enemy.aiCoordinator && enemy.aiCoordinator.setTarget) {
+                console.log(`🍩 [Sugar] UPDATE: Новый враг ${enemy.enemyType} в радиусе сахара, переключаем цель`);
+                console.log(`🍩 [Sugar] UPDATE: - Текущая цель: ${enemy.target?.constructor?.name || 'null'}`);
+                console.log(`🍩 [Sugar] UPDATE: - Цель сахар: ${enemy._target === sugar}`);
+                
+                // Сохраняем оригинальную цель если еще не сохранена
+                if (!enemy._originalTarget) {
+                    enemy._originalTarget = enemy.target;
+                    console.log(`🍩 [Sugar] UPDATE: - Сохранили оригинальную цель: ${enemy._originalTarget?.constructor?.name || 'null'}`);
+                }
+                
+                // Переключаем на сахар
+                enemy.aiCoordinator.setTarget(sugar);
+                enemy._target = sugar;
+                
+                console.log(`🍩 [Sugar] UPDATE: - Новая цель установлена: ${enemy._target?.constructor?.name || 'null'}`);
+            }
+        });
+
+        // Обновляем визуальный радиус (только для диагностики)
+        this.updateSugarDebugCircle(sugar, radius);
+    }
+
+    /**
+     * Возвращает радиус действия сахара в пикселях
+     */
+    getSugarRadiusPx(sugar) {
+        if (!sugar || !sugar._defenseData) return 0;
+        // Радиус интерпретируем как пиксели, без дополнительных коэффициентов
+        const r = sugar._defenseData.radius || 0;
+        return Math.max(0, r);
     }
     
     /**
@@ -299,8 +557,12 @@ export class GestureActionSystem {
         const pitCount = this.abilitySystem.getPitCount();
         const maxPits = this.abilitySystem.abilities.PIT?.maxValue || 4;
         
+        console.log(`🪓 [DEBUG] placePit вызван: shovelCount=${shovelCount}, pitCount=${pitCount}, maxPits=${maxPits}`);
+        console.log(`🪓 [DEBUG] abilitySystem.abilities.SHOVEL_COUNT=${this.abilitySystem.abilities.SHOVEL_COUNT}`);
+        
         // Проверяем, есть ли лопаты
         if (shovelCount <= 0) {
+            console.log(`🪓 [DEBUG] Нет лопат для копания!`);
             return false;
         }
         
@@ -309,15 +571,17 @@ export class GestureActionSystem {
         
         if (existingPit) {
             // Расширяем существующую яму (pitCount не изменяется)
+            console.log(`🪓 [DEBUG] Найдена существующая яма, расширяем...`);
             return this.expandPit(existingPit);
         } else {
             // Проверяем, можно ли выкопать новую яму
             if (pitCount >= maxPits) {
+                console.log(`🪓 [DEBUG] Достигнут максимум ям!`);
                 return false;
             }
             
             // Создаем новую яму (pitCount увеличивается)
-            console.log(`🆕 Выкапываем новую яму`);
+            console.log(`🪓 [DEBUG] Создаем новую яму...`);
             return this.digNewPit(x, y);
         }
     }
@@ -329,28 +593,38 @@ export class GestureActionSystem {
      * @returns {Object|null} Найденная яма или null
      */
     findPitAt(x, y) {
-        const searchRadius = 50; // Радиус поиска в пикселях
-        
+        // Ищем ближайшую яму, в радиус которой попадает точка (x, y)
         if (!this.defenses || this.defenses.length === 0) {
             return null;
         }
-        
-        // Используем GeometryUtils для поиска
-        const pit = GeometryUtils.findFirstObjectInRadius(
-            this.defenses, 
-            x, y, 
-            searchRadius,
-            (defense) => defense && defense.defenseType === 'pit' && defense.isAlive
-        );
-        
-        if (pit) {
-            const distance = GeometryUtils.distance(x, y, pit.x, pit.y);
-            console.log(`🎯 Найдена яма в радиусе ${distance.toFixed(1)}px от (${x}, ${y})`);
-        } else {
-            console.log(`🔍 Ям не найдено в радиусе ${searchRadius}px от (${x}, ${y})`);
+
+        let closestPit = null;
+        let closestDist = Infinity;
+
+        for (const defense of this.defenses) {
+            if (!defense || !defense.isAlive || defense.defenseType !== 'pit') {
+                continue;
+            }
+
+            const radius = Math.max(0, defense._defenseData?.radius || 0);
+            if (radius <= 0) {
+                continue;
+            }
+
+            const dist = GeometryUtils.distance(x, y, defense.x, defense.y);
+            if (dist <= radius && dist < closestDist) {
+                closestDist = dist;
+                closestPit = defense;
+            }
         }
-        
-        return pit;
+
+        if (closestPit) {
+            console.log(`🎯 Найдена яма в радиусе ${closestDist.toFixed(1)}px от (${x}, ${y}) (R=${closestPit._defenseData?.radius})`);
+        } else {
+            console.log(`🔍 Ям не найдено в зоне действия ям для точки (${x}, ${y})`);
+        }
+
+        return closestPit;
     }
     
     /**
@@ -360,28 +634,26 @@ export class GestureActionSystem {
      */
     expandPit(pit) {
         try {
-            const pitHealthIncrease = this.abilitySystem.getPitHealth();
+            console.log(`🪓 [DEBUG] expandPit вызван, лопат до: ${this.abilitySystem.getShovelCount()}`);
+            
+            const pitHealthIncrease = this.abilitySystem.getPitHealth?.() ?? (pit._defenseData?.increase ?? 50);
             
             // Увеличиваем здоровье ямы (Defense использует прямое изменение health)
             const oldHealth = pit.health;
-            const newHealth = Math.min(pit.health + pitHealthIncrease, pit.maxHealth);
+            const maxHealth = pit.maxHealth ?? (pit._defenseData?.maxHealth ?? 1000);
+            const newHealth = Math.min(pit.health + pitHealthIncrease, maxHealth);
             pit.health = newHealth;
             
-            // Увеличиваем размер визуально
-            const currentScale = pit.scaleX;
-            const newScale = Math.min(currentScale * 1.2, 3.0); // Максимум в 5 раза больше
-            pit.setScale(newScale);
+            // Пересчитываем визуал и радиус в зависимости от здоровья
+            this.updatePitVisual(pit);
             
             // Обновляем счетчики (только лопаты, pitCount не изменяется)
-            this.abilitySystem.abilities.SHOVEL_COUNT -= 1;
+            this.abilitySystem.decrementAbility('SHOVEL_COUNT', 1);
             
             console.log(`🕳️ Яма расширена в (${pit.x}, ${pit.y})`);
             console.log(`💚 Здоровье: ${oldHealth} → ${newHealth} (+${pitHealthIncrease})`);
-            console.log(`📏 Размер: ${currentScale.toFixed(1)} → ${newScale.toFixed(1)}`);
             console.log(`🪓 Лопат осталось: ${this.abilitySystem.getShovelCount()}`);
-            
-            // Взаимодействие с врагом - заглушка
-            console.log(`⚔️ Взаимодействие с врагами (заглушка)`);
+            console.log(`🪓 [DEBUG] abilitySystem.abilities.SHOVEL_COUNT после уменьшения: ${this.abilitySystem.abilities.SHOVEL_COUNT}`);
             
             return true;
         } catch (error) {
@@ -391,6 +663,176 @@ export class GestureActionSystem {
     }
     
     /**
+     * Создает сахар по координатам
+     * @param {number} x - Координата X
+     * @param {number} y - Координата Y
+     * @returns {boolean} Успешность создания
+     */
+    createSugar(x, y) {
+        try {
+            console.log(`🍩 [GestureAction] СОЗДАНИЕ САХАРА в (${x}, ${y})`);
+            
+            // Создаем объект сахара через Defense.createDefense
+            const sugar = Defense.createDefense(this.scene, 'sugar', x, y);
+            
+            console.log(`🍩 [GestureAction] - Объект сахара создан:`, {
+                x: sugar.x,
+                y: sugar.y,
+                defenseType: sugar.defenseType,
+                health: sugar.health,
+                radius: sugar._defenseData?.radius
+            });
+            
+            // Добавляем в массив защитных объектов сцены
+            this.scene.defenses.push(sugar);
+            console.log(`🍩 [GestureAction] - Добавлен в массив defenses, всего: ${this.scene.defenses.length}`);
+            
+            // Активируем систему переключения целей для врагов в радиусе
+            this.activateSugarEffect(sugar);
+            
+            return true;
+        } catch (error) {
+            console.error('Ошибка создания сахара:', error);
+            return false;
+        }
+    }
+    
+    /**
+     * Активирует эффект сахара - переключает цели врагов в радиусе
+     * @param {Object} sugar - Объект сахара
+     */
+    activateSugarEffect(sugar) {
+        const radius = this.getSugarRadiusPx(sugar);
+        
+        console.log(`🍩 [Sugar] АКТИВАЦИЯ САХАРА:`);
+        console.log(`🍩 [Sugar] - Позиция сахара: (${sugar.x}, ${sugar.y})`);
+        console.log(`🍩 [Sugar] - Радиус: ${radius}px`);
+        console.log(`🍩 [Sugar] - Всего врагов на поле: ${this.getEnemiesArray().length}`);
+        
+        // Находим всех врагов в радиусе действия сахара
+        console.log(`🍩 [Sugar] - Проверяем фильтр для каждого врага:`);
+        this.getEnemiesArray().forEach((enemy, index) => {
+            if (enemy) {
+                console.log(`🍩 [Sugar] - - Враг ${index}: alive=${enemy.isAlive}, aiCoordinator=${!!enemy.aiCoordinator}, setTarget=${!!(enemy.aiCoordinator && enemy.aiCoordinator.setTarget)}`);
+            }
+        });
+        
+        const enemiesInRange = GeometryUtils.findObjectsInRadius(
+            this.getEnemiesArray(),
+            sugar.x,
+            sugar.y,
+            radius,
+            (enemy) => {
+                const passes = enemy && enemy.isAlive && enemy.aiCoordinator;
+                console.log(`🍩 [Sugar] - Фильтр для врага ${enemy?.enemyType || 'null'}: ${passes}`);
+                return passes;
+            }
+        );
+        
+        console.log(`🍩 [Sugar] - Найдено врагов в радиусе: ${enemiesInRange.length}`);
+        
+        // Логируем позиции всех врагов для диагностики
+        this.getEnemiesArray().forEach((enemy, index) => {
+            if (enemy && enemy.isAlive) {
+                const distance = GeometryUtils.distance(sugar.x, sugar.y, enemy.x, enemy.y);
+                const inRange = distance <= radius;
+                console.log(`🍩 [Sugar] - Враг ${index}: ${enemy.enemyType} в (${enemy.x.toFixed(1)}, ${enemy.y.toFixed(1)}) - расстояние: ${distance.toFixed(1)}px - в радиусе: ${inRange}`);
+            }
+        });
+        
+        // Переключаем цели врагов на сахар
+        enemiesInRange.forEach((enemy, index) => {
+            console.log(`🍩 [Sugar] - Обрабатываем врага ${index}: ${enemy.enemyType}`);
+            console.log(`🍩 [Sugar] - - aiCoordinator существует: ${!!enemy.aiCoordinator}`);
+            console.log(`🍩 [Sugar] - - setTarget существует: ${!!(enemy.aiCoordinator && enemy.aiCoordinator.setTarget)}`);
+            console.log(`🍩 [Sugar] - - Текущая цель: ${enemy.target?.constructor?.name || 'null'}`);
+            
+            if (enemy.aiCoordinator && enemy.aiCoordinator.setTarget) {
+                console.log(`🍩 [Sugar] - - ВЫПОЛНЯЕМ ПЕРЕКЛЮЧЕНИЕ ЦЕЛИ на сахар`);
+                enemy.aiCoordinator.setTarget(sugar);
+                
+                // Сохраняем оригинальную цель (яйцо) для восстановления
+                if (!enemy._originalTarget) {
+                    enemy._originalTarget = enemy.target;
+                    console.log(`🍩 [Sugar] - - Сохранили оригинальную цель: ${enemy._originalTarget?.constructor?.name || 'null'}`);
+                }
+                enemy._target = sugar;
+                
+                console.log(`🍩 [Sugar] - - Новая цель установлена: ${enemy._target?.constructor?.name || 'null'}`);
+            } else {
+                console.log(`🍩 [Sugar] - - ОШИБКА: не можем переключить цель (нет aiCoordinator или setTarget)`);
+            }
+        });
+        
+        // Обновляем визуальный радиус (только для диагностики)
+        this.updateSugarDebugCircle(sugar, radius);
+
+        // Добавляем обработчик уничтожения сахара
+        sugar.on('destroy', () => {
+            this.onSugarDestroyed(sugar);
+            // Удаляем отладочную окружность
+            if (sugar._debugCircle) {
+                sugar._debugCircle.destroy();
+                sugar._debugCircle = null;
+            }
+        });
+    }
+
+    /**
+     * Рисует/обновляет отладочную окружность радиуса сахара
+     */
+    updateSugarDebugCircle(sugar, radiusPx) {
+        if (!this.scene || !this.scene.add) return;
+        if (!sugar._debugCircle) {
+            sugar._debugCircle = this.scene.add.graphics();
+            sugar._debugCircle.setDepth(5);
+            sugar._debugCircle.setAlpha(0.25);
+        }
+        const g = sugar._debugCircle;
+        g.clear();
+        g.lineStyle(2, 0x00aaff, 0.8);
+        g.strokeCircle(sugar.x, sugar.y, radiusPx);
+    }
+    
+    /**
+     * Обрабатывает уничтожение сахара - возвращает врагов к яйцу
+     * @param {Object} destroyedSugar - Уничтоженный сахар
+     */
+    onSugarDestroyed(destroyedSugar) {
+        console.log(`🍩 [Sugar] Сахар уничтожен, возвращаем врагов к яйцу`);
+        
+        // Находим всех врагов, которые атаковали этот сахар
+        // Используем актуальный массив врагов
+        const allEnemies = this.getEnemiesArray();
+        const affectedEnemies = allEnemies.filter(enemy => 
+            enemy && enemy.isAlive && (
+                enemy._target === destroyedSugar || 
+                (enemy.aiCoordinator && enemy.aiCoordinator.target === destroyedSugar)
+            )
+        );
+        
+        console.log(`🍩 [Sugar] Найдено ${affectedEnemies.length} врагов, которые атаковали сахар`);
+        console.log(`🍩 [Sugar] Всего врагов на поле: ${allEnemies.length}`);
+        
+        // Возвращаем врагов к их оригинальной цели (яйцу)
+        affectedEnemies.forEach((enemy, index) => {
+            if (enemy.aiCoordinator && enemy.aiCoordinator.setTarget) {
+                const originalTarget = enemy._originalTarget || this.egg;
+                console.log(`🍩 [Sugar] ${index+1}. Возвращаем врага ${enemy.enemyType} к цели:`, originalTarget?.constructor?.name || 'unknown');
+                
+                // Переключаем цель обратно
+                enemy.aiCoordinator.setTarget(originalTarget);
+                enemy._target = originalTarget;
+                enemy._originalTarget = null; // Очищаем сохраненную цель
+                
+                console.log(`🍩 [Sugar] ${index+1}. Цель восстановлена: ${enemy._target?.constructor?.name || 'null'}`);
+            } else {
+                console.log(`🍩 [Sugar] ${index+1}. ОШИБКА: не можем восстановить цель для врага ${enemy.enemyType} (нет aiCoordinator или setTarget)`);
+            }
+        });
+    }
+
+    /**
      * Выкапывает новую яму
      * @param {number} x - Координата X
      * @param {number} y - Координата Y
@@ -398,6 +840,8 @@ export class GestureActionSystem {
      */
     digNewPit(x, y) {
         try {
+            console.log(`🪓 [DEBUG] digNewPit вызван, лопат до: ${this.abilitySystem.getShovelCount()}`);
+            
             // Создаем объект ямы через Defense.createDefense
             const pit = Defense.createDefense(this.scene, 'pit', x, y);
             
@@ -406,11 +850,12 @@ export class GestureActionSystem {
             
             // Обновляем счетчики
             this.abilitySystem.abilities.PIT += 1;
-            this.abilitySystem.abilities.SHOVEL_COUNT -= 1;
+            this.abilitySystem.decrementAbility('SHOVEL_COUNT', 1);
             
             console.log(`🕳️ Яма выкопана в (${x}, ${y}), здоровье: ${pit.health}`);
             console.log(`🕳️ Ям на поле: ${this.abilitySystem.getPitCount()}`);
             console.log(`🪓 Лопат осталось: ${this.abilitySystem.getShovelCount()}`);
+            console.log(`🪓 [DEBUG] abilitySystem.abilities.SHOVEL_COUNT после уменьшения: ${this.abilitySystem.abilities.SHOVEL_COUNT}`);
             
             // Взаимодействие с врагом - заглушка
             console.log(`⚔️ Взаимодействие с врагами (заглушка)`);

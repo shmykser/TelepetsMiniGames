@@ -41,16 +41,16 @@ export const enemyTypes = {
         spriteKey: 'ant',
         defaultSize: '32x32',
         detectionRange: 150,
-        dropList: [], //ничего не дропается
+        dropList: [ITEM_TYPES.SHOVEL], //ничего не дропается
         movement: {
             strategy: 'linear',
             speed: 60,
-            rotationSpeed: 0.15
+            rotationSpeed: 0.15,
         },
         attack: {
             strategy: 'simple',
             damage: 3,
-            range: 30,
+            range: 0,
             cooldown: 5000
         },
         collision: {
@@ -61,6 +61,40 @@ export const enemyTypes = {
             algorithm: 'astar',
             allowDiagonal: true,
             ignoreGroundObstacles: false
+        }
+    },
+    fly: {
+        name: 'Муха',
+        health: 5,
+        canFly: true,
+        size: 1.5,
+        texture: '🪰',
+        spriteKey: 'fly',
+        defaultSize: '64x64',
+        detectionRange: 150,
+        dropList: [ITEM_TYPES.SHOVEL], //ничего не дропается
+        movement: {         
+            strategy: 'jittery',
+            speed: 80,                     // Базовая скорость движения
+            rotationSpeed: 0.15,          // Скорость поворота спрайта
+            jitterIntensity: 100,          // Максимальное отклонение в пикселях
+            jitterFrequency: 0.2,         // Частота смены направления (0-1)
+            jitterSmoothness: 0.08        // Плавность перехода (0=резкий, 1=плавный)
+        },
+        attack: {
+            strategy: 'simple',
+            damage: 1,
+            range: -20,
+            cooldown: 2000
+        },
+        collision: {
+            enabled: true,
+            layers: ['ENEMIES', 'OBSTACLES']
+        },
+        pathfinding: {
+            algorithm: 'astar',
+            allowDiagonal: true,
+            ignoreGroundObstacles: true
         }
     },
     beetle: {
@@ -112,7 +146,6 @@ export const enemyTypes = {
             acceleration: 800,      // Скорость ускорения
             deceleration: 800,      // Скорость торможения (быстрее чем ускорение)
             rotationSpeed: 0.05,    // Скорость поворота спрайта
-            attackRange: 60,        // Радиус атаки при прохождении
             mass: 3.5,              // Масса для инерции
             drag: 0.95,             // Сопротивление воздуха
             bounce: 0.3             // Отскок от границ
@@ -120,7 +153,7 @@ export const enemyTypes = {
         attack: {
             strategy: 'none',       // Отключаем обычную атаку, используем только inertia атаку
             damage: 50,             // Большой урон при прохождении через цель
-            range: 50,
+            range: 60,              // Радиус атаки при прохождении
             cooldown: 5000          // Короткая задержка между атаками
         },
         collision: {
@@ -180,13 +213,12 @@ export const enemyTypes = {
             rotationSpeed: 0.08,
             amplitude: 35,
             oscillationSpeed: 0.02,
-            targetAttraction: 0.9,
-            attackRange: 35
+            targetAttraction: 0.9
         },
         attack: {
             strategy: 'simple',
             damage: 4,
-            range: 35,
+            range: 0,
             cooldown: 4000
         },
         collision: {
@@ -213,7 +245,6 @@ export const enemyTypes = {
         movement: {
             strategy: 'butterfly',
             speed: 25,                    // Уменьшил скорость с 30 до 25 для более медленного движения
-            attackRange: 20,
             // Параметры порхания
             flutterAmplitude: 20,        // Уменьшил амплитуду с 40 до 20 для более плавного порхания
             flutterFrequency: 0.1,      // Уменьшил частоту с 0.3 до 0.1 для более медленного порхания
@@ -322,7 +353,7 @@ export const enemyTypes = {
         name: 'Слизень',
         health: 25,
         canFly: false,
-        size: 2,
+        size: 3,
         texture: '🐌',
         spriteKey: 'snail',
         defaultSize: '64x64',
@@ -360,7 +391,7 @@ export const enemyTypes = {
         name: 'Улитка',
         health: 100,
         canFly: false,
-        size: 2,
+        size: 3,
         texture: '🐌',
         spriteKey: 'snail',
         defaultSize: '64x64',
@@ -479,7 +510,7 @@ export const enemyTypes = {
         name: 'Комар',
         health: 8,
         canFly: true,
-        size: 2,
+        size: 1.4,
         texture: '🦟',
         spriteKey: 'mosquito',
         defaultSize: '64x64',
@@ -491,8 +522,7 @@ export const enemyTypes = {
             rotationSpeed: 0.1,
             amplitude: 45,
             oscillationSpeed: 0.2,
-            targetAttraction: 0.9,
-            attackRange: 20
+            targetAttraction: 0.9
         },
         attack: {
             strategy: 'simple',
@@ -514,7 +544,7 @@ export const enemyTypes = {
         name: 'Блоха',
         health: 12,
         canFly: false,
-        size: 1,
+        size: 1.5,
         texture: '🦗',
         spriteKey: 'flea',
         defaultSize: '32x32',
@@ -548,40 +578,6 @@ export const enemyTypes = {
             ignoreGroundObstacles: false
         }
     },
-    fly: {
-        name: 'Муха',
-        health: 5,
-        canFly: true,
-        size: 1,
-        texture: '🪰',
-        spriteKey: 'fly',
-        defaultSize: '64x64',
-        detectionRange: 150,
-        dropList: [], // Только пластырь
-        movement: {         
-            strategy: 'jittery',
-            speed: 80,                     // Базовая скорость движения
-            rotationSpeed: 0.15,          // Скорость поворота спрайта
-            jitterIntensity: 100,          // Максимальное отклонение в пикселях
-            jitterFrequency: 0.2,         // Частота смены направления (0-1)
-            jitterSmoothness: 0.08        // Плавность перехода (0=резкий, 1=плавный)
-        },
-        attack: {
-            strategy: 'simple',
-            damage: 1,
-            range: 30,
-            cooldown: 2000
-        },
-        collision: {
-            enabled: true,
-            layers: ['ENEMIES', 'OBSTACLES']
-        },
-        pathfinding: {
-            algorithm: 'astar',
-            allowDiagonal: true,
-            ignoreGroundObstacles: true
-        }
-    },
     projectile: {
         name: 'Снаряд',
         health: 1,
@@ -589,7 +585,7 @@ export const enemyTypes = {
         size: 1,
         texture: '💣',
         spriteKey: 'bomb',
-        defaultSize: '64x64',
+        defaultSize: '32x32',
         detectionRange: 300,
         dropList: [], // Не дропает предметы
         movement: {
@@ -623,7 +619,7 @@ export const enemyTypes = {
         spriteKey: 'hive',
         defaultSize: '128x128',
         detectionRange: 300,
-        dropList: [ITEM_TYPES.HONEY], // Сердце, алоэ и мёд - ценные ресурсы улья
+        dropList: [], // ITEM_TYPES.HONEY не используем, плохая реализация замедления
         movement: {
             strategy: 'static', // Неподвижный улей
             speed: 0,

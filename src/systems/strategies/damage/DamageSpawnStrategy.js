@@ -44,21 +44,20 @@ export class DamageSpawnStrategy {
     /**
      * Вычисляет количество ос для спавна на основе урона
      * @param {number} damage - Полученный урон
-     * @returns {number} Количество ос (0 означает не спавнить)
+     * @returns {number} Количество ос (включая minSpawnCount и maxSpawnCount)
      */
     calculateSpawnCount(damage) {
-        // Простая случайная логика: от 0 до maxSpawnCount
-        // 0 = не спавнить ни одной пчелы
-        const spawnCount = Math.floor(Math.random() * (this.maxSpawnCount + 1));
+        // Случайное число от minSpawnCount до maxSpawnCount включительно
+        const spawnCount = Math.floor(Math.random() * (this.maxSpawnCount - this.minSpawnCount + 1)) + this.minSpawnCount;
         
-        console.log(`🏠 [DamageSpawnStrategy] Случайное количество ос: ${spawnCount} (диапазон: 0-${this.maxSpawnCount})`);
+        console.log(`🏠 [DamageSpawnStrategy] Случайное количество ос: ${spawnCount} (диапазон: ${this.minSpawnCount}-${this.maxSpawnCount})`);
         
         return spawnCount;
     }
 
     /**
      * Спавн ос с эффектом выталкивания
-     * @param {number} spawnCount - Количество ос для спавна (0 = не спавнить)
+     * @param {number} spawnCount - Количество ос для спавна (может быть 0 если minSpawnCount = 0)
      */
     spawnWasps(spawnCount) {
         if (spawnCount === 0) {

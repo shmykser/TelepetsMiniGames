@@ -14,7 +14,10 @@ export class ButterflyMovementStrategy {
         
         // Основные параметры движения
         this.speed = movementConfig.speed || config.get('speed', 80);
-        this.attackRange = movementConfig.attackRange || config.get('attackRange', 25);
+        
+        // Получаем базовый радиус ТОЛЬКО из attack.range
+        const attackConfig = config.get('attack', {});
+        this.attackRange = attackConfig.range || 0;
         
         // Параметры порхания
         this.flutterAmplitude = movementConfig.flutterAmplitude || config.get('flutterAmplitude', 40); // Амплитуда порхания
@@ -231,13 +234,10 @@ export class ButterflyMovementStrategy {
      * @returns {boolean}
      */
     isTargetReached(target) {
-        if (!target) return false;
-        
-        const dx = target.x - this.gameObject.x;
-        const dy = target.y - this.gameObject.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        return distance <= this.attackRange;
+        if (!target || !this.gameObject) return false;
+        const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, target.x, target.y);
+        const effectiveRange = GeometryUtils.effectiveAttackRange(this.gameObject, target, this.attackRange);
+        return distance <= effectiveRange;
     }
 
     /**

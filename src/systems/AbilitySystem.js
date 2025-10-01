@@ -178,8 +178,12 @@ export class AbilitySystem {
             return false;
         }
         
+        const oldValue = this.abilities[abilityType];
+        console.log(`🪓 [DEBUG] upgradeAbility(${abilityType}): старое значение=${oldValue}, maxValue=${config.maxValue}, increase=${config.increase}`);
+        
         // Проверяем, не достигнут ли уже максимум
         if (this.abilities[abilityType] >= config.maxValue) {
+            console.log(`🪓 [DEBUG] upgradeAbility(${abilityType}): достигнут максимум!`);
             return false; // Уже на максимуме
         }
         
@@ -191,6 +195,8 @@ export class AbilitySystem {
         
         this.abilities[abilityType] = newValue;
         
+        console.log(`🪓 [DEBUG] upgradeAbility(${abilityType}): новое значение=${newValue}`);
+        
         // Эмитим событие изменения
         this.scene.events.emit('ability:upgraded', {
             abilityType,
@@ -199,6 +205,32 @@ export class AbilitySystem {
             isMaxLevel: newValue >= config.maxValue
         });
         
+        return true;
+    }
+
+    /**
+     * Уменьшает значение способности на указанную величину, с событием для UI
+     * @param {string} abilityType
+     * @param {number} value
+     * @returns {boolean}
+     */
+    decrementAbility(abilityType, value = 1) {
+        if (!this.abilities.hasOwnProperty(abilityType)) {
+            return false;
+        }
+        const oldValue = this.abilities[abilityType];
+        const newValue = Math.max(0, oldValue - value);
+        if (newValue === oldValue) {
+            return false;
+        }
+        this.abilities[abilityType] = newValue;
+        // уведомляем UI тем же событием
+        this.scene.events.emit('ability:upgraded', {
+            abilityType,
+            oldValue,
+            newValue,
+            isMaxLevel: false
+        });
         return true;
     }
     

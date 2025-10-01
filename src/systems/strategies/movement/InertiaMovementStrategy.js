@@ -1,3 +1,4 @@
+import { GeometryUtils } from '../../../utils/GeometryUtils.js';
 /**
  * Стратегия движения по инерции (рино)
  * Использует физику Phaser для реалистичного движения с инерцией
@@ -20,7 +21,9 @@ export class InertiaMovementStrategy {
         this.rotationSpeed = movementConfig.rotationSpeed || config.get('rotationSpeed', 0.15);
         
         // Физические параметры
-        this.attackRange = movementConfig.attackRange || config.get('attackRange', 60);
+        // Получаем базовый радиус ТОЛЬКО из attack.range
+        const attackConfig = config.get('attack', {});
+        this.attackRange = attackConfig.range || 0;
         this.mass = movementConfig.mass || config.get('mass', 1.5);
         this.drag = movementConfig.drag || config.get('drag', 0.95);
         this.bounce = movementConfig.bounce || config.get('bounce', 0.3);
@@ -34,7 +37,6 @@ export class InertiaMovementStrategy {
         
         // Атака
         this.lastAttackTime = 0;
-        const attackConfig = config.get('attack', {});
         this.attackCooldown = attackConfig.cooldown || config.get('cooldown', 1000);
         
         
@@ -340,5 +342,12 @@ export class InertiaMovementStrategy {
             this.gameObject.body.setVelocity(0, 0);
             this.gameObject.body.setAcceleration(0, 0);
         }
+    }
+
+    isTargetReached(target) {
+        if (!target || !this.gameObject) return false;
+        const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, target.x, target.y);
+        const effectiveRange = GeometryUtils.effectiveAttackRange(this.gameObject, target, this.attackRange);
+        return distance <= effectiveRange;
     }
 }

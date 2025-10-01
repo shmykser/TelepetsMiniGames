@@ -16,6 +16,7 @@ export class GameObject extends Phaser.GameObjects.Sprite {
         PropertyUtils.defineProperty(this, "_isAlive", true);
         PropertyUtils.defineProperty(this, "_body", undefined);
         PropertyUtils.defineProperty(this, "_healthBar", undefined);
+        PropertyUtils.defineProperty(this, "_size", undefined);
         
         // Свойства кулдауна
         PropertyUtils.defineProperty(this, "_cooldown", config.cooldown || 0);
@@ -24,6 +25,7 @@ export class GameObject extends Phaser.GameObjects.Sprite {
         // Инициализация базовых свойств
         this._health = config.health;
         this._maxHealth = config.maxHealth !== undefined ? config.maxHealth : config.health;
+        this._size = config.size || 1; // Сохраняем размер объекта
         
         // Добавляем в сцену и физику
         scene.add.existing(this);
@@ -43,6 +45,7 @@ export class GameObject extends Phaser.GameObjects.Sprite {
     get isAlive() { return this._isAlive; }
     get physicsBody() { return this._body; }
     get cooldown() { return this._cooldown; }
+    get size() { return this._size; }
     
     // Сеттеры - только базовые для всех объектов
     set health(value) {
@@ -54,6 +57,10 @@ export class GameObject extends Phaser.GameObjects.Sprite {
     }
     
     // Базовые методы
+    setVelocity(x, y) {
+        this._body.setVelocity(x, y);
+    }
+    
     stopMovement() {
         this._body.setVelocity(0, 0);
     }
@@ -282,5 +289,23 @@ export class GameObject extends Phaser.GameObjects.Sprite {
      */
     setCooldown(newCooldown) {
         this._cooldown = Math.max(0, newCooldown);
+    }
+    
+    /**
+     * Получает размер объекта в пикселях
+     * @returns {number} Размер объекта в пикселях (size 1 = 32px, 2 = 64px, 3 = 128px)
+     */
+    getSizeInPixels() {
+        const size = 32 * Math.pow(2, this._size - 1); // size 1 = 32px, 2 = 64px, 3 = 128px
+        
+        // Логируем размеры для отладки
+        if (this.defenseType === 'sugar' || this.texture === '🥚') {
+            console.log(`📏 [GameObject] Размер объекта:`);
+            console.log(`📏 [GameObject] - Тип: ${this.defenseType || 'egg'}`);
+            console.log(`📏 [GameObject] - this._size: ${this._size}`);
+            console.log(`📏 [GameObject] - Размер в пикселях: ${size}px`);
+        }
+        
+        return size;
     }
 }

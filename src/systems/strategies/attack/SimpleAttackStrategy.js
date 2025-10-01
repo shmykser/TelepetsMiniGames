@@ -12,7 +12,8 @@ export class SimpleAttackStrategy {
         const attackConfig = config.get('attack', {});
         
         this.damage = attackConfig.damage || config.get('damage', 10);
-        this.range = attackConfig.range || config.get('range', 30);
+        // Радиус атаки берем ТОЛЬКО из attack.range
+        this.range = attackConfig.range || 0;
         this.cooldown = attackConfig.cooldown || config.get('cooldown', 1000);
         this.lastAttackTime = 0;
         this.attackDuration = config.get('attackDuration', 200);
@@ -72,14 +73,12 @@ export class SimpleAttackStrategy {
      * @returns {boolean}
      */
     isInRange(target) {
-        if (!target || !this.gameObject) {
-            return false;
-        }
-
+        if (!target || !this.gameObject) return false;
         const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, target.x, target.y);
-        return distance <= this.range;
+        const effectiveRange = GeometryUtils.effectiveAttackRange(this.gameObject, target, this.range);
+        return distance <= effectiveRange;
     }
-
+    
     /**
      * Применение урона к цели
      * @param {Object} target - Цель

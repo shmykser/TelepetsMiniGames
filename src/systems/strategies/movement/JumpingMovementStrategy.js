@@ -1,3 +1,4 @@
+import { GeometryUtils } from '../../../utils/GeometryUtils.js';
 /**
  * Стратегия прыгающего движения (блоха)
  * Быстрые прыжки с остановками между ними
@@ -13,7 +14,10 @@ export class JumpingMovementStrategy {
         // Параметры движения
         this.speed = movementConfig.speed || config.get('speed', 150);
         this.rotationSpeed = movementConfig.rotationSpeed || config.get('rotationSpeed', 0.2);
-        this.attackRange = movementConfig.attackRange || config.get('attackRange', 30);
+        
+        // Получаем базовый радиус ТОЛЬКО из attack.range
+        const attackConfig = config.get('attack', {});
+        this.attackRange = attackConfig.range || 0;
         
         // Параметры прыжков
         this.jumpDuration = movementConfig.jumpDuration || config.get('jumpDuration', 200);
@@ -305,5 +309,12 @@ export class JumpingMovementStrategy {
         this.jumpStartPosition = { x: 0, y: 0 };
         this.jumpTargetPosition = { x: 0, y: 0 };
         this.jumpDirection = { x: 0, y: 0 };
+    }
+
+    isTargetReached(target) {
+        if (!target || !this.gameObject) return false;
+        const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, target.x, target.y);
+        const effectiveRange = GeometryUtils.effectiveAttackRange(this.gameObject, target, this.attackRange);
+        return distance <= effectiveRange;
     }
 }

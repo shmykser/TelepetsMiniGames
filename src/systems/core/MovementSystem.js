@@ -1,5 +1,6 @@
 import { ISystem } from '../interfaces/ISystem.js';
 import { GeometryUtils } from '../../utils/GeometryUtils.js';
+import { LinearMovementStrategy } from '../strategies/movement/LinearMovementStrategy.js';
 import { OrbitalMovementStrategy } from '../strategies/movement/OrbitalMovementStrategy.js';
 import { RandomPointMovementStrategy } from '../strategies/movement/RandomPointMovementStrategy.js';
 import { SpawnerMovementStrategy } from '../strategies/movement/SpawnerMovementStrategy.js';
@@ -45,6 +46,9 @@ export class MovementSystem extends ISystem {
         
         // Создаем стратегию движения
         switch (this.strategyType) {
+            case 'linear':
+                this.strategy = new LinearMovementStrategy(this.gameObject, this.config);
+                break;
             case 'orbital':
                 this.strategy = new OrbitalMovementStrategy(this.gameObject, this.config);
                 break;
@@ -189,11 +193,13 @@ export class MovementSystem extends ISystem {
 
         // Проверяем расстояние до цели
         const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, this.currentTarget.x, this.currentTarget.y);
-        const movementConfig = this.config.get('movement', {});
-        const attackRange = movementConfig.attackRange || this.getConfigValue('attackRange', 30);
+        // Базовый радиус должен браться только из attack.range
+        const attackCfg = this.config.get('attack', {});
+        const baseRange = attackCfg.range || 0;
+        const effectiveRange = GeometryUtils.effectiveAttackRange(this.gameObject, this.currentTarget, baseRange);
 
         // Если цель в радиусе атаки, останавливаемся
-        if (distance <= attackRange) {
+        if (distance <= effectiveRange) {
             this.stopMovement();
             this.onTargetReached(this.currentTarget);
             return;
@@ -206,7 +212,7 @@ export class MovementSystem extends ISystem {
         this.flightTime += delta;
         
         const direction = this.getFlyingDirection();
-        const speed = movementConfig.speed || this.getConfigValue('speed', 120);
+        const speed = this.getConfigValue('speed', 120);
         
         const velocityX = direction.x * speed;
         const velocityY = direction.y * speed;
@@ -358,11 +364,24 @@ export class MovementSystem extends ISystem {
         }
 
         const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, target.x, target.y);
-        const attackRange = this.getConfigValue('attackRange', 30);
+        // Базовый радиус должен браться только из attack.range
+        const attackCfg = this.config.get('attack', {});
+        const baseAttackRange = attackCfg.range || 0;
+        
+        // Вычисляем эффективный радиус атаки с учетом размеров обоих объектов (централизовано)
+        const effectiveAttackRange = GeometryUtils.effectiveAttackRange(this.gameObject, target, baseAttackRange);
 
+        // Логируем для отладки (только для сахара)
+        if (target.defenseType === 'sugar') {
+            console.log(`🚶 [Movement] Враг ${this.gameObject.enemyType} движется к сахару:`);
+            console.log(`🚶 [Movement] - Расстояние: ${distance.toFixed(1)}px`);
+            console.log(`🚶 [Movement] - Базовый радиус: ${baseAttackRange}px`);
+            console.log(`🚶 [Movement] - Эффективный радиус: ${effectiveAttackRange}px`);
+            console.log(`🚶 [Movement] - Останавливается: ${distance <= effectiveAttackRange}`);
+        }
 
         // Если цель в радиусе атаки, останавливаемся
-        if (distance <= attackRange) {
+        if (distance <= effectiveAttackRange) {
             this.stopMovement();
             this.onTargetReached(target);
             return;
@@ -544,6 +563,14 @@ export class MovementSystem extends ISystem {
         if (!this.currentTarget) return Infinity;
         return GeometryUtils.distance(this.gameObject.x, this.gameObject.y, this.currentTarget.x, this.currentTarget.y);
     }
+
+    /**
+     * Вычисляет эффективный радиус атаки с учетом размеров объектов
+     * @param {Object} target - Цель атаки
+     * @param {number} baseRange - Базовый радиус атаки
+     * @returns {number} Эффективный радиус атаки
+     */
+    // calculateEffectiveAttackRange и getObjectSize удалены — используем GeometryUtils.effectiveAttackRange/getObjectSize
 
     destroy() {
         this.stopMovement();

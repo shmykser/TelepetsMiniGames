@@ -32,6 +32,18 @@ export class GeometryUtils {
     }
 
     /**
+     * Вычисляет угол к цели (алиас для angle)
+     * @param {number} x1 - X координата первой точки
+     * @param {number} y1 - Y координата первой точки
+     * @param {number} x2 - X координата второй точки
+     * @param {number} y2 - Y координата второй точки
+     * @returns {number} Угол в радианах
+     */
+    static angleToTarget(x1, y1, x2, y2) {
+        return Math.atan2(y2 - y1, x2 - x1);
+    }
+
+    /**
      * Нормализует вектор
      * @param {number} x - X компонент вектора
      * @param {number} y - Y компонент вектора
@@ -391,5 +403,47 @@ export class GeometryUtils {
         const totalRadius = baseRadius + settings.missTolerance;
         
         return totalRadius;
+    }
+
+    /**
+     * Универсальный метод получения размера объекта в пикселях
+     * @param {Object} obj - игровой объект
+     * @returns {number} размер в пикселях
+     */
+    static getObjectSize(obj) {
+        if (!obj) return 32;
+        // Используем реальный размер спрайта, если он есть
+        if (typeof obj.displayWidth === 'number' && obj.displayWidth > 0) {
+            return obj.displayWidth;
+        }
+        // Phaser Arcade Body может иметь ширину
+        if (obj.body && typeof obj.body.width === 'number' && obj.body.width > 0) {
+            return obj.body.width;
+        }
+        if (typeof obj.getSizeInPixels === 'function') {
+            return obj.getSizeInPixels();
+        }
+        if (typeof obj.size === 'number') {
+            return 32 * Math.pow(2, obj.size - 1);
+        }
+        return 32;
+    }
+
+    /**
+     * Универсальный расчет effectiveAttackRange с учетом размеров объектов
+     * @param {Object} attacker
+     * @param {Object} target
+     * @param {number} baseRange
+     * @returns {number}
+     */
+    static effectiveAttackRange(attacker, target, baseRange) {
+        // Простой расчет: половина реального спрайта атакующего + половина спрайта цели + baseRange
+        const attackerHalf = (attacker && typeof attacker.displayWidth === 'number' && attacker.displayWidth > 0)
+            ? attacker.displayWidth / 2
+            : GeometryUtils.getObjectSize(attacker) / 2;
+        const targetHalf = (target && typeof target.displayWidth === 'number' && target.displayWidth > 0)
+            ? target.displayWidth / 2
+            : GeometryUtils.getObjectSize(target) / 2;
+        return (baseRange || 0) + attackerHalf + targetHalf;
     }
 }

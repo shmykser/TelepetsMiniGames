@@ -1,3 +1,4 @@
+import { GeometryUtils } from '../../../utils/GeometryUtils.js';
 /**
  * Стратегия дерганого движения (комар)
  * Линейное движение к цели с случайными отклонениями
@@ -14,9 +15,9 @@ export class JitteryMovementStrategy {
         this.speed = movementConfig.speed || config.get('speed', 80);
         this.rotationSpeed = movementConfig.rotationSpeed || config.get('rotationSpeed', 0.15);
         
-        // Получаем attackRange из конфигурации атаки, а не движения
+        // Получаем базовый радиус ТОЛЬКО из attack.range
         const attackConfig = config.get('attack', {});
-        this.attackRange = attackConfig.range || config.get('attackRange', 30);
+        this.attackRange = attackConfig.range || 0;
         
         // Параметры дерганого движения
         this.jitterIntensity = movementConfig.jitterIntensity || config.get('jitterIntensity', 20); // Максимальное отклонение в пикселях
@@ -49,8 +50,11 @@ export class JitteryMovementStrategy {
             Math.pow(this.currentTarget.y - this.gameObject.y, 2)
         );
         
+        // Вычисляем эффективный радиус атаки с учетом размеров обоих объектов
+        const effectiveAttackRange = GeometryUtils.effectiveAttackRange(this.gameObject, this.currentTarget, this.attackRange);
+        
         // Если цель в радиусе атаки, останавливаемся
-        if (distance <= this.attackRange) {
+        if (distance <= effectiveAttackRange) {
             // Эмитируем событие достижения цели только один раз
             if (!this.targetReachedEmitted && this.gameObject.scene && this.gameObject.scene.events) {
                 this.gameObject.scene.events.emit('movement:targetReached', this.currentTarget);
@@ -210,6 +214,18 @@ export class JitteryMovementStrategy {
             targetJitter: this.targetJitter,
             hasTarget: !!this.currentTarget
         };
+    }
+
+    /**
+     * Проверяет, достигнута ли цель
+     * @param {Object} target - Цель для проверки
+     * @returns {boolean} True, если цель достигнута
+     */
+    isTargetReached(target) {
+        if (!target || !this.gameObject) return false;
+        const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, target.x, target.y);
+        const effectiveRange = GeometryUtils.effectiveAttackRange(this.gameObject, target, this.attackRange);
+        return distance <= effectiveRange;
     }
 
     /**

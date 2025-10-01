@@ -12,7 +12,10 @@ export class SpawnerMovementStrategy {
         const movementConfig = config.get('movement', {});
         
         this.speed = movementConfig.speed || 0; // Не двигается
-        this.attackRange = movementConfig.attackRange || config.get('attackRange', 60);
+        
+        // Получаем базовый радиус ТОЛЬКО из attack.range
+        const attackConfig = config.get('attack', {});
+        this.attackRange = attackConfig.range || 0;
         
         // Параметры спавна
         this.spawnInterval = config.get('spawnInterval', 5000); // Интервал спавна (мс)
@@ -142,13 +145,10 @@ export class SpawnerMovementStrategy {
      * @returns {boolean}
      */
     isTargetReached(target) {
-        const distance = GeometryUtils.distance(
-            this.gameObject.x, 
-            this.gameObject.y, 
-            target.x, 
-            target.y
-        );
-        return distance <= this.attackRange;
+        if (!target || !this.gameObject) return false;
+        const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, target.x, target.y);
+        const effectiveRange = GeometryUtils.effectiveAttackRange(this.gameObject, target, this.attackRange);
+        return distance <= effectiveRange;
     }
 
     /**

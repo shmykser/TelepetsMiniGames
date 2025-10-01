@@ -139,7 +139,9 @@ export class SpawnAttackStrategy {
     isInRange(target) {
         if (!target) return false;
         
-        const attackRange = this.config.get('attackRange', 60);
+        // Радиус атаки берем ТОЛЬКО из attack.range
+        const attackCfg = this.config.get('attack', {});
+        const attackRange = attackCfg.range || 0;
         const distance = GeometryUtils.distance(
             this.gameObject.x, this.gameObject.y,
             target.x, target.y

@@ -70,8 +70,9 @@ export class EnemyAdapter extends IGameObject {
     getAttackConfig(enemyData) {
         return {
             damage: enemyData.damage || 10,
-            attackRange: enemyData.attackRange || 30,
-            cooldown: enemyData.cooldown || 1000,
+            // Радиус атаки берем из attack.range
+            range: enemyData.attack?.range || 0,
+            cooldown: enemyData.cooldown || enemyData.attack?.cooldown || 1000,
             strategy: this.getAttackType(enemyData)
         };
     }

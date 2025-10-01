@@ -12,7 +12,10 @@ export class LinearMovementStrategy {
         const movementConfig = config.get('movement', {});
         
         this.speed = movementConfig.speed || config.get('speed', 100);
-        this.attackRange = movementConfig.attackRange || config.get('attackRange', 30);
+        
+        // Получаем базовый радиус ТОЛЬКО из attack.range
+        const attackConfig = config.get('attack', {});
+        this.attackRange = attackConfig.range || 0;
     }
 
     /**
@@ -21,8 +24,61 @@ export class LinearMovementStrategy {
      * @param {number} delta - Время с последнего обновления
      */
     update(time, delta) {
-        // Эта стратегия не требует дополнительной логики
-        // Вся логика движения обрабатывается в MovementSystem
+        // Простое линейное движение к цели
+        if (this.gameObject.target) {
+            this.moveToTarget(this.gameObject.target);
+        } else {
+            // Логируем для муравья
+            if (this.gameObject.enemyType === 'ant') {
+
+            }
+        }
+    }
+
+    /**
+     * Движение к цели
+     * @param {Object} target - Цель {x, y}
+     */
+    moveToTarget(target) {
+        if (!target || !this.gameObject.isAlive) {
+            this.stopMovement();
+            return;
+        }
+
+        // Проверяем, достигнута ли цель
+        if (this.isTargetReached(target)) {
+            this.stopMovement();
+            return;
+        }
+
+        // Получаем направление к цели
+        const direction = this.getDirection(target);
+        
+        // Вычисляем скорость
+        const velocityX = direction.x * this.speed;
+        const velocityY = direction.y * this.speed;
+        
+        // Применяем движение
+        this.gameObject.setVelocity(velocityX, velocityY);
+        
+        // Поворачиваем спрайт к цели
+        this.rotateToTarget(target);
+    }
+
+    /**
+     * Остановка движения
+     */
+    stopMovement() {
+        this.gameObject.setVelocity(0, 0);
+    }
+
+    /**
+     * Поворот к цели
+     * @param {Object} target - Цель {x, y}
+     */
+    rotateToTarget(target) {
+        const angle = GeometryUtils.angleToTarget(this.gameObject.x, this.gameObject.y, target.x, target.y);
+        this.gameObject.setRotation(angle);
     }
 
     /**
@@ -42,13 +98,13 @@ export class LinearMovementStrategy {
      * @returns {boolean}
      */
     isTargetReached(target) {
-        const distance = GeometryUtils.distance(
-            this.gameObject.x, 
-            this.gameObject.y, 
-            target.x, 
-            target.y
-        );
-        return distance <= this.attackRange;
+        if (!target || !this.gameObject) return false;
+        const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, target.x, target.y);
+        const effectiveRange = GeometryUtils.effectiveAttackRange(this.gameObject, target, this.attackRange);
+        const reached = distance <= effectiveRange;
+        
+        
+        return reached;
     }
 
     /**

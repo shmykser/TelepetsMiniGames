@@ -17,6 +17,7 @@ import { BackgroundUtils } from '../utils/BackgroundUtils.js';
 import { SafeAreaUtils } from '../utils/SafeAreaUtils.js';
 import { TelegramTimer } from '../components/TelegramTimer.js';
 import { HTMLResultsTable } from '../components/HTMLResultsTable.js';
+import { AbilitiesDisplay } from '../components/AbilitiesDisplay.js';
 
 /**
  * Основная игровая сцена EggDefense
@@ -37,7 +38,6 @@ export class EggDefense extends Phaser.Scene {
     }
 
     create() {
-        console.log('🎮 [EggDefense] create() вызван');
         
         // Сбрасываем флаги для корректного рестарта
         this.isGameEnded = false;
@@ -45,7 +45,6 @@ export class EggDefense extends Phaser.Scene {
         this.gameStartTime = null;
         this.isGameStarted = false; // Важно! Сбрасываем флаг начала игры
         
-        console.log('🎮 [EggDefense] Флаги сброшены - isGameStarted:', this.isGameStarted);
         
         // Создание игровых объектов
         this.createGameObjects();
@@ -153,7 +152,6 @@ export class EggDefense extends Phaser.Scene {
         // Обработчик спавна врагов от осы и других спавнеров
         this.events.on('enemy:spawn', (spawnData) => {
             if (this.gameObject?.enemyType === 'wasp') {
-                console.log('🐝 [EggDefense] ОСА: Получено событие спавна:', spawnData);
             }
             
             if (spawnData.enemyType && spawnData.x && spawnData.y) {
@@ -163,33 +161,17 @@ export class EggDefense extends Phaser.Scene {
                 
                 // Применяем эффект вылета если есть launchEffect
                 if (spawnData.launchEffect && spawnData.launchEffect.enabled && enemy && this.effectSystem) {
-                    console.log(`🏠 [EggDefense] Применяем эффект вылета для ${spawnData.enemyType}`);
                     
                     // Применяем визуальный эффект вылета
                     this.effectSystem.applyEffect('launchEffect', enemy, 1.0, {
                         duration: spawnData.launchEffect.duration || 1000
                     });
                     
-                    // Применяем физическое выталкивание
-                    if (enemy.body && spawnData.launchEffect.angle && spawnData.launchEffect.force) {
-                        const forceX = Math.cos(spawnData.launchEffect.angle) * spawnData.launchEffect.force;
-                        const forceY = Math.sin(spawnData.launchEffect.angle) * spawnData.launchEffect.force;
-                        
-                        enemy.body.setVelocity(forceX, forceY);
-                        
-                        // Через некоторое время останавливаем выталкивание
-                        this.time.delayedCall(spawnData.launchEffect.duration || 1000, () => {
-                            if (enemy && enemy.body) {
-                                enemy.body.setVelocity(0, 0);
-                            }
-                        });
-                    }
                 }
                 
                 // Если спавнимый враг - снаряд, и есть цель, устанавливаем её
                 if (spawnData.enemyType === 'projectile' && spawnData.target && enemy && enemy.aiCoordinator) {
                     if (this.gameObject?.enemyType === 'wasp') {
-                        console.log('🐝 [EggDefense] ОСА: Устанавливаем цель для спавненного снаряда');
                     }
                     enemy.aiCoordinator.setTarget(spawnData.target);
                 }
@@ -198,7 +180,18 @@ export class EggDefense extends Phaser.Scene {
         
         // Обработчик эффекта мёда - замедление всех врагов
         
-        console.log('🎮 [EggDefense] Обработчики событий настроены');
+        // Обновляем UI способностей сразу при изменении способностей (например, при поднятии лопаты)
+        this.events.on('ability:upgraded', () => {
+            if (this.abilitiesDisplay) {
+                this.abilitiesDisplay.updateValues();
+            }
+        });
+        this.events.on('abilities:reset', () => {
+            if (this.abilitiesDisplay) {
+                this.abilitiesDisplay.updateValues();
+            }
+        });
+        
     }
 
     /**
@@ -230,7 +223,59 @@ export class EggDefense extends Phaser.Scene {
      * Настройка обработчиков клавиш
      */
     setupKeyboardHandlers() {
-        // Обработчик Tab удален (таблица способностей удалена)
+        // Обработчик Space для вывода таблицы способностей
+        this.input.keyboard?.on('keydown-SPACE', () => {
+            this.toggleAbilitiesTable();
+        });
+    }
+
+    /**
+     * Переключение отображения таблицы способностей
+     */
+    toggleAbilitiesTable() {
+        if (!this.abilitySystem) return;
+        
+        if (this.abilitiesDisplay) {
+            // Переключаем видимость
+            this.abilitiesDisplay.setVisible(!this.abilitiesDisplay.visible);
+        } else {
+            // Создаем таблицу способностей если её нет
+            this.createAbilitiesDisplay();
+        }
+    }
+
+    /**
+     * Создание дисплея способностей
+     */
+    createAbilitiesDisplay() {
+        if (!this.abilitySystem) return;
+        
+        // Вычисляем безопасную позицию с учетом safe-area
+        const abilitiesX = SafeAreaUtils.getSafeRightPosition(this.scale.width, this.scale.width - 100, 200);
+        const abilitiesY = SafeAreaUtils.getSafeTopPosition(100, 100);
+        
+        // Создаем дисплей способностей
+        this.abilitiesDisplay = new AbilitiesDisplay(
+            this,
+            abilitiesX,
+            abilitiesY,
+            this.abilitySystem,
+            {
+                width: 180,
+                height: 250,
+                backgroundColor: 0x000000,
+                backgroundAlpha: 0.9,
+                borderColor: 0x00ff00,
+                borderWidth: 2,
+                textColor: '#ffffff',
+                fontSize: '10px',
+                padding: 8,
+                lineHeight: 12
+            }
+        );
+        
+        // Устанавливаем глубину отображения
+        this.abilitiesDisplay.setDepth(1000);
     }
     
     /**
@@ -341,22 +386,16 @@ export class EggDefense extends Phaser.Scene {
      * Запуск игры из меню
      */
     startGameFromMenu() {
-        console.log('🎮 [EggDefense] startGameFromMenu() вызван');
-        console.log('🎮 [EggDefense] isGameStarted до:', this.isGameStarted);
-        console.log('🎮 [EggDefense] waveSystem существует:', !!this.waveSystem);
         
         this.isGameStarted = true;
         
         // Безопасно получаем время начала игры
         if (this.scene?.time?.now !== undefined) {
             this.gameStartTime = this.scene.time.now;
-            console.log('🎮 [EggDefense] gameStartTime установлен:', this.gameStartTime);
         } else {
-            console.warn('🎮 [EggDefense] scene.time.now недоступен, используем Date.now()');
             this.gameStartTime = Date.now();
         }
         
-        console.log('🎮 [EggDefense] Вызываем startGame()...');
         this.startGame();
     }
 
@@ -364,8 +403,6 @@ export class EggDefense extends Phaser.Scene {
      * Запуск игры
      */
     startGame() {
-        console.log('🎮 [EggDefense] startGame() вызван');
-        console.log('🎮 [EggDefense] waveSystem существует:', !!this.waveSystem);
         
         // Создаем таймер только при старте игры
         this.createTimer();
@@ -376,9 +413,7 @@ export class EggDefense extends Phaser.Scene {
         });
         
         // Запускаем волновую систему
-        console.log('🎮 [EggDefense] Запускаем waveSystem.startGame()...');
         this.waveSystem.startGame();
-        console.log('🎮 [EggDefense] waveSystem.gameStartTime после startGame:', this.waveSystem.gameStartTime);
     }
 
     /**
@@ -412,7 +447,6 @@ export class EggDefense extends Phaser.Scene {
         const eggDestroyed = !this.egg || this.egg.health <= 0;
         
         if (timeUp || eggDestroyed) {
-            console.log('🎮 [GameEnd] Game ending! timeUp:', timeUp, 'eggDestroyed:', eggDestroyed);
             this.gameOver(timeUp && !eggDestroyed);
         }
     }

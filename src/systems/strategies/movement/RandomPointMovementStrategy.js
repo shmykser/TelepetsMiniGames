@@ -14,6 +14,10 @@ export class RandomPointMovementStrategy {
         this.speed = movementConfig.speed || config.get('speed', 80);
         this.rotationSpeed = movementConfig.rotationSpeed || config.get('rotationSpeed', 0.12);
         
+        // Получаем базовый радиус ТОЛЬКО из attack.range
+        const attackConfig = config.get('attack', {});
+        this.attackRange = attackConfig.range || 0;
+        
         // Параметры выбора точек
         this.searchRadius = config.get('searchRadius', 200); // Радиус поиска новых точек
         this.minDistance = config.get('minDistance', 50); // Минимальное расстояние до новой точки
@@ -250,7 +254,10 @@ export class RandomPointMovementStrategy {
             this.currentTarget.y
         );
         
-        return distance < 15; // Радиус достижения цели
+        // Вычисляем эффективный радиус атаки с учетом размеров обоих объектов
+        const effectiveAttackRange = GeometryUtils.effectiveAttackRange(this.gameObject, this.currentTarget, this.attackRange);
+        
+        return distance < effectiveAttackRange;
     }
 
     /**

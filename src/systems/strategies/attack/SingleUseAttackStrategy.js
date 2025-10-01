@@ -9,7 +9,9 @@ export class SingleUseAttackStrategy {
         this.gameObject = gameObject;
         this.config = config;
         this.damage = config.get('damage', 25);
-        this.range = config.get('range', 50); // Радиус контакта для атаки
+        const attackConfig = this.config.get('attack', {});
+        // Радиус атаки берем ТОЛЬКО из attack.range
+        this.range = attackConfig.range || 0;
         this.speed = config.get('speed', 150); // Скорость движения к цели
         this.detectionRange = config.get('detectionRange', 300); // Радиус обнаружения цели
         this.explosionRadius = config.get('explosionRadius', 80); // Радиус взрыва

@@ -4,7 +4,7 @@
  * Каждая минута добавляет новые типы врагов
  */
 export const enemyTypesByMinute = {
-    1: ['hive'],
+    1: ['ant', 'fly'],
     2: ['ant', 'fly', 'mosquito', 'flea'],
     3: ['ant', 'beetle', 'mosquito', 'fly', 'bee', 'slug', 'flea'],
     4: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'bee', 'butterfly', 'snail', 'slug', 'mole', 'flea'],
@@ -56,10 +56,10 @@ export const WAVE_SETTINGS = {
 export const SPAWN_SETTINGS = {
     // Основные настройки спавна
     baseRate: 3000,              // 3 секунд между спавнами в начале
-    minRate: 100,                // 0.5 секунды в конце игры
+    minRate: 500,                // 0.5 секунды в конце игры
     rateMultiplier: 0.9,         // Коэффициент ускорения спавна
     maxEnemiesOnScreen: 50,      // Максимум врагов на экране
-    enemiesPerSpawn: 1,          // Количество врагов создаваемых за раз
+    enemiesPerSpawn: 2,          // Количество врагов создаваемых за раз
     randomFactor: {
         min: 0.8,                // Минимальный коэффициент случайности задержки
         max: 1.2                 // Максимальный коэффициент случайности задержки
@@ -70,8 +70,8 @@ export const SPAWN_SETTINGS = {
  * Дополнительные константы для спавна врагов
  */
 export const SPAWN_CONSTANTS = {
-    RETRY_DELAY: 500,                    // Задержка при достижении лимита врагов
-    SPAWN_MARGIN: 50,                    // Отступ от края экрана для спавна
+    RETRY_DELAY: 3000,                    // Задержка при достижении лимита врагов
+    SPAWN_MARGIN: 10,                    // Отступ от края экрана для спавна
     SPAWN_SIDES: 3,                      // Количество сторон для спавна (0-3)
     SPAWN_RATE_MULTIPLIER: 10,           // Множитель для ускорения спавна
     HEALTH_MULTIPLIER: 5,                // Множитель для здоровья врагов

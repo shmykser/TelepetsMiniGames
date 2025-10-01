@@ -1,4 +1,4 @@
-import { GeometryUtils } from '../../../utils/GeometryUtils.js';
+import { GeometryUtils } from '../../utils/GeometryUtils.js';
 
 /**
  * Стратегия полета
@@ -12,7 +12,10 @@ export class FlyingMovementStrategy {
         const movementConfig = config.get('movement', {});
         
         this.speed = movementConfig.speed || config.get('speed', 120);
-        this.attackRange = movementConfig.attackRange || config.get('attackRange', 30);
+        
+        // Получаем базовый радиус ТОЛЬКО из attack.range
+        const attackConfig = config.get('attack', {});
+        this.attackRange = attackConfig.range || 0;
         
         // Параметры полета
         this.amplitude = movementConfig.amplitude || config.get('amplitude', 35); // Амплитуда колебаний
@@ -76,13 +79,10 @@ export class FlyingMovementStrategy {
      * @returns {boolean}
      */
     isTargetReached(target) {
-        const distance = GeometryUtils.distance(
-            this.gameObject.x, 
-            this.gameObject.y, 
-            target.x, 
-            target.y
-        );
-        return distance <= this.attackRange;
+        if (!target || !this.gameObject) return false;
+        const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, target.x, target.y);
+        const effectiveRange = GeometryUtils.effectiveAttackRange(this.gameObject, target, this.attackRange);
+        return distance <= effectiveRange;
     }
 
     /**

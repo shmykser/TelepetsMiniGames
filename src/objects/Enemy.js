@@ -27,7 +27,8 @@ export class Enemy extends GameObject {
             damage: config.damage !== undefined ? config.damage : (enemyData.damage || enemyData.attack?.damage),
             speed: config.speed !== undefined ? config.speed : (enemyData.speed || enemyData.movement?.speed), // скорость в пикселях в секунду
             cooldown: config.cooldown !== undefined ? config.cooldown : (enemyData.cooldown || enemyData.attack?.cooldown), // уже в миллисекундах
-            attackRange: config.attackRange || enemyData.attackRange || enemyData.attack?.range || PHYSICS_CONSTANTS.ENEMY_ATTACK_RANGE_DEFAULT,
+            // Радиус атаки берем ТОЛЬКО из attack.range
+            attackRange: enemyData.attack?.range !== undefined ? enemyData.attack.range : 0,
             size: config.size !== undefined ? config.size : enemyData.size, // размер врага
             x: config.x,
             y: config.y,
@@ -89,6 +90,10 @@ export class Enemy extends GameObject {
                 intensity: intensity
             });
         }
+        // Дублируем событие на scene.events, чтобы системы сцены (например, жестов) могли подписаться
+        if (this.scene && this.scene.events) {
+            this.scene.events.emit(EVENT_TYPES.ENEMY_SPAWN, { enemy: this });
+        }
     }
         // Геттеры для врагов
         get damage() { return this._damage; }
@@ -101,6 +106,7 @@ export class Enemy extends GameObject {
         get enemyType() { return this._enemyType; }
         get enemyData() { return this._enemyData; }
         get canFly() { return this._enemyData?.canFly || false; }
+        get aiCoordinator() { return this._aiCoordinator; }
         
         // Методы для совместимости с новой системой ИИ
         setVelocity(x, y) {
@@ -150,7 +156,7 @@ export class Enemy extends GameObject {
             this._aiCoordinator.update(_time, _delta);
         } else {
             // Fallback к базовому поведению
-            console.log(`⚠️ [Enemy] ${this.enemyType} использует базовое поведение. Новая ИИ:`, this._useNewAI ? 'включена, но координатор отсутствует' : 'отключена');
+
             super.update(_time, _delta);
         }
         
@@ -205,7 +211,7 @@ export class Enemy extends GameObject {
             this.emit('attack', target, this.damage);
         } else {
             // Если цель не может получать урон, просто логируем атаку
-            console.log(`⚔️ [Enemy] ${this.enemyType} атакует цель, но она не может получать урон`);
+
             this.emit('attack', target, this.damage);
         }
     }
@@ -363,7 +369,7 @@ export class Enemy extends GameObject {
             // Инициализируем стратегию спавна при уроне (для улья)
             this.setupDamageSpawnStrategy();
         } catch (error) {
-            console.error(`❌ [Enemy] Ошибка инициализации новой системы ИИ для ${enemyType}:`, error);
+
             this._useNewAI = false;
         }
     }
@@ -408,7 +414,6 @@ export class Enemy extends GameObject {
     getAttackConfig() {
         const config = {
             damage: this._damage,
-            attackRange: this._attackRange,
             cooldown: this._cooldown,
             strategy: this.getAttackType()
         };
@@ -417,6 +422,10 @@ export class Enemy extends GameObject {
         if (this._enemyData.attack) {
             Object.assign(config, this._enemyData.attack);
         }
+
+        // Устанавливаем attackRange из range (единообразие)
+        config.attackRange = this._attackRange;
+        config.range = this._attackRange; // Дублируем для совместимости
 
 
         return config;
@@ -475,12 +484,12 @@ export class Enemy extends GameObject {
                     this.damageSpawnStrategy = new module.DamageSpawnStrategy(this, {
                         get: (key, defaultValue) => damageSpawnConfig[key] || defaultValue
                     });
-                    console.log(`🏠 [Enemy] Стратегия спавна при уроне инициализирована для ${this.enemyType}`);
+
                 }).catch(error => {
-                    console.error(`❌ [Enemy] Ошибка загрузки DamageSpawnStrategy:`, error);
+
                 });
             } catch (error) {
-                console.error(`❌ [Enemy] Ошибка инициализации стратегии спавна при уроне:`, error);
+
             }
         }
     }
