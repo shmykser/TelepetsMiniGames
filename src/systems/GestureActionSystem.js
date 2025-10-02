@@ -67,16 +67,22 @@ export class GestureActionSystem {
      * @returns {boolean} Успешность выполнения действия
      */
     handleGesture(gesture) {
+        console.log(`🎯 [DEBUG] handleGesture: type=${gesture.type}, x=${gesture.x}, y=${gesture.y}`);
+        
         // Определяем цель жеста
         const target = this.detectTarget(gesture.x, gesture.y);
         gesture.target = target;
         
+        console.log(`🎯 [DEBUG] detectTarget result: type=${target.type}`);
         
         // Формируем ключ действия
         const actionKey = `${gesture.type}_${target.type}`;
         const action = GESTURE_ACTIONS[actionKey];
         
+        console.log(`🎯 [DEBUG] actionKey=${actionKey}, action=${action?.name || 'null'}`);
+        
         if (!action) {
+            console.log(`🎯 [DEBUG] No action found for ${actionKey}`);
             return false;
         }
         
@@ -366,9 +372,7 @@ export class GestureActionSystem {
         if (!pit) return;
         if (pit._pitBaseInitialized) return;
         const baseHealth = pit._defenseData?.health ?? pit.health ?? 1;
-        const baseRadius = pit._defenseData?.radius ?? 100;
         pit._pitBaseHealth = Math.max(1, baseHealth);
-        pit._pitBaseRadius = Math.max(1, baseRadius);
         pit._pitBaseScaleX = pit.scaleX || 1;
         pit._pitBaseScaleY = pit.scaleY || 1;
         pit._pitBaseInitialized = true;
@@ -384,12 +388,17 @@ export class GestureActionSystem {
         if (!pit._pitBaseInitialized) this.initPitVisual(pit);
         const health = Math.max(0, pit.health || 0);
         const baseHealth = pit._pitBaseHealth || 1;
-        const baseRadius = pit._pitBaseRadius || 100;
         const scaleFactor = Math.max(0.1, health / baseHealth);
-        const newRadius = baseRadius * scaleFactor;
-        if (pit._defenseData) pit._defenseData.radius = newRadius;
+        
         // Абсолютный скейл относительно базового
         pit.setScale(pit._pitBaseScaleX * scaleFactor, pit._pitBaseScaleY * scaleFactor);
+        
+        // Радиус должен соответствовать размеру спрайта (половина от displayWidth)
+        const newRadius = (pit.displayWidth || pit.width || 64) / 2;
+        if (pit._defenseData) pit._defenseData.radius = newRadius;
+        
+        console.log(`🕳️ [DEBUG] updatePitVisual: health=${health}, scale=${scaleFactor.toFixed(2)}, displayWidth=${pit.displayWidth}, radius=${newRadius.toFixed(1)}`);
+        
         // Обновим отладочную окружность, если есть
         if (pit._debugCircle) {
             const g = pit._debugCircle;

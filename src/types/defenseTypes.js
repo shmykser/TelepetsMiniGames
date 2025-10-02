@@ -75,7 +75,7 @@ export const defenseTypes = {
         name: 'Яма',
         health: 200,
         maxHealth: 1000, // верхняя граница здоровья
-        radius: 15, // стартовый радиус (px)
+        radius: 100, // стартовый радиус (px)
         effect: 'Мгновенное взаимодействие: яма и враг вычитают здоровье друг из друга',
         upgradableParams: ['Макс. здоровье'],
         damage: 0,

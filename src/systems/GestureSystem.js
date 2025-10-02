@@ -199,11 +199,22 @@ export class GestureSystem {
         this.gestureState.currentX = pointer.x;
         this.gestureState.currentY = pointer.y;
         this.gestureState.moveDistance = 0;
+        this.gestureState.longTapTriggered = false;
         
         // Начинаем отслеживание для $Q жестов
         this.drawingState.isDrawing = true;
         this.drawingState.drawingPoints = [];
         this.drawingState.drawingPoints.push(new Point(pointer.x, pointer.y, 1));
+        
+        // Запускаем таймер для долгого тапа
+        this.gestureState.longTapTimer = this.scene.time.delayedCall(
+            this.settings.longTap.minDuration,
+            () => {
+                if (this.gestureState.isPointerDown && !this.gestureState.longTapTriggered) {
+                    this.triggerLongTap(pointer);
+                }
+            }
+        );
     }
     
     /**
@@ -224,6 +235,11 @@ export class GestureSystem {
         );
         this.gestureState.moveDistance = distance;
         
+        // Если движение превышает лимит долгого тапа, отменяем его
+        if (this.gestureState.moveDistance > this.settings.longTap.maxDistance) {
+            this.cancelLongTap();
+        }
+        
         // Добавляем точку для $Q распознавания
         if (this.drawingState.isDrawing) {
             this.drawingState.drawingPoints.push(new Point(pointer.x, pointer.y, 1));
@@ -236,6 +252,9 @@ export class GestureSystem {
     handlePointerUp(pointer) {
         if (!this.gestureState.isPointerDown) return;
         
+        // Отменяем таймер долгого тапа
+        this.cancelLongTap();
+        
         const currentTime = this.scene.time.now;
         const duration = currentTime - this.gestureState.startTime;
         const distance = this.gestureState.moveDistance;
@@ -245,15 +264,17 @@ export class GestureSystem {
             this.drawingState.drawingPoints.push(new Point(pointer.x, pointer.y, 1));
         }
         
-        // Определяем тип жеста (Phaser или $Q)
-        const gesture = this.detectGesture(duration, distance, pointer);
-        
-        if (gesture) {
-            this.executeGesture(gesture, pointer);
+        // Определяем тип жеста (Phaser или $Q), но только если долгий тап не был уже сработан
+        if (!this.gestureState.longTapTriggered) {
+            const gesture = this.detectGesture(duration, distance, pointer);
+            if (gesture) {
+                this.executeGesture(gesture, pointer);
+            }
         }
         
         // Сбрасываем состояние
         this.gestureState.isPointerDown = false;
+        this.gestureState.longTapTriggered = false;
         this.drawingState.isDrawing = false;
     }
     
@@ -274,6 +295,7 @@ export class GestureSystem {
         // Проверяем долгий тап
         if (duration >= settings.longTap.minDuration && 
             distance <= settings.longTap.maxDistance) {
+            console.log(`🎯 [DEBUG] Long tap detected: duration=${duration}ms, distance=${distance}px`);
             return this.createLongTapGesture(pointer);
         }
         
@@ -462,9 +484,39 @@ export class GestureSystem {
     }
 
     /**
+     * Срабатывает долгий тап по таймеру
+     * @param {Object} pointer - Объект указателя
+     */
+    triggerLongTap(pointer) {
+        if (!this.gestureState.isPointerDown || this.gestureState.longTapTriggered) return;
+        
+        // Проверяем, что палец не сдвинулся слишком далеко
+        if (this.gestureState.moveDistance <= this.settings.longTap.maxDistance) {
+            this.gestureState.longTapTriggered = true;
+            console.log(`🎯 [DEBUG] Long tap triggered by timer: duration=${this.settings.longTap.minDuration}ms`);
+            
+            const longTapGesture = this.createLongTapGesture(pointer);
+            this.executeGesture(longTapGesture, pointer);
+        }
+    }
+    
+    /**
+     * Отменяет долгий тап (при движении или отпускании пальца)
+     */
+    cancelLongTap() {
+        if (this.gestureState.longTapTimer) {
+            this.gestureState.longTapTimer.remove();
+            this.gestureState.longTapTimer = null;
+        }
+    }
+
+    /**
      * Уничтожение системы жестов
      */
     destroy() {
+        // Отменяем таймер долгого тапа
+        this.cancelLongTap();
+        
         // Удаляем обработчики событий
         this.scene.input.off('pointerdown');
         this.scene.input.off('pointermove');
