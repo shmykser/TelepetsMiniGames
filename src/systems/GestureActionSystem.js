@@ -1,5 +1,5 @@
 import { GESTURE_ACTIONS, TARGET_TYPES, TARGET_SETTINGS } from '../types/gestureTypes';
-import { EVENT_TYPES } from '../types/eventTypes.js';
+import { EVENT_TYPES } from '../types/EventTypes.js';
 import { GeometryUtils } from '../utils/GeometryUtils.js';
 import { Defense } from '../objects/Defense.js';
 import { Enemy } from '../objects/Enemy.js';
