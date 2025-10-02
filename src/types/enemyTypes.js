@@ -41,7 +41,7 @@ export const enemyTypes = {
         spriteKey: 'ant',
         defaultSize: '32x32',
         detectionRange: 150,
-        dropList: [ITEM_TYPES.SHOVEL], //ничего не дропается
+        dropList: [], //ничего не дропается
         movement: {
             strategy: 'linear',
             speed: 60,
@@ -72,7 +72,7 @@ export const enemyTypes = {
         spriteKey: 'fly',
         defaultSize: '64x64',
         detectionRange: 150,
-        dropList: [ITEM_TYPES.SHOVEL], //ничего не дропается
+        dropList: [], //ничего не дропается
         movement: {         
             strategy: 'jittery',
             speed: 80,                     // Базовая скорость движения
