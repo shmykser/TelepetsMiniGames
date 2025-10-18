@@ -31,6 +31,7 @@ export class AttackSystem extends ISystem {
 
     initialize() {
         this.setupStrategy();
+        
     }
 
     setupStrategy() {

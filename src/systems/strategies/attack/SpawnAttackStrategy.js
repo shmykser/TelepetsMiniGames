@@ -10,7 +10,35 @@ export class SpawnAttackStrategy {
         this.config = config;
         this.lastSpawnTime = 0;
         this.spawnedCount = 0;
-        this.maxSpawned = 10; // Максимальное количество спавненных врагов
+        this.maxSpawned = this.config?.get('maxSpawned', 10);
+        
+        // Только для улья выводим инициализацию
+        if (this.gameObject?.enemyType === 'hive') {
+            const interval = this.getResolvedInterval();
+            const spawnType = this.config.get('spawnType', 'unknown');
+            console.log(`🏠 [HIVE] SpawnAttackStrategy инициализирован: interval=${interval}ms, spawnType=${spawnType}, maxSpawned=${this.maxSpawned}`);
+        }
+    }
+
+    /**
+     * Выбор интервала спавна: приоритет attack.cooldown, затем spawnInterval, затем дефолт 5000
+     */
+    getResolvedInterval() {
+        const cooldown = this.config.get('cooldown', undefined);
+        if (cooldown != null) return cooldown;
+        const spawnInterval = this.config.get('spawnInterval', undefined);
+        if (spawnInterval != null) return spawnInterval;
+        return 5000;
+    }
+
+    /**
+     * Безопасное получение текущего времени сцены
+     */
+    getNow() {
+        return (this.gameObject && this.gameObject.scene && this.gameObject.scene.time &&
+            typeof this.gameObject.scene.time.now === 'number')
+            ? this.gameObject.scene.time.now
+            : Date.now();
     }
 
     /**
@@ -19,15 +47,11 @@ export class SpawnAttackStrategy {
      * @param {number} delta - Время с последнего обновления
      */
     update(time, delta) {
-        if (this.gameObject.enemyType === 'wasp') {
-            console.log(`🐝 [SpawnAttackStrategy] ОСА: Update в ${time}`);
-        }
+        const now = (typeof time === 'number') ? time : this.getNow();
+        
         // Проверяем, можем ли спавнить
-        if (this.canSpawn(time)) {
-            if (this.gameObject.enemyType === 'wasp') {
-                console.log(`🐝 [SpawnAttackStrategy] ОСА: Выполняем спавн в ${time}`);
-            }
-            this.performSpawn(time);
+        if (this.canSpawn(now)) {
+            this.performSpawn(now);
         }
     }
 
@@ -37,8 +61,9 @@ export class SpawnAttackStrategy {
      * @returns {boolean}
      */
     canSpawn(time) {
-        const spawnInterval = this.config.get('spawnInterval', 5000);
-        const timeSinceLastSpawn = time - this.lastSpawnTime;
+        const now = (typeof time === 'number') ? time : this.getNow();
+        const spawnInterval = this.getResolvedInterval();
+        const timeSinceLastSpawn = now - this.lastSpawnTime;
         const basicCondition = timeSinceLastSpawn > spawnInterval && this.spawnedCount < this.maxSpawned;
         
         // Проверяем дополнительные условия (для крота)
@@ -49,10 +74,9 @@ export class SpawnAttackStrategy {
         
         const canSpawnNow = basicCondition && conditionalCheck;
         
-        if (this.gameObject.enemyType === 'wasp') {
-            console.log(`🐝 [SpawnAttackStrategy] ОСА: Проверка спавна - время: ${timeSinceLastSpawn}/${spawnInterval}, спавнено: ${this.spawnedCount}/${this.maxSpawned}, условие: ${conditionalCheck}, можно: ${canSpawnNow}`);
-        } else if (this.gameObject.enemyType === 'mole') {
-            console.log(`🐀 [SpawnAttackStrategy] КРОТ: Проверка спавна - время: ${timeSinceLastSpawn}/${spawnInterval}, спавнено: ${this.spawnedCount}/${this.maxSpawned}, условие: ${conditionalCheck}, можно: ${canSpawnNow}`);
+        // Только для улья логируем попытки спавна
+        if (this.gameObject?.enemyType === 'hive' && timeSinceLastSpawn > 7000) {
+            console.log(`🏠 [HIVE] canSpawn: timeSince=${Math.round(timeSinceLastSpawn)}ms >= interval=${spawnInterval}ms, spawned=${this.spawnedCount}/${this.maxSpawned} -> ${canSpawnNow}`);
         }
         
         return canSpawnNow;
@@ -70,8 +94,9 @@ export class SpawnAttackStrategy {
         const spawnType = this.config.get('spawnType', 'spider');
         const spawnDirection = this.config.get('spawnDirection', 'circle');
         
-        if (this.gameObject.enemyType === 'wasp') {
-            console.log(`🐝 [SpawnAttackStrategy] ОСА: Параметры спавна - count: ${spawnCount} (${minSpawnCount}-${maxSpawnCount}), range: ${spawnRange}, type: ${spawnType}, direction: ${spawnDirection}`);
+        // Только для улья логируем спавн
+        if (this.gameObject?.enemyType === 'hive') {
+            console.log(`🏠 [HIVE] performSpawn: spawning ${spawnCount}x ${spawnType} at range=${spawnRange}`);
         }
 
         for (let i = 0; i < spawnCount; i++) {
@@ -85,9 +110,7 @@ export class SpawnAttackStrategy {
                 spawnX = this.gameObject.x + Math.cos(angleToTarget) * spawnRange;
                 spawnY = this.gameObject.y + Math.sin(angleToTarget) * spawnRange;
                 
-                if (this.gameObject.enemyType === 'wasp') {
-                    console.log(`🐝 [SpawnAttackStrategy] ОСА: Спавн ${spawnType} в направлении цели: угол ${(angleToTarget * 180 / Math.PI).toFixed(1)}°`);
-                }
+                
             } else {
                 // Круговой спавн (по умолчанию)
                 const angle = (Math.PI * 2 * i) / spawnCount;
@@ -97,11 +120,16 @@ export class SpawnAttackStrategy {
                 spawnY = this.gameObject.y + Math.sin(angle) * distance;
             }
             
+            // Защита от некорректных координат
+            if (!Number.isFinite(spawnX) || !Number.isFinite(spawnY)) {
+                if (this.gameObject.enemyType === 'spiderQueen') {
+                    console.warn(`🕷️👑 [SpawnAttackStrategy] QUEEN: пропуск спавна из-за неверных координат`, { spawnX, spawnY });
+                }
+                continue;
+            }
+
             // Эмитим событие спавна
             if (this.gameObject.scene && this.gameObject.scene.events) {
-                if (this.gameObject.enemyType === 'wasp') {
-                    console.log(`🐝 [SpawnAttackStrategy] ОСА: Эмитим событие спавна ${spawnType} в (${spawnX.toFixed(1)}, ${spawnY.toFixed(1)})`);
-                }
                 this.gameObject.scene.events.emit('enemy:spawn', {
                     enemyType: spawnType,
                     x: spawnX,
@@ -109,25 +137,20 @@ export class SpawnAttackStrategy {
                     parent: this.gameObject,
                     target: this.gameObject.aiCoordinator?.currentTarget // Передаем цель для снарядов
                 });
-            } else {
-                if (this.gameObject.enemyType === 'wasp') {
-                    console.log(`🐝 [SpawnAttackStrategy] ОСА: ОШИБКА - нет сцены или событий для спавна!`);
-                }
             }
         }
 
         this.lastSpawnTime = time;
         this.spawnedCount += spawnCount;
         
+        // Только для улья логируем результат
+        if (this.gameObject?.enemyType === 'hive') {
+            console.log(`🏠 [HIVE] Spawned: ${spawnCount} enemies, total=${this.spawnedCount}/${this.maxSpawned}`);
+        }
+        
         // Для крота: отмечаем, что спавн на поверхности выполнен
         if (this.gameObject.enemyType === 'mole') {
             this.hasSpawnedOnSurface = true;
-        }
-        
-        if (this.gameObject.enemyType === 'wasp') {
-            console.log(`🐝 [SpawnAttackStrategy] ОСА: Спавн ${spawnCount} ${spawnType} завершен (всего: ${this.spawnedCount})`);
-        } else if (this.gameObject.enemyType === 'mole') {
-            console.log(`🐀 [SpawnAttackStrategy] КРОТ: Спавн ${spawnCount} ${spawnType} завершен (всего: ${this.spawnedCount})`);
         }
     }
 
@@ -156,7 +179,26 @@ export class SpawnAttackStrategy {
      */
     attack(target) {
         // Спавн не требует цели, но может использовать её позицию
-        this.performSpawn(this.gameObject.scene.time.now);
+        const now = this.getNow();
+        // Если стратегия вызывается через систему атаки, используем тот же механизм, что и в update
+        if (this.canSpawn(now)) {
+            this.performSpawn(now);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Прямой вызов атаки системой (используется AttackSystem.performAttack)
+     * Возвращает true, если спавн выполнен
+     */
+    performAttack(/* target */) {
+        const now = this.getNow();
+        if (this.canSpawn(now)) {
+            this.performSpawn(now);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -165,7 +207,7 @@ export class SpawnAttackStrategy {
      */
     setConditionCallback(callback) {
         this.conditionCallback = callback;
-        console.log(`🕷️ [SpawnAttackStrategy] Установлен callback для условного спавна`);
+        
     }
 
 

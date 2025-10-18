@@ -8,5 +8,10 @@ export const settings = {
     telegramSecrets: {
         botToken: import.meta.env.VITE_BOT_TOKEN,
         webAppUrl: import.meta.env.VITE_WEBAPP_URL
+    },
+    // Глобальные флаги ИИ/геймплея
+    ai: {
+        // Временный флаг: при необходимости отключаем pathfinding, чтобы не ломать стратегии движения
+        pathfindingEnabled: false
     }
 };

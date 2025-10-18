@@ -662,7 +662,19 @@ export class EffectSystem {
      * Создает эффект взрыва (круговая волна)
      */
     createBlastEffect(target, config) {
-        const radius = config.radius || config.baseRadius || 100;
+        // Уважаем radius=0 (не подменяем на дефолт), если radius не задан, используем baseRadius/100
+        const hasRadius = Object.prototype.hasOwnProperty.call(config, 'radius');
+        const hasBaseRadius = Object.prototype.hasOwnProperty.call(config, 'baseRadius');
+        let radius = 100;
+        if (hasRadius) {
+            radius = config.radius;
+        } else if (hasBaseRadius) {
+            radius = config.baseRadius;
+        }
+        // Если радиус не положительный — не рисуем эффект вообще
+        if (radius <= 0) {
+            return null;
+        }
         const duration = config.duration || 800;
         const color = config.color || 0xff6600;
         const thickness = config.thickness || 3;

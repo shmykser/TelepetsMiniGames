@@ -6,6 +6,7 @@ import { SystemConfig } from '../config/SystemConfig.js';
 import { StealthStrategy } from '../strategies/stealth/StealthStrategy.js';
 import { BurrowStealthStrategy } from '../strategies/stealth/BurrowStealthStrategy.js';
 import { TargetPointSystem } from './TargetPointSystem.js';
+import { settings } from '../../../config/settings.js';
 
 /**
  * Координатор систем ИИ
@@ -42,28 +43,30 @@ export class AICoordinator {
 
     setupSystems() {
         // Создаем конфигурации для каждой системы
+        // ВАЖНО: Порядок источников - от низкого к высокому приоритету
+        // Последний источник имеет наивысший приоритет при разрешении конфликтов
         const movementConfig = new SystemConfig([
-            this.config.get('movement', {}),
+            this.config,
             this.config.get('behaviorParams', {}),
-            this.config
+            this.config.get('movement', {})
         ]);
 
         const attackConfig = new SystemConfig([
-            this.config.get('attack', {}),
+            this.config,
             this.config.get('behaviorParams', {}),
-            this.config
+            this.config.get('attack', {})
         ]);
 
         const collisionConfig = new SystemConfig([
-            this.config.get('collision', {}),
+            this.config,
             this.config.get('behaviorParams', {}),
-            this.config
+            this.config.get('collision', {})
         ]);
 
         const pathfindingConfig = new SystemConfig([
-            this.config.get('pathfinding', {}),
+            this.config,
             this.config.get('behaviorParams', {}),
-            this.config
+            this.config.get('pathfinding', {})
         ]);
 
         // Создаем системы только если gameObject существует
@@ -84,7 +87,8 @@ export class AICoordinator {
         // Настраиваем стратегию движения
         const movementSystem = this.systems.get('movement');
         if (movementSystem) {
-            const movementStrategy = this.config.get('movement.strategy', 'linear');
+            const movementData = this.config.get('movement', {});
+            const movementStrategy = (movementData && movementData.strategy) || 'linear';
             movementSystem.setStrategy(movementStrategy);
         }
 
@@ -114,7 +118,7 @@ export class AICoordinator {
         // Настраиваем стратегию стелса
         const stealthConfig = this.config.get('stealth', {});
         if (stealthConfig && stealthConfig.strategy) {
-            const stealthSystemConfig = new SystemConfig([stealthConfig, this.config]);
+            const stealthSystemConfig = new SystemConfig([this.config, stealthConfig]);
             
             if (stealthConfig.strategy === 'stealth') {
                 this.stealthStrategy = new StealthStrategy(this.gameObject, stealthSystemConfig);
@@ -156,8 +160,12 @@ export class AICoordinator {
         this.lastUpdateTime = time;
 
         // Обновляем все системы
-        this.systems.forEach(system => {
+        this.systems.forEach((system, name) => {
             if (system.isActive) {
+                // Только для улья логируем обновление системы атаки
+                if (this.gameObject?.enemyType === 'hive' && name === 'attack') {
+                    console.log(`🏠 [HIVE] AICoordinator вызывает AttackSystem.update()`);
+                }
                 system.update(time, delta);
             }
         });
@@ -191,25 +199,42 @@ export class AICoordinator {
             return;
         }
 
-
-        // Проверяем, можем ли атаковать (только если стратегия атаки не 'none')
+        // Получаем стратегии движения и атаки для дальнейших проверок
+        const movementData = this.config.get('movement', {});
+        const movementStrategy = (movementData && movementData.strategy) || 'linear';
         const attackConfig = this.config.get('attack', {});
         const attackStrategy = attackConfig.strategy || 'simple';
         
-        if (attackSystem && attackStrategy !== 'none' && attackSystem.isInRange && attackSystem.isInRange()) {
-            this.setState('attacking');
-            attackSystem.attack(this.currentTarget);
+        // Для стратегии 'spawn' НЕ вызываем attack() - стратегия работает через свой update()
+        // который уже вызван на строке 185 в AICoordinator.update()
+        if (attackStrategy === 'spawn') {
+            // Спавнеры работают автономно через SpawnAttackStrategy.update()
+            // Не нужно вызывать attackSystem.attack() - это перезапишет логику таймера
+            if (this.gameObject?.enemyType === 'hive') {
+                console.log(`🏠 [HIVE] coordinateSystems: strategy='spawn', пропускаем вызов attack()`);
+            }
             return;
         }
+        
+        // Для остальных стратегий проверяем, можем ли атаковать
+        if (attackSystem && attackStrategy !== 'none') {
+            // Проверяем радиус атаки
+            if (attackSystem.isInRange && attackSystem.isInRange()) {
+                this.setState('attacking');
+                attackSystem.attack(this.currentTarget);
+                return;
+            }
+        }
 
-        // Если не можем атаковать, ищем путь
-        if (pathfindingSystem && this.shouldUsePathfinding()) {
-            console.log(`🤖 [AICoordinator] Используем pathfinding для ${this.gameObject.constructor.name} (canFly: ${this.gameObject.canFly})`);
+        // Если не можем атаковать, ищем путь (кроме стационарных спавнеров и статичных объектов)
+        // movementStrategy уже получена выше
+        if (movementStrategy === 'spawner' || movementStrategy === 'static') {
+            // Для спавнеров и статичных объектов (улей) не используем pathfinding и не двигаем их
+        } else if (pathfindingSystem && this.shouldUsePathfinding()) {
             // Если уже есть активный путь, не пересчитываем каждый кадр
             const existingPathActive = movementSystem.currentPath && movementSystem.pathIndex < movementSystem.currentPath.length;
             const path = existingPathActive ? movementSystem.currentPath : pathfindingSystem.findPath(this.currentTarget);
             if (path && path.length > 0) {
-                console.log(`🤖 [AICoordinator] Найден путь длиной ${path.length} для ${this.gameObject.constructor.name}`);
                 this.setState('pathfinding');
                 if (!existingPathActive) {
                     pathfindingSystem.setPath(path);
@@ -217,22 +242,21 @@ export class AICoordinator {
                 }
                 return;
             } else {
-                console.log(`🤖 [AICoordinator] Путь не найден для ${this.gameObject.constructor.name} - останавливаемся`);
                 // НЕ пытаемся двигаться напрямую - это приведет к движению через препятствия
                 this.setState('idle');
                 movementSystem.stopMovement();
                 return;
             }
         } else {
-            console.log(`🤖 [AICoordinator] Pathfinding не используется для ${this.gameObject.constructor.name} (pathfindingSystem: ${!!pathfindingSystem}, shouldUse: ${this.shouldUsePathfinding()}, canFly: ${this.gameObject.canFly})`);
         }
 
         // Проверяем тип стратегии движения
-        const movementStrategy = this.config.get('movement.strategy', 'linear');
+        // movementStrategy уже получена выше
         
-        if (movementStrategy === 'randomPoint' || movementStrategy === 'spawner') {
+        if (movementStrategy === 'randomPoint' || movementStrategy === 'spawner' || movementStrategy === 'static') {
             // Для этих стратегий не передаем внешнюю цель
-            // Они работают со своими внутренними целями
+            // randomPoint и spawner работают со своими внутренними целями
+            // static объекты (улей) вообще не двигаются
             // Не устанавливаем состояние moving для этих стратегий
             return;
         }
@@ -247,6 +271,10 @@ export class AICoordinator {
      * @returns {boolean}
      */
     shouldUsePathfinding() {
+        // Глобальный флаг для временного отключения pathfinding
+        if (settings && settings.ai && settings.ai.pathfindingEnabled === false) {
+            return false;
+        }
         const pathfindingSystem = this.systems.get('pathfinding');
         if (!pathfindingSystem) {
             return false;
@@ -254,14 +282,12 @@ export class AICoordinator {
 
         // Для летающих объектов не используем pathfinding, если они игнорируют наземные препятствия
         if (this.gameObject.canFly && pathfindingSystem.ignoreGroundObstacles) {
-            console.log(`🤖 [AICoordinator] Летающий объект игнорирует наземные препятствия, pathfinding не нужен`);
             return false;
         }
 
         // Используем ObstacleInteractionSystem для проверки препятствий
         const obstacleSystem = this.gameObject.scene.obstacleInteractionSystem;
         if (obstacleSystem && obstacleSystem.obstacles && obstacleSystem.obstacles.length > 0) {
-            console.log(`🤖 [AICoordinator] shouldUsePathfinding: найдено ${obstacleSystem.obstacles.length} препятствий`);
             return true;
         }
 
@@ -270,8 +296,6 @@ export class AICoordinator {
             this.gameObject.scene.children.list.some(obj => 
                 obj.isObstacle || (obj.defenseData && obj.defenseData.isObstacle)
             );
-        
-        console.log(`🤖 [AICoordinator] shouldUsePathfinding: canFly=${this.gameObject.canFly}, ignoreGroundObstacles=${pathfindingSystem.ignoreGroundObstacles}, hasObstacles=${hasObstacles}`);
         return hasObstacles;
     }
 
@@ -299,7 +323,7 @@ export class AICoordinator {
         
         // Проверяем тип стратегии движения
         const movementConfig = this.config.get('movement', {});
-        const movementStrategy = movementConfig.strategy || this.config.get('movement.strategy', 'linear');
+        const movementStrategy = (movementConfig && movementConfig.strategy) || 'linear';
         
         
         if (movementSystem && movementStrategy !== 'randomPoint' && movementStrategy !== 'spawner') {

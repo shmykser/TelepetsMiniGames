@@ -82,6 +82,11 @@ export class Enemy extends GameObject {
         // Инициализируем новую систему ИИ
         this.setupNewAI(enemyType);
         
+        // Для улья выводим успешную инициализацию
+        if (enemyType === 'hive') {
+            console.log(`🏠 [HIVE] Enemy создан успешно, ИИ инициализирован`);
+        }
+        
         // Отправляем событие появления врага
         if (Enemy.eventSystem) {
             const intensity = this.size > 1 ? this.size : 0.8;
@@ -153,10 +158,13 @@ export class Enemy extends GameObject {
         
         // Обновляем новую систему ИИ
         if (this._useNewAI && this._aiCoordinator) {
+            // Только для улья логируем раз в 5 секунд
+            if (this._enemyType === 'hive' && (_time % 5000 < 100)) {
+                console.log(`🏠 [HIVE] Enemy.update() вызывается, time=${Math.round(_time)}, вызываем aiCoordinator.update()`);
+            }
             this._aiCoordinator.update(_time, _delta);
         } else {
             // Fallback к базовому поведению
-
             super.update(_time, _delta);
         }
         
@@ -365,6 +373,16 @@ export class Enemy extends GameObject {
 
             // Создаем AI координатор
             this._aiCoordinator = new AICoordinator(this, config);
+
+            // Гарантируем корректные стратегии для специфичных типов (защита от регрессий конфигурации)
+            const movementSystem = this._aiCoordinator.getSystem('movement');
+            const attackSystem = this._aiCoordinator.getSystem('attack');
+            if (movementSystem && this._enemyType === 'wasp') {
+                movementSystem.setStrategy('orbital');
+            }
+            if (attackSystem && this._enemyType === 'wasp') {
+                attackSystem.setStrategy('spawn');
+            }
             
             // Инициализируем стратегию спавна при уроне (для улья)
             this.setupDamageSpawnStrategy();

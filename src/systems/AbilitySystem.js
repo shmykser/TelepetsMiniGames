@@ -127,7 +127,7 @@ export class AbilitySystem {
      * @returns {number}
      */
     getEggExplosionRadius() {
-        return 1000;
+        return this.abilities.EGG_RADIUS * this.abilities.EGG_EXPLOSION;
     }
 
     getEggExplosionCooldown() {

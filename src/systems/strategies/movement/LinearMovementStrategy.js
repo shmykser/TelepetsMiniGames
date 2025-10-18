@@ -16,6 +16,9 @@ export class LinearMovementStrategy {
         // Получаем базовый радиус ТОЛЬКО из attack.range
         const attackConfig = config.get('attack', {});
         this.attackRange = attackConfig.range || 0;
+
+        // Поддержка внешней цели (waypoint) от MovementSystem
+        this.currentTarget = null;
     }
 
     /**
@@ -24,9 +27,10 @@ export class LinearMovementStrategy {
      * @param {number} delta - Время с последнего обновления
      */
     update(time, delta) {
-        // Простое линейное движение к цели
-        if (this.gameObject.target) {
-            this.moveToTarget(this.gameObject.target);
+        // Простое линейное движение к цели: приоритет внешнему waypoint
+        const target = this.currentTarget || this.gameObject.target;
+        if (target) {
+            this.moveToTarget(target);
         } else {
             // Логируем для муравья
             if (this.gameObject.enemyType === 'ant') {
@@ -63,6 +67,14 @@ export class LinearMovementStrategy {
         
         // Поворачиваем спрайт к цели
         this.rotateToTarget(target);
+    }
+
+    /**
+     * Установка внешней цели (waypoint) от MovementSystem
+     * @param {Object} target - Цель {x, y}
+     */
+    setTarget(target) {
+        this.currentTarget = target;
     }
 
     /**

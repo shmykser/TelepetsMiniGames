@@ -1,7 +1,7 @@
 import { ISystem } from './interfaces/ISystem.js';
 import { EVENT_TYPES } from '../types/EventTypes.js';
 
-/**
+/** НЕ РЕАЛИЗОВАНО, ОТКЛЮЧЕНО
  * Система drag & drop для перетаскивания объектов
  */
 export class DragDropSystem extends ISystem {

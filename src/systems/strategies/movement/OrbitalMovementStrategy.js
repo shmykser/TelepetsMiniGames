@@ -10,12 +10,13 @@ export class OrbitalMovementStrategy {
         this.config = config;
         this.currentTarget = null;
         this.orbitAngle = 0; // Текущий угол на орбите
-        this.orbitSpeed = config.get('orbitSpeed', 0.02);
-        this.approachDistance = config.get('approachDistance', 250);
-        this.minOrbitRadius = config.get('minOrbitRadius', 150);
-        this.maxOrbitRadius = config.get('maxOrbitRadius', 300);
         // Получаем конфигурацию движения
         const movementConfig = config.get('movement', {});
+        // Параметры орбиты читаем из movement, с безопасным фолбэком на верхний уровень
+        this.orbitSpeed = (movementConfig.orbitSpeed !== undefined ? movementConfig.orbitSpeed : config.get('orbitSpeed', 0.02));
+        this.approachDistance = (movementConfig.approachDistance !== undefined ? movementConfig.approachDistance : config.get('approachDistance', 250));
+        this.minOrbitRadius = (movementConfig.minOrbitRadius !== undefined ? movementConfig.minOrbitRadius : config.get('minOrbitRadius', 150));
+        this.maxOrbitRadius = (movementConfig.maxOrbitRadius !== undefined ? movementConfig.maxOrbitRadius : config.get('maxOrbitRadius', 300));
         
         this.speed = movementConfig.speed || config.get('speed', 100);
         this.rotationSpeed = movementConfig.rotationSpeed || config.get('rotationSpeed', 0.15);
@@ -88,8 +89,10 @@ export class OrbitalMovementStrategy {
      * Устанавливает случайный радиус орбиты и случайное направление
      */
     startOrbiting() {
-        // Случайный радиус орбиты в заданном диапазоне
-        this.currentOrbitRadius = Phaser.Math.Between(this.minOrbitRadius, this.maxOrbitRadius);
+        // Случайный радиус орбиты в заданном диапазоне, ограничиваем сверху зоной подхода
+        const maxAllowedRadius = Math.max(this.minOrbitRadius, this.approachDistance - 10);
+        const upper = Math.min(this.maxOrbitRadius, maxAllowedRadius);
+        this.currentOrbitRadius = Phaser.Math.Between(this.minOrbitRadius, upper);
         
         // Случайное направление движения (только при первом запуске)
         if (!this.initialDirectionSet) {

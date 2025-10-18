@@ -81,6 +81,11 @@ export class MovementSystem extends ISystem {
                 this.strategy = null;
                 break;
         }
+
+        // Если стратегия создана и уже есть цель — сразу передаём её стратегии
+        if (this.strategy && this.strategy.setTarget && this.currentTarget) {
+            this.strategy.setTarget(this.currentTarget);
+        }
     }
 
     setupPhysics() {
@@ -106,20 +111,43 @@ export class MovementSystem extends ISystem {
 
         this.lastUpdateTime = time;
 
-        // Если есть активный путь — приоритетно двигаемся по нему
-        if (this.currentPath && this.pathIndex < this.currentPath.length) {
+        // Если есть активный путь — стратегия должна вести к waypoint; MovementSystem не задаёт velocity напрямую
+        const hasPath = this.currentPath && this.pathIndex < this.currentPath.length;
+        if (hasPath) {
             const waypoint = this.currentPath[this.pathIndex];
             // Контроль застреваний
             this.detectAndRecoverFromStuck(waypoint, time);
-            this.moveToTarget(waypoint);
+
+            // Если стратегия умеет принимать внешнюю цель и это не "рандомная"/"спавнер" стратегия — передаём waypoint стратегии
+            if (this.strategy && this.strategy.update && this.strategy.setTarget &&
+                this.strategyType !== 'randomPoint' && this.strategyType !== 'spawner') {
+                this.moveTo(waypoint);
+                this.strategy.update(time, delta);
+            } else {
+                // Для спавнера запрещаем движение по пути вовсе
+                if (this.strategyType === 'spawner') {
+                    this.stopMovement();
+                } else {
+                    // Фолбэк: двигаем к waypoint напрямую, как раньше
+                    this.moveToTarget(waypoint);
+                }
+            }
+
+            // Проверяем прогресс по пути после шага стратегии/фолбэка
+            this.checkPathProgress();
             return;
         }
 
+        // Без пути — ведёт активная стратегия либо дефолтное движение
         if (this.strategy) {
-            // Используем стратегию напрямую
+            // Гарантируем, что стратегия имеет актуальную цель (защита от потери ссылки)
+            if (this.strategy.getTarget && (!this.strategy.getTarget()) && this.gameObject?.aiCoordinator?.currentTarget) {
+                if (this.strategy.setTarget) {
+                    this.strategy.setTarget(this.gameObject.aiCoordinator.currentTarget);
+                }
+            }
             this.strategy.update(time, delta);
         } else {
-            // Используем встроенную логику MovementSystem
             this.defaultMovement(time, delta);
         }
     }
@@ -449,7 +477,6 @@ export class MovementSystem extends ISystem {
                 this.pathIndex++;
                 const next = this.currentPath[this.pathIndex];
                 this.moveTo(next);
-                console.log(`🚧 [MovementSystem] stuck: skip waypoint -> index=${this.pathIndex}`);
             } else {
                 // последний waypoint — считаем завершенным
                 this.stopMovement();

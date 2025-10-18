@@ -153,11 +153,7 @@ export class EggDefense extends Phaser.Scene {
             this.egg.updateAura();
             this.egg.updateEggExplosion();
             
-            // Для тестирования - прокачиваем взрыв яйца
-            if (this.egg.eggExplosion <= 0) {
-                this.abilitySystem.upgradeAbility('EGG_EXPLOSION');
-                this.egg.updateEggExplosion();
-            }
+            // Удалена автопрокачка взрыва яйца при нулевом уровне
         }
         
         // Устанавливаем яйцо как цель для волновой системы
@@ -188,7 +184,8 @@ export class EggDefense extends Phaser.Scene {
             if (this.gameObject?.enemyType === 'wasp') {
             }
             
-            if (spawnData.enemyType && spawnData.x && spawnData.y) {
+            if (spawnData.enemyType && spawnData.x !== undefined && spawnData.y !== undefined) {
+                
                 // Создаем врага напрямую, как в тестовой сцене
                 const enemy = this.createEnemy(spawnData.enemyType, spawnData.x, spawnData.y);
                 
@@ -203,11 +200,16 @@ export class EggDefense extends Phaser.Scene {
                     
                 }
                 
-                // Если спавнимый враг - снаряд, и есть цель, устанавливаем её
-                if (spawnData.enemyType === 'projectile' && spawnData.target && enemy && enemy.aiCoordinator) {
-                    if (this.gameObject?.enemyType === 'wasp') {
+                // Устанавливаем цель для спавнимого врага: приоритет целям из spawnData, иначе яйцо
+                if (enemy && enemy.aiCoordinator && typeof enemy.aiCoordinator.setTarget === 'function') {
+                    const target = spawnData.target || this.egg;
+                    if (target) {
+                        enemy.aiCoordinator.setTarget(target);
                     }
-                    enemy.aiCoordinator.setTarget(spawnData.target);
+                }
+            } else {
+                if (spawnData.parent?.enemyType === 'spiderQueen') {
+                    console.warn(`🕷️👑 [EggDefense] QUEEN: enemy:spawn dropped due to invalid coords`, spawnData);
                 }
             }
         });
@@ -730,9 +732,7 @@ export class EggDefense extends Phaser.Scene {
                 this.waveSystem.enemies.push(enemy);
             }
             
-            if (enemyType === 'wasp' || enemyType === 'projectile') {
-                console.log(`🐝 [EggDefense] ОСА: Создан враг ${enemyType} в позиции (${x}, ${y})`);
-            }
+            
         }
         
         return enemy;

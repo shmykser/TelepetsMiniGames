@@ -37,7 +37,8 @@ export class RecoverySystem {
         }
 
         const strategy = recoveryConfig.strategy;
-        const strategyConfig = new SystemConfig([recoveryConfig, this.config]);
+        // Порядок источников: родительская конфигурация (низший приоритет), recoveryConfig (высший приоритет)
+        const strategyConfig = new SystemConfig([this.config, recoveryConfig]);
 
         try {
             switch (strategy) {

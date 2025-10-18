@@ -30,7 +30,7 @@ export const defenseTypes = {
         affectsGround: true,        // Влияет на наземных
         // Параметры генерации камней на карте
         spawn: {
-            minCount: 2,
+            minCount: 0,
             maxCount: 6,
             margin: 10 // отступ от краёв экрана (px)
         }

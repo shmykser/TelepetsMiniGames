@@ -109,7 +109,7 @@ export const enemyTypes = {
         dropList: [], // Клевер, пластырь, двойной пластырь
         movement: {
             strategy: 'linear',
-            speed: 50,
+            speed: 30,
             rotationSpeed: 0.1
         },
         attack: {
@@ -184,7 +184,7 @@ export const enemyTypes = {
         attack: {
             strategy: 'simple',
             damage: 10,
-            range: 50,
+            range: 0,
             cooldown: 5000
         },
         collision: {
@@ -329,8 +329,9 @@ export const enemyTypes = {
         attack: {
             strategy: 'spawn',
             damage: 0,
-            range: 300,
+            range: 100,
             spawnInterval: 3000,
+            cooldown: 3000,
             minSpawnCount: 1,
             maxSpawnCount: 1,
             spawnRange: 10,
@@ -432,7 +433,7 @@ export const enemyTypes = {
     spiderQueen: {
         name: 'Самка паука',
         health: 80,
-        canFly: false,
+        canFly: true,
         size: 3,
         texture: '🕷️👑',
         spriteKey: 'spider',
@@ -441,7 +442,7 @@ export const enemyTypes = {
         dropList: [ITEM_TYPES.HEART, ITEM_TYPES.DOUBLEPATCH], // Сердце, двойной пластырь, клевер
         movement: {
             strategy: 'linear',
-            speed: 25,
+            speed: 15,
             rotationSpeed: 0.1
         },
         attack: {
@@ -450,7 +451,8 @@ export const enemyTypes = {
             minSpawnCount: 1,
             maxSpawnCount: 5,
             spawnRange: 100,
-            spawnType: 'spider'
+            spawnType: 'spider',
+            maxSpawned: 20
         },
         collision: {
             enabled: true,
@@ -543,7 +545,7 @@ export const enemyTypes = {
     flea: {
         name: 'Блоха',
         health: 12,
-        canFly: false,
+        canFly: true,
         size: 1.5,
         texture: '🦗',
         spriteKey: 'flea',
@@ -595,8 +597,8 @@ export const enemyTypes = {
         },
         attack: {
             strategy: 'singleUse',
-            damage: 1,
-            range: 50,
+            damage: 2,
+            range: -10,
             explosionRadius: 80,
             explosionDamage: 0
         },
@@ -632,7 +634,8 @@ export const enemyTypes = {
             maxSpawnCount: 3,
             spawnRange: 80,
             spawnType: 'wasp',
-            spawnDirection: 'circle'
+            spawnDirection: 'circle',
+            maxSpawned: 20 // Максимум заспавненных ос за игру
         },
         damageSpawn: {
             strategy: 'damageSpawn', // Спавн ос при получении урона

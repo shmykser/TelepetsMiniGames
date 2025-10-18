@@ -294,6 +294,13 @@ export class GestureActionSystem {
         if (!egg || !egg.activateEggExplosion) {
             return false;
         }
+        // Явно проверяем уровень способности взрыва яйца, чтобы при 0 ничего не происходило
+        const level = (this.abilitySystem && this.abilitySystem.getEggExplosion)
+            ? this.abilitySystem.getEggExplosion()
+            : (egg.eggExplosion || 0);
+        if (level <= 0) {
+            return false;
+        }
         
         return egg.activateEggExplosion();
     }

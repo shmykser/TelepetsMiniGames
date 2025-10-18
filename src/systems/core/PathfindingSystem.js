@@ -36,7 +36,7 @@ export class PathfindingSystem extends ISystem {
     }
 
     initialize() {
-        console.log(`🗺️ [PathfindingSystem] initialize: Инициализация для ${this.gameObject.constructor.name} (canFly: ${this.canFly})`);
+        
         this.setupPathfinding();
         
         // Слушаем события обновления препятствий
@@ -57,7 +57,7 @@ export class PathfindingSystem extends ISystem {
                 loop: true
             });
         }
-        console.log(`🗺️ [PathfindingSystem] initialize: Инициализация завершена`);
+        
     }
 
     setupPathfinding() {
@@ -66,7 +66,7 @@ export class PathfindingSystem extends ISystem {
     }
 
     createGrid() {
-        console.log(`🗺️ [PathfindingSystem] createGrid: Создаем сетку ${this.gridWidth}x${this.gridHeight} с размером клетки ${this.cellSize}`);
+        
         
         // Создаем сетку для поиска пути
         this.grid = this.createEmptyGrid(this.gridWidth, this.gridHeight);
@@ -74,7 +74,7 @@ export class PathfindingSystem extends ISystem {
         // НЕ вызываем updateObstacles() здесь - это вызовет рекурсию
         // Препятствия будут добавлены позже через updateObstacles()
         
-        console.log(`🗺️ [PathfindingSystem] createGrid: Сетка создана`);
+        
     }
 
     createEmptyGrid(width, height) {
@@ -160,7 +160,7 @@ export class PathfindingSystem extends ISystem {
      */
     findPath(target) {
         if (!target || !this.grid || !this.finder) {
-            console.log(`🗺️ [PathfindingSystem] findPath: Нет цели, сетки или поисковика (target: ${!!target}, grid: ${!!this.grid}, finder: ${!!this.finder})`);
+            
             return null;
         }
 
@@ -169,19 +169,19 @@ export class PathfindingSystem extends ISystem {
         const endX = Math.floor(target.x / this.cellSize);
         const endY = Math.floor(target.y / this.cellSize);
 
-        console.log(`🗺️ [PathfindingSystem] findPath: ${startX},${startY} -> ${endX},${endY} | grid ${this.gridWidth}x${this.gridHeight} cell ${this.cellSize} | fly:${this.canFly} ignoreGround:${this.ignoreGroundObstacles}`);
+        
 
         // Проверяем границы сетки
         if (startX < 0 || startX >= this.gridWidth || startY < 0 || startY >= this.gridHeight ||
             endX < 0 || endX >= this.gridWidth || endY < 0 || endY >= this.gridHeight) {
-            console.log(`🗺️ [PathfindingSystem] findPath: Координаты выходят за границы сетки (start: ${startX},${startY}, end: ${endX},${endY})`);
+            
             return null;
         }
 
         // Проверяем, не заблокированы ли начальная и конечная точки
         const startWalkable = this.grid.isWalkableAt(startX, startY);
         const endWalkable = this.grid.isWalkableAt(endX, endY);
-        console.log(`🗺️ [PathfindingSystem] findPath: startWalkable=${startWalkable}, endWalkable=${endWalkable}`);
+        
 
         // Если начальная точка заблокирована, пытаемся найти ближайшую свободную
         let actualStartX = startX;
@@ -191,9 +191,9 @@ export class PathfindingSystem extends ISystem {
             if (nearestWalkable) {
                 actualStartX = nearestWalkable.x;
                 actualStartY = nearestWalkable.y;
-                console.log(`🗺️ [PathfindingSystem] findPath: Используем ближайшую свободную клетку (${actualStartX}, ${actualStartY})`);
+                
             } else {
-                console.log(`🗺️ [PathfindingSystem] findPath: Не удалось найти свободную клетку рядом с начальной точкой`);
+                
                 return null;
             }
         }
@@ -206,9 +206,9 @@ export class PathfindingSystem extends ISystem {
             if (nearestWalkable) {
                 actualEndX = nearestWalkable.x;
                 actualEndY = nearestWalkable.y;
-                console.log(`🗺️ [PathfindingSystem] findPath: Используем ближайшую свободную клетку для цели (${actualEndX}, ${actualEndY})`);
+                
             } else {
-                console.log(`🗺️ [PathfindingSystem] findPath: Не удалось найти свободную клетку рядом с конечной точкой`);
+                
                 return null;
             }
         }
@@ -218,11 +218,11 @@ export class PathfindingSystem extends ISystem {
         const path = this.finder.findPath(actualStartX, actualStartY, actualEndX, actualEndY, gridClone);
         
         // Короткий лог результата
-        console.log(`🗺️ [PathfindingSystem] findPath: resultPoints=${path ? path.length : 0}`);
+        
         
         // Дополнительная диагностика если путь не найден
         if (!path || path.length === 0) {
-            console.log(`🗺️ [PathfindingSystem] findPath: no path | start:${actualStartX},${actualStartY} end:${actualEndX},${actualEndY}`);
+            
             
             // Проверяем несколько клеток вокруг начальной точки
             for (let dx = -2; dx <= 2; dx++) {
@@ -231,7 +231,7 @@ export class PathfindingSystem extends ISystem {
                     const y = actualStartY + dy;
                     if (x >= 0 && x < this.gridWidth && y >= 0 && y < this.gridHeight) {
                         const walkable = this.grid.isWalkableAt(x, y);
-                        console.log(`🗺️ [PathfindingSystem] findPath: cell ${x},${y} ${walkable ? 'ok' : 'blocked'}`);
+                        
                     }
                 }
             }
@@ -243,11 +243,11 @@ export class PathfindingSystem extends ISystem {
                 x: x * this.cellSize + this.cellSize / 2,
                 y: y * this.cellSize + this.cellSize / 2
             }));
-            console.log(`🗺️ [PathfindingSystem] findPath: pathLen=${worldPath.length}`);
+            
             return worldPath;
         }
 
-        console.log(`🗺️ [PathfindingSystem] findPath: Путь не найден`);
+        
         return null;
     }
 
@@ -321,11 +321,11 @@ export class PathfindingSystem extends ISystem {
      */
     updateObstacles() {
         if (!this.grid) {
-            console.log(`🗺️ [PathfindingSystem] updateObstacles: Сетка не создана`);
+        
             return;
         }
 
-        console.log(`🗺️ [PathfindingSystem] updateObstacles: обновление сетки ${this.gridWidth}x${this.gridHeight}`);
+        
 
         // Очищаем сетку
         this.grid = new PF.Grid(this.gridWidth, this.gridHeight);
@@ -336,7 +336,7 @@ export class PathfindingSystem extends ISystem {
         // НЕ вызываем debugGrid() здесь - это покажет пустую сетку
         // debugGrid() должен вызываться только после добавления препятствий
         
-        console.log(`🗺️ [PathfindingSystem] updateObstacles: Обновление завершено`);
+        
     }
 
     /**
@@ -369,33 +369,21 @@ export class PathfindingSystem extends ISystem {
      * @param {Object} obstacle - Препятствие
      */
     addObstacleToGrid(obstacle) {
-        console.log(`🗺️ [PathfindingSystem] addObstacleToGrid: Обрабатываем препятствие (canFly: ${this.canFly}, ignoreGroundObstacles: ${this.ignoreGroundObstacles})`);
-        console.log(`🗺️ [PathfindingSystem] addObstacleToGrid: Препятствие:`, {
-            type: obstacle.constructor.name,
-            hasDefenseData: !!obstacle.defenseData,
-            isObstacle: obstacle.defenseData?.isObstacle,
-            name: obstacle.defenseData?.name,
-            affectsFlying: obstacle.defenseData?.affectsFlying,
-            affectsGround: obstacle.defenseData?.affectsGround,
-            x: obstacle.x,
-            y: obstacle.y,
-            width: obstacle.width,
-            height: obstacle.height
-        });
+        
 
         // Проверяем, влияет ли препятствие на данный тип объекта
         if (obstacle.defenseData) {
             if (this.canFly && !obstacle.defenseData.affectsFlying) {
-                console.log(`🗺️ [PathfindingSystem] Пропускаем препятствие для летающего объекта (affectsFlying: ${obstacle.defenseData.affectsFlying})`);
+                
                 return;
             }
             if (!this.canFly && !obstacle.defenseData.affectsGround) {
-                console.log(`🗺️ [PathfindingSystem] Пропускаем препятствие для наземного объекта (affectsGround: ${obstacle.defenseData.affectsGround})`);
+                
                 return;
             }
         }
 
-        console.log(`🗺️ [PathfindingSystem] Добавляем препятствие в сетку (canFly: ${this.canFly}, obstacle: ${obstacle.defenseData?.name || 'unknown'})`);
+        
 
         // Центрируем прямоугольник блокировки относительно центра препятствия
         const centerX = Math.floor(obstacle.x / this.cellSize);
@@ -411,7 +399,7 @@ export class PathfindingSystem extends ISystem {
         if (startX + cellsW > this.gridWidth) { cellsW = Math.max(0, this.gridWidth - startX); }
         if (startY + cellsH > this.gridHeight) { cellsH = Math.max(0, this.gridHeight - startY); }
 
-        console.log(`🗺️ [PathfindingSystem] Центр (${centerX}, ${centerY}), старт (${startX}, ${startY}), размер в клетках (${cellsW}, ${cellsH})`);
+        
 
         let blockedCells = 0;
         for (let y = startY; y < startY + cellsH; y++) {
@@ -422,7 +410,7 @@ export class PathfindingSystem extends ISystem {
                 }
             }
         }
-        console.log(`🗺️ [PathfindingSystem] Заблокировано клеток: ${blockedCells}`);
+        
     }
 
     /**
@@ -544,7 +532,7 @@ export class PathfindingSystem extends ISystem {
             if (newPath && newPath.length > 0) {
                 this.currentPath = newPath;
                 this.pathIndex = 0;
-                console.log('🛤️ [PathfindingSystem] Путь обновлен из-за изменения препятствий');
+                
             }
         }
     }
