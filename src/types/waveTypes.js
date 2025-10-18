@@ -4,7 +4,7 @@
  * Каждая минута добавляет новые типы врагов
  */
 export const enemyTypesByMinute = {
-    1: ['ant', 'beetle', 'spider', 'spiderQueen'],
+    1: ['spider', 'beetle'],
     //1: ['spiderQueen'],
     //1: ['hive'],
     //1: ['wasp'],

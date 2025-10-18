@@ -14,7 +14,7 @@ export const enemyTypes = {
         movement: {
             strategy: 'linear',
             speed: 70,
-            rotationSpeed: 0.1
+            rotationSpeed: 5.0
         },
         attack: {
             strategy: 'simple',
@@ -45,7 +45,7 @@ export const enemyTypes = {
         movement: {
             strategy: 'linear',
             speed: 60,
-            rotationSpeed: 0.15,
+            rotationSpeed: 7.5,
         },
         attack: {
             strategy: 'simple',
@@ -76,7 +76,7 @@ export const enemyTypes = {
         movement: {         
             strategy: 'jittery',
             speed: 80,                     // Базовая скорость движения
-            rotationSpeed: 0.15,          // Скорость поворота спрайта
+            rotationSpeed: 7.5,          // Скорость поворота спрайта
             jitterIntensity: 100,          // Максимальное отклонение в пикселях
             jitterFrequency: 0.2,         // Частота смены направления (0-1)
             jitterSmoothness: 0.08        // Плавность перехода (0=резкий, 1=плавный)
@@ -110,7 +110,7 @@ export const enemyTypes = {
         movement: {
             strategy: 'linear',
             speed: 30,
-            rotationSpeed: 0.1
+            rotationSpeed: 5.0
         },
         attack: {
             strategy: 'simple',
@@ -145,7 +145,7 @@ export const enemyTypes = {
             minSpeed: 5,            // Минимальная скорость для разворота
             acceleration: 800,      // Скорость ускорения
             deceleration: 800,      // Скорость торможения (быстрее чем ускорение)
-            rotationSpeed: 0.05,    // Скорость поворота спрайта
+            rotationSpeed: 2.5,    // Скорость поворота спрайта
             mass: 3.5,              // Масса для инерции
             drag: 0.95,             // Сопротивление воздуха
             bounce: 0.3             // Отскок от границ
@@ -179,7 +179,7 @@ export const enemyTypes = {
         movement: {
             strategy: 'linear',
             speed: 50,
-            rotationSpeed: 0.1
+            rotationSpeed: 5.0
         },
         attack: {
             strategy: 'simple',
@@ -210,7 +210,7 @@ export const enemyTypes = {
         movement: {
             strategy: 'flying',
             speed: 60,
-            rotationSpeed: 0.08,
+            rotationSpeed: 4.0,
             amplitude: 35,
             oscillationSpeed: 0.02,
             targetAttraction: 0.9
@@ -288,7 +288,7 @@ export const enemyTypes = {
         movement: {
             strategy: 'linear',
             speed: 180,
-            rotationSpeed: 0.2
+            rotationSpeed: 10.0
         },
         attack: {
             strategy: 'singleUse',
@@ -320,7 +320,7 @@ export const enemyTypes = {
         movement: {
             strategy: 'orbital',
             speed: 120,
-            rotationSpeed: 0.15,
+            rotationSpeed: 7.5,
             orbitSpeed: 0.02,
             approachDistance: 250,
             minOrbitRadius: 50,
@@ -363,7 +363,7 @@ export const enemyTypes = {
         movement: {
             strategy: 'linear',
             speed: 30,
-            rotationSpeed: 0.1
+            rotationSpeed: 5.0
         },
         stealth: {
             strategy: 'stealth',
@@ -401,7 +401,7 @@ export const enemyTypes = {
         movement: {
             strategy: 'shell',
             speed: 20,
-            rotationSpeed: 0.08,
+            rotationSpeed: 4.0,
             shellProtection: 0.5,
             shellDuration: 3000,
             shellCooldown: 5000
@@ -443,7 +443,7 @@ export const enemyTypes = {
         movement: {
             strategy: 'linear',
             speed: 15,
-            rotationSpeed: 0.1
+            rotationSpeed: 5.0
         },
         attack: {
             strategy: 'spawn',
@@ -477,7 +477,7 @@ export const enemyTypes = {
         movement: {
             strategy: 'randomPoint',
             speed: 40,
-            rotationSpeed: 0.12,
+            rotationSpeed: 5.02,
             searchRadius: 600,
             minDistance: 50
         },
@@ -521,7 +521,7 @@ export const enemyTypes = {
         movement: {
             strategy: 'flying',
             speed: 40,
-            rotationSpeed: 0.1,
+            rotationSpeed: 5.0,
             amplitude: 45,
             oscillationSpeed: 0.2,
             targetAttraction: 0.9
@@ -555,7 +555,7 @@ export const enemyTypes = {
         movement: {
             strategy: 'jumping',
             speed: 200,                   // Скорость прыжка
-            rotationSpeed: 0.2,           // Скорость поворота спрайта
+            rotationSpeed: 10.0,           // Скорость поворота спрайта
             jumpDuration: 1000,           // Длительность прыжка в миллисекундах
             restDuration: 500,            // Длительность отдыха между прыжками в миллисекундах
             jumpHeight: 30,               // Высота прыжка в пикселях
@@ -593,7 +593,7 @@ export const enemyTypes = {
         movement: {
             strategy: 'linear',
             speed: 150,
-            rotationSpeed: 0.2
+            rotationSpeed: 10.0
         },
         attack: {
             strategy: 'singleUse',

@@ -19,27 +19,31 @@ export class LinearMovementStrategy {
 
         // Поддержка внешней цели (waypoint) от MovementSystem
         this.currentTarget = null;
+        
+        // Скорость поворота в радианах/секунду
+        this.rotationSpeed = movementConfig.rotationSpeed || 18.0;
     }
 
     /**
      * Обновление стратегии
      * @param {number} time - Текущее время
-     * @param {number} delta - Время с последнего обновления
+     * @param {number} delta - Время с последнего обновления (в миллисекундах)
      */
     update(time, delta) {
         // Простое линейное движение к цели: приоритет внешнему waypoint
         const target = this.currentTarget || this.gameObject.target;
         
         if (target) {
-            this.moveToTarget(target);
+            this.moveToTarget(target, delta);
         }
     }
 
     /**
      * Движение к цели
      * @param {Object} target - Цель {x, y}
+     * @param {number} delta - Время с последнего обновления (в миллисекундах)
      */
-    moveToTarget(target) {
+    moveToTarget(target, delta) {
         if (!target || !this.gameObject.isAlive) {
             this.stopMovement();
             return;
@@ -63,8 +67,8 @@ export class LinearMovementStrategy {
         // Применяем движение
         this.gameObject.setVelocity(velocityX, velocityY);
         
-        // Поворачиваем спрайт к цели
-        this.rotateToTarget(target);
+        // Поворачиваем спрайт к цели (плавно)
+        this.rotateToTarget(target, delta);
     }
 
     /**
@@ -83,12 +87,32 @@ export class LinearMovementStrategy {
     }
 
     /**
-     * Поворот к цели
+     * Поворот к цели (плавный)
      * @param {Object} target - Цель {x, y}
+     * @param {number} delta - Время с последнего обновления (в миллисекундах)
      */
-    rotateToTarget(target) {
-        const angle = GeometryUtils.angleToTarget(this.gameObject.x, this.gameObject.y, target.x, target.y);
-        this.gameObject.setRotation(angle);
+    rotateToTarget(target, delta) {
+        // Вычисляем целевой угол
+        const targetAngle = GeometryUtils.angleToTarget(this.gameObject.x, this.gameObject.y, target.x, target.y);
+        
+        // Получаем текущий угол
+        const currentAngle = this.gameObject.rotation;
+        
+        // Вычисляем разницу углов (кратчайший путь)
+        let angleDiff = targetAngle - currentAngle;
+        
+        // Нормализуем разницу в диапазон [-PI, PI]
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        
+        // Вычисляем максимальный поворот за этот кадр (delta в миллисекундах)
+        const maxRotation = this.rotationSpeed * (delta / 1000);
+        
+        // Ограничиваем поворот
+        const actualRotation = Math.sign(angleDiff) * Math.min(Math.abs(angleDiff), maxRotation);
+        
+        // Применяем новый угол
+        this.gameObject.setRotation(currentAngle + actualRotation);
     }
 
     /**

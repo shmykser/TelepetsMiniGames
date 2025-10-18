@@ -32,7 +32,7 @@ export const defenseTypes = {
         spawn: {
             minCount: 0,
             maxCount: 6,
-            margin: 10 // отступ от краёв экрана (px)
+            margin: 100 // отступ от краёв экрана (px)
         }
     },
     crack: {
