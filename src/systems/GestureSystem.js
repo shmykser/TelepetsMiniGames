@@ -192,6 +192,15 @@ export class GestureSystem {
      * Обработка начала касания
      */
     handlePointerDown(pointer) {
+        // Проверяем, не нажали ли мы на интерактивный объект (камень для drag & drop)
+        const hitObjects = this.scene.input.hitTestPointer(pointer);
+        for (const obj of hitObjects) {
+            if (obj.isDraggable && obj.interactive) {
+                // Игнорируем жест, позволяя drag & drop системе обработать это
+                return;
+            }
+        }
+        
         this.gestureState.isPointerDown = true;
         this.gestureState.startTime = this.scene.time.now;
         this.gestureState.startX = pointer.x;

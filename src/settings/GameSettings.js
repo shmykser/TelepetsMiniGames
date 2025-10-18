@@ -31,12 +31,24 @@ export const PHASER_SETTINGS = {
 
 // Настройки фона
 export const BACKGROUND_SETTINGS = {
-    tileSize: 64,
+    tileSize: 512,
     animate: true,
     animation: {
         speedX: 8,
         speedY: 4,
         duration: 20000
+    }
+};
+
+// Настройки камней
+export const STONE_SETTINGS = {
+    MIN_STONES: 3,
+    MAX_STONES: 10,
+    STONE_SPAWN_MARGIN: 50,  // Отступ от краев экрана
+    AVOIDANCE_RADIUS: 80,    // Радиус обхода для врагов
+    DRAG_FEEDBACK: {
+        ALPHA: 0.7,
+        SCALE_MULTIPLIER: 1.1
     }
 };
 

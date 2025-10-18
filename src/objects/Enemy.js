@@ -127,7 +127,7 @@ export class Enemy extends GameObject {
         set damage(value) { this._damage = Math.max(0, value); }
         set speed(value) { this._speed = Math.max(0, value); }
         set cooldown(value) { this._cooldown = Math.max(0, value); }
-        set attackRange(value) { this._attackRange = Math.max(0, value); }
+        set attackRange(value) { this._attackRange = value; }
         set target(value) { 
             const oldTarget = this._target;
             this._target = value; 

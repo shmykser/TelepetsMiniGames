@@ -10,6 +10,9 @@ import { EventSystem } from '../systems/EventSystem.js';
 import { AbilitySystem } from '../systems/AbilitySystem.js';
 import { EffectHandler } from '../handlers/EffectHandler.js';
 import { EnemyEffectSystem } from '../systems/EnemyEffectSystem.js';
+import { StoneManager } from '../systems/StoneManager.js';
+import { DragDropSystem } from '../systems/DragDropSystem.js';
+import { ObstacleInteractionSystem } from '../systems/ObstacleInteractionSystem.js';
 import { EVENT_TYPES } from '../types/EventTypes.js';
 import { BACKGROUND_SETTINGS, DEPTH_CONSTANTS } from '../settings/GameSettings.js';
 import { ABILITIES } from '../types/abilityTypes.js';
@@ -67,6 +70,16 @@ export class EggDefense extends Phaser.Scene {
         // HTML отображение способностей удалено
         
         // НЕ запускаем игру автоматически - только когда пользователь нажмет "ИГРАТЬ"
+        
+        // Инициализируем системы с задержкой, чтобы input был готов
+        this.time.delayedCall(2000, () => {
+            if (this.dragDropSystem) {
+                this.dragDropSystem.initialize();
+            }
+            if (this.obstacleInteractionSystem) {
+                this.obstacleInteractionSystem.initialize();
+            }
+        });
     }
 
     /**
@@ -121,6 +134,15 @@ export class EggDefense extends Phaser.Scene {
             Enemy.itemDropSystem, // Передаем ItemDropSystem для обработки предметов
             this.abilitySystem // Передаем AbilitySystem для получения актуальных значений
         );
+
+        // Система управления камнями
+        this.stoneManager = new StoneManager(this);
+        
+        // Система drag & drop
+        this.dragDropSystem = new DragDropSystem(this);
+        
+        // Система взаимодействия с препятствиями
+        this.obstacleInteractionSystem = new ObstacleInteractionSystem(this);
         
         // Передаем систему способностей яйцу
         if (this.egg && this.abilitySystem) {
@@ -149,6 +171,18 @@ export class EggDefense extends Phaser.Scene {
      * Настройка обработчиков событий
      */
     setupEventHandlers() {
+        // Обработчик обновления путей при изменении препятствий
+        this.events.on(EVENT_TYPES.PATHFINDING_UPDATED, () => {
+            // Обновляем пути всех врагов с активным pathfinding
+            if (this.waveSystem && this.waveSystem.enemies) {
+                this.waveSystem.enemies.forEach(enemy => {
+                    if (enemy.pathfindingSystem && enemy.pathfindingSystem.updatePathForObstacles) {
+                        enemy.pathfindingSystem.updatePathForObstacles();
+                    }
+                });
+            }
+        });
+        
         // Обработчик спавна врагов от осы и других спавнеров
         this.events.on('enemy:spawn', (spawnData) => {
             if (this.gameObject?.enemyType === 'wasp') {
@@ -406,6 +440,9 @@ export class EggDefense extends Phaser.Scene {
         
         // Создаем таймер только при старте игры
         this.createTimer();
+        
+        // Инициализируем камни на поле
+        this.stoneManager.initializeStones();
         
         // Отправляем событие начала игры
         this.eventSystem.emit(EVENT_TYPES.GAME_START, {

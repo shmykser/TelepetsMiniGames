@@ -23,7 +23,11 @@ export const defenseTypes = {
         size: 3, // 3x3
         texture: '', // fallback эмодзи камня
         spriteKey: 'stone', // ключ для спрайта
-        defaultSize: '128x128'
+        defaultSize: '128x128',
+        isDraggable: true,           // Можно перетаскивать
+        isObstacle: true,           // Является препятствием
+        affectsFlying: false,       // Не влияет на летающих
+        affectsGround: true         // Влияет на наземных
     },
     crack: {
         name: 'Трещина',

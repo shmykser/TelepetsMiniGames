@@ -23,6 +23,10 @@ export class MovementSystem extends ISystem {
         this.isMoving = false;
         this.lastUpdateTime = 0;
         this.updateInterval = this.getConfigValue('updateInterval', 16); // ~60 FPS
+        // Детектор застреваний при движении по пути
+        this.lastWaypointDistance = null;
+        this.lastWaypointCheckTime = 0;
+        this.stuckChecks = 0;
         
         // Стратегия движения
         this.strategy = null;
@@ -101,6 +105,15 @@ export class MovementSystem extends ISystem {
         }
 
         this.lastUpdateTime = time;
+
+        // Если есть активный путь — приоритетно двигаемся по нему
+        if (this.currentPath && this.pathIndex < this.currentPath.length) {
+            const waypoint = this.currentPath[this.pathIndex];
+            // Контроль застреваний
+            this.detectAndRecoverFromStuck(waypoint, time);
+            this.moveToTarget(waypoint);
+            return;
+        }
 
         if (this.strategy) {
             // Используем стратегию напрямую
@@ -331,6 +344,9 @@ export class MovementSystem extends ISystem {
 
         this.currentPath = path;
         this.pathIndex = 0;
+        this.lastWaypointDistance = null;
+        this.lastWaypointCheckTime = 0;
+        this.stuckChecks = 0;
         this.moveTo(path[0]);
     }
 
@@ -364,27 +380,17 @@ export class MovementSystem extends ISystem {
         }
 
         const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, target.x, target.y);
-        // Базовый радиус должен браться только из attack.range
-        const attackCfg = this.config.get('attack', {});
-        const baseAttackRange = attackCfg.range || 0;
-        
-        // Вычисляем эффективный радиус атаки с учетом размеров обоих объектов (централизовано)
-        const effectiveAttackRange = GeometryUtils.effectiveAttackRange(this.gameObject, target, baseAttackRange);
-
-        // Логируем для отладки (только для сахара)
-        if (target.defenseType === 'sugar') {
-            console.log(`🚶 [Movement] Враг ${this.gameObject.enemyType} движется к сахару:`);
-            console.log(`🚶 [Movement] - Расстояние: ${distance.toFixed(1)}px`);
-            console.log(`🚶 [Movement] - Базовый радиус: ${baseAttackRange}px`);
-            console.log(`🚶 [Movement] - Эффективный радиус: ${effectiveAttackRange}px`);
-            console.log(`🚶 [Movement] - Останавливается: ${distance <= effectiveAttackRange}`);
-        }
-
-        // Если цель в радиусе атаки, останавливаемся
-        if (distance <= effectiveAttackRange) {
-            this.stopMovement();
-            this.onTargetReached(target);
-            return;
+        const movingAlongPath = !!(this.currentPath && this.pathIndex < this.currentPath.length);
+        if (!movingAlongPath) {
+            // Базовый радиус должен браться только из attack.range (только для реальных целей)
+            const attackCfg = this.config.get('attack', {});
+            const baseAttackRange = attackCfg.range || 0;
+            const effectiveAttackRange = GeometryUtils.effectiveAttackRange(this.gameObject, target, baseAttackRange);
+            if (distance <= effectiveAttackRange) {
+                this.stopMovement();
+                this.onTargetReached(target);
+                return;
+            }
         }
 
         // Вычисляем направление и скорость
@@ -406,8 +412,52 @@ export class MovementSystem extends ISystem {
         // Поворачиваем объект в направлении движения
         this.rotateToDirection(direction);
 
-        // Проверяем, достигли ли следующей точки пути
-        this.checkPathProgress();
+        // Проверяем прогресс только при движении по пути
+        if (movingAlongPath) {
+            this.checkPathProgress();
+        }
+    }
+
+    /**
+     * Детекция застревания при движении по пути и восстановление
+     * Если расстояние до текущего waypoint не уменьшается длительное время —
+     * инкрементируем индекс или слегка сдвигаем цель
+     */
+    detectAndRecoverFromStuck(waypoint, time) {
+        const checkInterval = 250; // мс между проверками
+        const maxStuckChecks = 4;  // ~1 сек без прогресса
+        const now = time;
+
+        if (now - this.lastWaypointCheckTime < checkInterval) return;
+        this.lastWaypointCheckTime = now;
+
+        const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, waypoint.x, waypoint.y);
+        if (this.lastWaypointDistance === null || distance < this.lastWaypointDistance - 1) {
+            // есть прогресс
+            this.lastWaypointDistance = distance;
+            this.stuckChecks = 0;
+            return;
+        }
+
+        // нет прогресса
+        this.stuckChecks++;
+        this.lastWaypointDistance = distance;
+
+        if (this.stuckChecks >= maxStuckChecks) {
+            // Пропускаем точку, если можем
+            if (this.currentPath && this.pathIndex < this.currentPath.length - 1) {
+                this.pathIndex++;
+                const next = this.currentPath[this.pathIndex];
+                this.moveTo(next);
+                console.log(`🚧 [MovementSystem] stuck: skip waypoint -> index=${this.pathIndex}`);
+            } else {
+                // последний waypoint — считаем завершенным
+                this.stopMovement();
+                this.onPathCompleted();
+            }
+            this.stuckChecks = 0;
+            this.lastWaypointDistance = null;
+        }
     }
 
     /**
@@ -449,19 +499,21 @@ export class MovementSystem extends ISystem {
      * Проверка прогресса по пути
      */
     checkPathProgress() {
-        if (!this.currentPath || this.pathIndex >= this.currentPath.length - 1) {
+        if (!this.currentPath || this.pathIndex >= this.currentPath.length) {
             return;
         }
 
         const currentTarget = this.currentPath[this.pathIndex];
         const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, currentTarget.x, currentTarget.y);
-        const threshold = this.getConfigValue('pathThreshold', 10);
+        const threshold = this.getConfigValue('pathThreshold', 16); // половина клетки по умолчанию
 
         if (distance <= threshold) {
-            this.pathIndex++;
-            if (this.pathIndex < this.currentPath.length) {
+            // Если это не последняя точка — переходим к следующей
+            if (this.pathIndex < this.currentPath.length - 1) {
+                this.pathIndex++;
                 this.moveTo(this.currentPath[this.pathIndex]);
             } else {
+                // Достигли последней точки пути
                 this.stopMovement();
                 this.onPathCompleted();
             }

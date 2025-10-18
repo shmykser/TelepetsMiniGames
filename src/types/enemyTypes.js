@@ -41,7 +41,7 @@ export const enemyTypes = {
         spriteKey: 'ant',
         defaultSize: '32x32',
         detectionRange: 150,
-        dropList: [], //ничего не дропается
+        dropList: [ITEM_TYPES.PATCH], //ничего не дропается
         movement: {
             strategy: 'linear',
             speed: 60,
@@ -50,7 +50,7 @@ export const enemyTypes = {
         attack: {
             strategy: 'simple',
             damage: 3,
-            range: 0,
+            range: -5,
             cooldown: 5000
         },
         collision: {

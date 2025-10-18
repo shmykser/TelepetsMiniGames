@@ -130,7 +130,7 @@ export class Item extends GameObject {
             case ITEM_TYPES.SHOVEL:
                 // Эффект: увеличение количества доступных лопат
                 if (this.abilitySystem) {
-                    const upgraded = this.abilitySystem.upgradeAbility('SHOVEL_COUNT');
+                    const upgraded = this.abilitySystem.upgradeAbility('SHOVEL');
                     if (upgraded) {
                         console.log(`🪓 [Item] Лопата добавлена в инвентарь: ${this.abilitySystem.getShovelCount()}`);
                     } else {

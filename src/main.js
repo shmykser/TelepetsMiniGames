@@ -28,6 +28,10 @@ const config = {
         }
     },
     physics: PHASER_SETTINGS.physics,
+    input: {
+        activePointers: 3,
+        smoothFactor: 0.5
+    },
     scene: [PreloadScene, MenuScene, TestEffects, SpriteTestScene, DemoComponents, TestGestures, TestBehaviors],
     render: {
         pixelArt: false,

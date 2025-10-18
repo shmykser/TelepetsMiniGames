@@ -567,7 +567,7 @@ export class GestureActionSystem {
         const maxPits = this.abilitySystem.abilities.PIT?.maxValue || 4;
         
         console.log(`🪓 [DEBUG] placePit вызван: shovelCount=${shovelCount}, pitCount=${pitCount}, maxPits=${maxPits}`);
-        console.log(`🪓 [DEBUG] abilitySystem.abilities.SHOVEL_COUNT=${this.abilitySystem.abilities.SHOVEL_COUNT}`);
+        console.log(`🪓 [DEBUG] abilitySystem.abilities.SHOVEL=${this.abilitySystem.abilities.SHOVEL}`);
         
         // Проверяем, есть ли лопаты
         if (shovelCount <= 0) {
@@ -657,12 +657,12 @@ export class GestureActionSystem {
             this.updatePitVisual(pit);
             
             // Обновляем счетчики (только лопаты, pitCount не изменяется)
-            this.abilitySystem.decrementAbility('SHOVEL_COUNT', 1);
+            this.abilitySystem.decrementAbility('SHOVEL', 1);
             
             console.log(`🕳️ Яма расширена в (${pit.x}, ${pit.y})`);
             console.log(`💚 Здоровье: ${oldHealth} → ${newHealth} (+${pitHealthIncrease})`);
             console.log(`🪓 Лопат осталось: ${this.abilitySystem.getShovelCount()}`);
-            console.log(`🪓 [DEBUG] abilitySystem.abilities.SHOVEL_COUNT после уменьшения: ${this.abilitySystem.abilities.SHOVEL_COUNT}`);
+            console.log(`🪓 [DEBUG] abilitySystem.abilities.SHOVEL после уменьшения: ${this.abilitySystem.abilities.SHOVEL}`);
             
             return true;
         } catch (error) {
@@ -859,12 +859,12 @@ export class GestureActionSystem {
             
             // Обновляем счетчики
             this.abilitySystem.abilities.PIT += 1;
-            this.abilitySystem.decrementAbility('SHOVEL_COUNT', 1);
+            this.abilitySystem.decrementAbility('SHOVEL', 1);
             
             console.log(`🕳️ Яма выкопана в (${x}, ${y}), здоровье: ${pit.health}`);
             console.log(`🕳️ Ям на поле: ${this.abilitySystem.getPitCount()}`);
             console.log(`🪓 Лопат осталось: ${this.abilitySystem.getShovelCount()}`);
-            console.log(`🪓 [DEBUG] abilitySystem.abilities.SHOVEL_COUNT после уменьшения: ${this.abilitySystem.abilities.SHOVEL_COUNT}`);
+            console.log(`🪓 [DEBUG] abilitySystem.abilities.SHOVEL после уменьшения: ${this.abilitySystem.abilities.SHOVEL}`);
             
             // Взаимодействие с врагом - заглушка
             console.log(`⚔️ Взаимодействие с врагами (заглушка)`);

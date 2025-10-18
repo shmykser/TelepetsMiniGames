@@ -52,5 +52,18 @@ export const EVENT_TYPES = {
 
     // События системы эффектов
     EFFECT_APPLY: 'effect:apply',
-    EFFECT_COMPLETE: 'effect:complete'
+    EFFECT_COMPLETE: 'effect:complete',
+
+    // События камней
+    STONE_CREATED: 'stone:created',
+    STONE_MOVED: 'stone:moved',
+    STONE_DESTROYED: 'stone:destroyed',
+    
+    // События препятствий
+    OBSTACLE_AVOIDANCE: 'obstacle:avoidance',
+    PATHFINDING_UPDATED: 'pathfinding:updated',
+    
+    // События drag & drop
+    DRAG_START: 'drag:start',
+    DRAG_END: 'drag:end'
 };

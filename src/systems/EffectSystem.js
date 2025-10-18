@@ -175,6 +175,14 @@ export class EffectSystem {
                 duration: 1000,
                 yoyo: true,
                 repeat: -1
+            },
+
+            // ЭКРАННЫЕ ЭФФЕКТЫ
+            screenFlash: {
+                color: 0xffffff,
+                duration: 500,
+                alpha: 0.3,
+                baseScale: 1.0
             }
         };
 
@@ -294,6 +302,10 @@ export class EffectSystem {
             // Эффект вылета
             case 'launchEffect':
                 return this.createLaunchEffect(target, config);
+
+            // Экранные эффекты
+            case 'screenFlash':
+                return this.createScreenFlashEffect(target, config);
 
             default:
                 console.warn(`Unknown effect type: ${effectType}`);
@@ -735,6 +747,35 @@ export class EffectSystem {
         return tween;
     }
 
+    /**
+     * Создает эффект вспышки экрана
+     */
+    createScreenFlashEffect(target, config) {
+        const color = config.color || 0xffffff;
+        const duration = config.duration || 500;
+        const alpha = config.alpha || 0.3;
+        const scale = config.scale?.to || 1.0;
+        
+        // Создаем прямоугольник на весь экран
+        const { width, height } = this.scene.scale;
+        const flash = this.scene.add.rectangle(width / 2, height / 2, width, height, color);
+        flash.setAlpha(0);
+        flash.setDepth(1000); // Поверх всех объектов
+        flash.setScale(scale);
+        
+        // Анимация вспышки
+        const tween = this.scene.tweens.add({
+            targets: flash,
+            alpha: alpha,
+            duration: duration / 2,
+            yoyo: true,
+            ease: 'Power2.easeOut',
+            onComplete: () => flash.destroy()
+        });
+        
+        return tween;
+    }
+
     // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
 
     /**
@@ -795,7 +836,7 @@ export class EffectSystem {
             'shake', 'flash', 'pulse', 'rotation', 'fadeIn', 'fadeOut',
             'scale', 'move', 'damage', 'explosion', 'flicker', 'glow',
             'wave', 'burstMovement', 'chaosMovement', 'particles', 'blast',
-            'auraGlow', 'launchEffect'
+            'auraGlow', 'launchEffect', 'screenFlash'
         ];
     }
 

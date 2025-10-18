@@ -204,13 +204,27 @@ export class AICoordinator {
 
         // Если не можем атаковать, ищем путь
         if (pathfindingSystem && this.shouldUsePathfinding()) {
-            const path = pathfindingSystem.findPath(this.currentTarget);
+            console.log(`🤖 [AICoordinator] Используем pathfinding для ${this.gameObject.constructor.name} (canFly: ${this.gameObject.canFly})`);
+            // Если уже есть активный путь, не пересчитываем каждый кадр
+            const existingPathActive = movementSystem.currentPath && movementSystem.pathIndex < movementSystem.currentPath.length;
+            const path = existingPathActive ? movementSystem.currentPath : pathfindingSystem.findPath(this.currentTarget);
             if (path && path.length > 0) {
+                console.log(`🤖 [AICoordinator] Найден путь длиной ${path.length} для ${this.gameObject.constructor.name}`);
                 this.setState('pathfinding');
-                pathfindingSystem.setPath(path);
-                movementSystem.moveAlongPath(path);
+                if (!existingPathActive) {
+                    pathfindingSystem.setPath(path);
+                    movementSystem.moveAlongPath(path);
+                }
+                return;
+            } else {
+                console.log(`🤖 [AICoordinator] Путь не найден для ${this.gameObject.constructor.name} - останавливаемся`);
+                // НЕ пытаемся двигаться напрямую - это приведет к движению через препятствия
+                this.setState('idle');
+                movementSystem.stopMovement();
                 return;
             }
+        } else {
+            console.log(`🤖 [AICoordinator] Pathfinding не используется для ${this.gameObject.constructor.name} (pathfindingSystem: ${!!pathfindingSystem}, shouldUse: ${this.shouldUsePathfinding()}, canFly: ${this.gameObject.canFly})`);
         }
 
         // Проверяем тип стратегии движения
@@ -223,7 +237,7 @@ export class AICoordinator {
             return;
         }
         
-        // Движение для обычных стратегий
+        // Движение для обычных стратегий (только если pathfinding не используется)
         this.setState('moving');
         movementSystem.moveTo(this.currentTarget);
     }
@@ -238,10 +252,26 @@ export class AICoordinator {
             return false;
         }
 
-        // Используем поиск пути, если есть препятствия
+        // Для летающих объектов не используем pathfinding, если они игнорируют наземные препятствия
+        if (this.gameObject.canFly && pathfindingSystem.ignoreGroundObstacles) {
+            console.log(`🤖 [AICoordinator] Летающий объект игнорирует наземные препятствия, pathfinding не нужен`);
+            return false;
+        }
+
+        // Используем ObstacleInteractionSystem для проверки препятствий
+        const obstacleSystem = this.gameObject.scene.obstacleInteractionSystem;
+        if (obstacleSystem && obstacleSystem.obstacles && obstacleSystem.obstacles.length > 0) {
+            console.log(`🤖 [AICoordinator] shouldUsePathfinding: найдено ${obstacleSystem.obstacles.length} препятствий`);
+            return true;
+        }
+
+        // Fallback: проверяем сцену напрямую
         const hasObstacles = this.gameObject && this.gameObject.scene && 
-            this.gameObject.scene.children.list.some(obj => obj.isObstacle);
+            this.gameObject.scene.children.list.some(obj => 
+                obj.isObstacle || (obj.defenseData && obj.defenseData.isObstacle)
+            );
         
+        console.log(`🤖 [AICoordinator] shouldUsePathfinding: canFly=${this.gameObject.canFly}, ignoreGroundObstacles=${pathfindingSystem.ignoreGroundObstacles}, hasObstacles=${hasObstacles}`);
         return hasObstacles;
     }
 
@@ -255,6 +285,17 @@ export class AICoordinator {
         // Уведомляем системы о новой цели
         const movementSystem = this.systems.get('movement');
         const attackSystem = this.systems.get('attack');
+        const pathfindingSystem = this.systems.get('pathfinding');
+        
+        // При смене цели (например, на сахар) сбрасываем активный путь,
+        // чтобы немедленно перестроить маршрут к новой цели
+        if (pathfindingSystem && pathfindingSystem.clearPath) {
+            pathfindingSystem.clearPath();
+        }
+        if (movementSystem) {
+            movementSystem.currentPath = null;
+            movementSystem.pathIndex = 0;
+        }
         
         // Проверяем тип стратегии движения
         const movementConfig = this.config.get('movement', {});

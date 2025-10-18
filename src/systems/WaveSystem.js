@@ -325,18 +325,18 @@ export class WaveSystem {
         switch (side) {
             case 0: // Верх
                 x = GeometryUtils.randomBetween(margin, width - margin);
-                y = -margin;
+                y = margin; // внутри мира
                 break;
             case 1: // Право
-                x = width + margin;
+                x = width - margin; // внутри мира
                 y = GeometryUtils.randomBetween(margin, height - margin);
                 break;
             case 2: // Низ
                 x = GeometryUtils.randomBetween(margin, width - margin);
-                y = height + margin;
+                y = height - margin; // внутри мира
                 break;
             case 3: // Лево
-                x = -margin;
+                x = margin; // внутри мира
                 y = GeometryUtils.randomBetween(margin, height - margin);
                 break;
         }

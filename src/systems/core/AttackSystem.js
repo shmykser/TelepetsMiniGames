@@ -17,8 +17,8 @@ export class AttackSystem extends ISystem {
         // Получаем конфигурацию атаки
         const attackConfig = this.config.get('attack', {});
         this.attackCooldown = attackConfig.cooldown || this.getConfigValue('cooldown', 1000);
-        // Радиус атаки берем ТОЛЬКО из attack.range
-        this.attackRange = attackConfig.range || 0;
+        // Радиус атаки берем ТОЛЬКО из attack.range. Важно: допускаем отрицательные значения
+        this.attackRange = (attackConfig.range !== undefined ? attackConfig.range : 0);
         this.damage = attackConfig.damage || this.getConfigValue('damage', 10);
         this.attackType = this.getConfigValue('attackType', 'singleUse');
         

@@ -22,7 +22,7 @@ export class AbilitySystem {
             EGG_EXPLOSION: ABILITIES.EGG_EXPLOSION.baseValue, // Взрыв яйца (множитель)
             EGG_RECOVERY: ABILITIES.EGG_RECOVERY.baseValue, // Регенерация яйца
             PIT: ABILITIES.PIT.baseValue,                   // Количество ям на поле
-            SHOVEL_COUNT: ABILITIES.SHOVEL_COUNT.baseValue  // Количество доступных лопат
+            SHOVEL: ABILITIES.SHOVEL.baseValue  // Количество доступных лопат
         };
     }
     
@@ -147,7 +147,7 @@ export class AbilitySystem {
      * @returns {number}
      */
     getShovelCount() {
-        return this.abilities.SHOVEL_COUNT;
+        return this.abilities.SHOVEL;
     }
 
     /**
@@ -277,7 +277,7 @@ export class AbilitySystem {
             EGG_EXPLOSION: ABILITIES.EGG_EXPLOSION.baseValue,
             EGG_RECOVERY: ABILITIES.EGG_RECOVERY.baseValue,
             PIT: ABILITIES.PIT.baseValue,
-            SHOVEL_COUNT: ABILITIES.SHOVEL_COUNT.baseValue
+            SHOVEL: ABILITIES.SHOVEL.baseValue
         };
         
         this.scene.events.emit('abilities:reset');
