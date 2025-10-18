@@ -117,14 +117,19 @@ export class AttackSystem extends ISystem {
      * @returns {boolean} - Успешность атаки
      */
     attackCurrentTarget() {
-        if (!this.currentTarget || !this.canAttack()) {
+        if (!this.currentTarget) {
+            return false;
+        }
+        
+        const canAttackNow = this.canAttack();
+        if (!canAttackNow) {
             return false;
         }
 
         if (!this.isInRange()) {
             return false;
         }
-
+        
         return this.performAttack();
     }
 

@@ -347,7 +347,6 @@ export class MovementSystem extends ISystem {
         if (this.strategy && this.strategy.setTarget && 
             this.strategyType !== 'randomPoint' && this.strategyType !== 'spawner') {
             this.strategy.setTarget(target);
-            
         }
     }
 

@@ -115,7 +115,7 @@ export const enemyTypes = {
         attack: {
             strategy: 'simple',
             damage: 10,
-            range: 35,
+            range: -5,
             cooldown: 5000
         },
         collision: {
@@ -184,7 +184,7 @@ export const enemyTypes = {
         attack: {
             strategy: 'simple',
             damage: 10,
-            range: 0,
+            range: -5,
             cooldown: 5000
         },
         collision: {

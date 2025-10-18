@@ -29,13 +29,9 @@ export class LinearMovementStrategy {
     update(time, delta) {
         // Простое линейное движение к цели: приоритет внешнему waypoint
         const target = this.currentTarget || this.gameObject.target;
+        
         if (target) {
             this.moveToTarget(target);
-        } else {
-            // Логируем для муравья
-            if (this.gameObject.enemyType === 'ant') {
-
-            }
         }
     }
 
@@ -50,7 +46,9 @@ export class LinearMovementStrategy {
         }
 
         // Проверяем, достигнута ли цель
-        if (this.isTargetReached(target)) {
+        const targetReached = this.isTargetReached(target);
+        
+        if (targetReached) {
             this.stopMovement();
             return;
         }
@@ -112,11 +110,13 @@ export class LinearMovementStrategy {
     isTargetReached(target) {
         if (!target || !this.gameObject) return false;
         const distance = GeometryUtils.distance(this.gameObject.x, this.gameObject.y, target.x, target.y);
-        const effectiveRange = GeometryUtils.effectiveAttackRange(this.gameObject, target, this.attackRange);
-        const reached = distance <= effectiveRange;
         
+        // Используем фиксированный tolerance для достижения точек движения (waypoints или финальной цели)
+        // Это НЕ то же самое что attack range - радиус атаки проверяется в AttackSystem.isInRange()
+        // Задача стратегии движения - просто довести объект до точки назначения, а не проверять радиус атаки
+        const MOVEMENT_TOLERANCE = 10;
         
-        return reached;
+        return distance <= MOVEMENT_TOLERANCE;
     }
 
     /**

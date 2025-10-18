@@ -210,19 +210,25 @@ export class AICoordinator {
         if (attackStrategy === 'spawn') {
             // Спавнеры работают автономно через SpawnAttackStrategy.update()
             // Не нужно вызывать attackSystem.attack() - это перезапишет логику таймера
-            if (this.gameObject?.enemyType === 'hive') {
-                console.log(`🏠 [HIVE] coordinateSystems: strategy='spawn', пропускаем вызов attack()`);
-            }
             return;
         }
         
         // Для остальных стратегий проверяем, можем ли атаковать
         if (attackSystem && attackStrategy !== 'none') {
             // Проверяем радиус атаки
-            if (attackSystem.isInRange && attackSystem.isInRange()) {
-                this.setState('attacking');
-                attackSystem.attack(this.currentTarget);
-                return;
+            const inRange = attackSystem.isInRange && attackSystem.isInRange();
+            
+            if (inRange) {
+                // Пытаемся атаковать
+                const attackSuccessful = attackSystem.attack(this.currentTarget);
+                
+                // Если атака успешна (cooldown прошел) - останавливаемся для атаки
+                if (attackSuccessful) {
+                    this.setState('attacking');
+                    return;
+                }
+                // Если атака неудачна (cooldown не прошел) - продолжаем движение ниже
+                // Это исправляет баг с рывками у жука и паука
             }
         }
 
@@ -233,7 +239,9 @@ export class AICoordinator {
         } else if (pathfindingSystem && this.shouldUsePathfinding()) {
             // Если уже есть активный путь, не пересчитываем каждый кадр
             const existingPathActive = movementSystem.currentPath && movementSystem.pathIndex < movementSystem.currentPath.length;
+            
             const path = existingPathActive ? movementSystem.currentPath : pathfindingSystem.findPath(this.currentTarget);
+            
             if (path && path.length > 0) {
                 this.setState('pathfinding');
                 if (!existingPathActive) {
@@ -262,6 +270,13 @@ export class AICoordinator {
         }
         
         // Движение для обычных стратегий (только если pathfinding не используется)
+        
+        // Логи для жука и паука
+        if ((this.gameObject?.enemyType === 'beetle' || this.gameObject?.enemyType === 'spider')) {
+            const enemyIcon = this.gameObject.enemyType === 'beetle' ? '🐞' : '🕷️';
+            console.log(`${enemyIcon} [${this.gameObject.enemyType}] 🏃 Прямое движение к цели (без pathfinding)`);
+        }
+        
         this.setState('moving');
         movementSystem.moveTo(this.currentTarget);
     }
