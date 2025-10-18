@@ -629,9 +629,9 @@ export const enemyTypes = {
         },
         attack: {
             strategy: 'spawn', // Регулярный спавн ос
-            spawnInterval: 8000, // Каждые 8 секунд
+            spawnInterval: 8000, // Каждые 10 секунд
             minSpawnCount: 1,
-            maxSpawnCount: 3,
+            maxSpawnCount: 2,
             spawnRange: 80,
             spawnType: 'wasp',
             spawnDirection: 'circle',

@@ -11,7 +11,9 @@ export const settings = {
     },
     // Глобальные флаги ИИ/геймплея
     ai: {
-        // Временный флаг: при необходимости отключаем pathfinding, чтобы не ломать стратегии движения
-        pathfindingEnabled: false
+        // Pathfinding для наземных врагов - обход камней
+        // НЕ используется для: летающих врагов (canFly + ignoreGroundObstacles), 
+        // static (улей), spawner, randomPoint (крот)
+        pathfindingEnabled: true
     }
 };
