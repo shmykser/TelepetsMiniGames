@@ -1,5 +1,6 @@
 import { Defense } from '../objects/Defense.js';
 import { STONE_SETTINGS } from '../settings/GameSettings.js';
+import { defenseTypes } from '../types/defenseTypes.js';
 import { EVENT_TYPES } from '../types/EventTypes.js';
 import { GeometryUtils } from '../utils/GeometryUtils.js';
 
@@ -10,9 +11,11 @@ export class StoneManager {
     constructor(scene) {
         this.scene = scene;
         this.stones = [];
-        this.minStones = STONE_SETTINGS.MIN_STONES;
-        this.maxStones = STONE_SETTINGS.MAX_STONES;
-        this.spawnMargin = STONE_SETTINGS.STONE_SPAWN_MARGIN;
+        // Читаем диапазон генерации из defenseTypes.stone.spawn, с fallback на GameSettings
+        const stoneSpawn = defenseTypes.stone?.spawn || {};
+        this.minStones = stoneSpawn.minCount ?? STONE_SETTINGS.MIN_STONES;
+        this.maxStones = stoneSpawn.maxCount ?? STONE_SETTINGS.MAX_STONES;
+        this.spawnMargin = stoneSpawn.margin ?? STONE_SETTINGS.STONE_SPAWN_MARGIN;
     }
     
     /**

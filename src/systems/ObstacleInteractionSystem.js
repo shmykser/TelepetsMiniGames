@@ -120,39 +120,13 @@ export class ObstacleInteractionSystem extends ISystem {
             return;
         }
 
-        // Детальная диагностика
+        // Берем только живые препятствия по defenseData.isObstacle
         const allObjects = this.scene.children.list;
-        console.log(`🚧 [ObstacleInteractionSystem] Всего объектов в сцене: ${allObjects.length}`);
-        
-        // Ищем объекты с defenseData
-        const objectsWithDefenseData = allObjects.filter(obj => obj.defenseData);
-        console.log(`🚧 [ObstacleInteractionSystem] Объектов с defenseData: ${objectsWithDefenseData.length}`);
-        
-        // Ищем объекты с isObstacle
-        const objectsWithIsObstacle = allObjects.filter(obj => obj.defenseData && obj.defenseData.isObstacle);
-        console.log(`🚧 [ObstacleInteractionSystem] Объектов с isObstacle: ${objectsWithIsObstacle.length}`);
-        
-        // Ищем живые объекты
-        const aliveObjects = allObjects.filter(obj => obj.isAlive);
-        console.log(`🚧 [ObstacleInteractionSystem] Живых объектов: ${aliveObjects.length}`);
-        
-        // Ищем камни по типу
-        const stoneObjects = allObjects.filter(obj => 
-            obj.defenseData && 
-            obj.defenseData.name === 'stone'
-        );
-        console.log(`🚧 [ObstacleInteractionSystem] Камней по типу: ${stoneObjects.length}`);
-
-        // Ищем все камни в сцене
-        const stones = allObjects.filter(obj => 
-            obj.defenseData && 
-            obj.defenseData.isObstacle && 
-            obj.isAlive
-        );
+        const stones = allObjects.filter(obj => obj.defenseData?.isObstacle && obj.isAlive);
 
         // Обновляем список препятствий
         this.obstacles = stones;
-        console.log(`🚧 [ObstacleInteractionSystem] Найдено препятствий в сцене: ${this.obstacles.length}`);
+        console.log(`🚧 [ObstacleInteractionSystem] Найдено препятствий: ${this.obstacles.length}`);
         
         // Уведомляем PathfindingSystem о обновлении препятствий
         this.scene.events.emit(EVENT_TYPES.PATHFINDING_UPDATED, {
@@ -161,18 +135,7 @@ export class ObstacleInteractionSystem extends ISystem {
         });
         
         // Выводим информацию о найденных препятствиях
-        stones.forEach((stone, index) => {
-            console.log(`🚧 [ObstacleInteractionSystem] Препятствие ${index}:`, {
-                type: stone.constructor.name,
-                name: stone.defenseData?.name,
-                isObstacle: stone.defenseData?.isObstacle,
-                affectsGround: stone.defenseData?.affectsGround,
-                affectsFlying: stone.defenseData?.affectsFlying,
-                isAlive: stone.isAlive,
-                x: stone.x,
-                y: stone.y
-            });
-        });
+        // при необходимости — можно детализировать вывод для первых нескольких объектов
     }
     
     /**

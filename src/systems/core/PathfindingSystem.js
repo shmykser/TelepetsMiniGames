@@ -16,12 +16,13 @@ export class PathfindingSystem extends ISystem {
         this.pathIndex = 0;
         this.updateTimer = null;
         
-        // Более точный расчет размера сетки
-        const gameWidth = 720;  // Из GameSettings
-        const gameHeight = 1280; // Из GameSettings
+        // Размеры мира берем из сцены (fallback на дефолты)
+        const sceneScale = this.gameObject?.scene?.scale;
+        const gameWidth = (sceneScale && sceneScale.width) ? sceneScale.width : 720;
+        const gameHeight = (sceneScale && sceneScale.height) ? sceneScale.height : 1280;
         this.cellSize = this.getConfigValue('cellSize', 32);
-        this.gridWidth = Math.ceil(gameWidth / this.cellSize);  // 23
-        this.gridHeight = Math.ceil(gameHeight / this.cellSize); // 40
+        this.gridWidth = Math.ceil(gameWidth / this.cellSize);
+        this.gridHeight = Math.ceil(gameHeight / this.cellSize);
         
         this.algorithm = this.getConfigValue('algorithm', 'astar');
         this.allowDiagonal = this.getConfigValue('allowDiagonal', true);
@@ -324,7 +325,7 @@ export class PathfindingSystem extends ISystem {
             return;
         }
 
-        console.log(`🗺️ [PathfindingSystem] updateObstacles: Обновляем препятствия в сетке ${this.gridWidth}x${this.gridHeight}`);
+        console.log(`🗺️ [PathfindingSystem] updateObstacles: обновление сетки ${this.gridWidth}x${this.gridHeight}`);
 
         // Очищаем сетку
         this.grid = new PF.Grid(this.gridWidth, this.gridHeight);
@@ -349,58 +350,14 @@ export class PathfindingSystem extends ISystem {
         // Получаем препятствия из ObstacleInteractionSystem
         const obstacleSystem = this.gameObject.scene.obstacleInteractionSystem;
         if (obstacleSystem && obstacleSystem.obstacles && obstacleSystem.obstacles.length > 0) {
-            console.log(`🗺️ [PathfindingSystem] Найдено препятствий из ObstacleInteractionSystem: ${obstacleSystem.obstacles.length} (canFly: ${this.canFly})`);
             obstacleSystem.obstacles.forEach(obstacle => {
                 this.addObstacleToGrid(obstacle);
             });
             return;
         } else {
             // Fallback: ищем препятствия напрямую в сцене
-            console.log(`🗺️ [PathfindingSystem] ObstacleInteractionSystem недоступна, ищем препятствия в сцене`);
-            
-            // Детальная диагностика
             const allObjects = this.gameObject.scene.children.list;
-            console.log(`🗺️ [PathfindingSystem] Всего объектов в сцене: ${allObjects.length}`);
-            
-            // Ищем объекты с defenseData
-            const objectsWithDefenseData = allObjects.filter(obj => obj.defenseData);
-            console.log(`🗺️ [PathfindingSystem] Объектов с defenseData: ${objectsWithDefenseData.length}`);
-            
-            // Ищем объекты с isObstacle
-            const objectsWithIsObstacle = allObjects.filter(obj => obj.defenseData && obj.defenseData.isObstacle);
-            console.log(`🗺️ [PathfindingSystem] Объектов с isObstacle: ${objectsWithIsObstacle.length}`);
-            
-            // Ищем живые объекты
-            const aliveObjects = allObjects.filter(obj => obj.isAlive);
-            console.log(`🗺️ [PathfindingSystem] Живых объектов: ${aliveObjects.length}`);
-            
-            // Ищем камни по типу
-            const stoneObjects = allObjects.filter(obj => 
-                obj.defenseData && 
-                obj.defenseData.name === 'stone'
-            );
-            console.log(`🗺️ [PathfindingSystem] Камней по типу: ${stoneObjects.length}`);
-            
-            // Выводим информацию о первых нескольких объектах
-            allObjects.slice(0, 5).forEach((obj, index) => {
-                console.log(`🗺️ [PathfindingSystem] Объект ${index}:`, {
-                    type: obj.constructor.name,
-                    hasDefenseData: !!obj.defenseData,
-                    isObstacle: obj.defenseData?.isObstacle,
-                    name: obj.defenseData?.name,
-                    isAlive: obj.isAlive,
-                    x: obj.x,
-                    y: obj.y
-                });
-            });
-            
-            const sceneObstacles = allObjects.filter(obj => 
-                obj.defenseData && 
-                obj.defenseData.isObstacle && 
-                obj.isAlive
-            );
-
-            console.log(`🗺️ [PathfindingSystem] Найдено препятствий в сцене: ${sceneObstacles.length} (canFly: ${this.canFly})`);
+            const sceneObstacles = allObjects.filter(obj => obj.defenseData?.isObstacle && obj.isAlive);
             sceneObstacles.forEach(obstacle => {
                 this.addObstacleToGrid(obstacle);
             });

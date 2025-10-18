@@ -27,7 +27,13 @@ export const defenseTypes = {
         isDraggable: true,           // Можно перетаскивать
         isObstacle: true,           // Является препятствием
         affectsFlying: false,       // Не влияет на летающих
-        affectsGround: true         // Влияет на наземных
+        affectsGround: true,        // Влияет на наземных
+        // Параметры генерации камней на карте
+        spawn: {
+            minCount: 3,
+            maxCount: 10,
+            margin: 50 // отступ от краёв экрана (px)
+        }
     },
     crack: {
         name: 'Трещина',

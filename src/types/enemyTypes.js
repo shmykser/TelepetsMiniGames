@@ -41,7 +41,7 @@ export const enemyTypes = {
         spriteKey: 'ant',
         defaultSize: '32x32',
         detectionRange: 150,
-        dropList: [ITEM_TYPES.PATCH], //ничего не дропается
+        dropList: [], //ничего не дропается
         movement: {
             strategy: 'linear',
             speed: 60,
