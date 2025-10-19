@@ -4,20 +4,29 @@
  * Каждая минута добавляет новые типы врагов
  */
 export const enemyTypesByMinute = {
-    1: ['spider', 'beetle'],
-    //1: ['spiderQueen'],
-    //1: ['hive'],
-    //1: ['wasp'],
-    2: ['ant', 'fly', 'mosquito', 'flea'],
-    3: ['ant', 'beetle', 'mosquito', 'fly', 'bee', 'slug', 'flea'],
-    4: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'bee', 'butterfly', 'snail', 'slug', 'mole', 'flea'],
-    5: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'flea'],
+    2: ['ant', 'beetle'],
+    1: ['ant', 'fly', 'mosquito', 'flea', 'bee', 'wasp'],
+    3: ['dragonfly'],
+    4: ['wasp'],
+
+    //3: ['ant', 'beetle', 'mosquito', 'fly', 'bee', 'slug', 'flea'],
+    //4: ['ant', 'beetle', 'mosquito', 'fly', 'bee', 'butterfly', 'flea'],
+    5: ['rhinoceros'],
+
+    //5: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'flea'],
     6: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'flea'],
     7: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'flea'],
     8: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'hive', 'flea'],
     9: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'hive', 'flea'],
     10: ['ant', 'beetle', 'mosquito', 'fly', 'spider', 'rhinoceros', 'bee', 'butterfly', 'dragonfly', 'snail', 'slug', 'mole', 'spiderQueen', 'wasp', 'hive', 'flea']
 };
+
+//3: ['dragonfly'],
+//6: ['rhinoceros','dragonfly'],
+//7: ['spiderQueen'],
+//9: ['wasp'],
+//8: ['hive'],
+//10: ['mole'],
 
 /**
  * Веса врагов для случайного выбора
@@ -49,7 +58,7 @@ export const enemyWeights = {
  */
 export const WAVE_SETTINGS = {
     duration: 10 * 60 * 1000,        // 10 минут в миллисекундах
-    waveDuration: 60 * 1000,         // 1 минута на волну
+    waveDuration: 30 * 1000,         // 1 минута на волну
     maxWaves: 10                     // Максимальное количество волн (обновлено для новых врагов)
 };
 
