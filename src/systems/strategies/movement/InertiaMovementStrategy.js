@@ -76,8 +76,11 @@ export class InertiaMovementStrategy {
         const currentAngle = this.gameObject.rotation;
         const angleDiff = this.normalizeAngle(targetAngle - currentAngle);
         
+        // Нормализуем rotationSpeed (если больше 1, то это старое значение)
+        const normalizedRotationSpeed = this.rotationSpeed > 1 ? 0.15 : this.rotationSpeed;
+        
         if (Math.abs(angleDiff) > 0.01) {
-            const newAngle = currentAngle + angleDiff * this.rotationSpeed;
+            const newAngle = currentAngle + angleDiff * normalizedRotationSpeed;
             this.gameObject.setRotation(newAngle);
         } else {
             this.gameObject.setRotation(targetAngle);

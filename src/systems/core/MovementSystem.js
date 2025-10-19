@@ -105,6 +105,11 @@ export class MovementSystem extends ISystem {
     }
 
     updateSystem(time, delta) {
+        // Проверяем, что объект еще существует
+        if (!this.gameObject || !this.gameObject.scene) {
+            return;
+        }
+        
         if (time - this.lastUpdateTime < this.updateInterval) {
             return;
         }
@@ -339,6 +344,11 @@ export class MovementSystem extends ISystem {
      * @param {Object} target - Цель {x, y}
      */
     moveTo(target) {
+        // Проверяем, что объект еще существует
+        if (!this.gameObject || !this.gameObject.scene) {
+            return;
+        }
+        
         this.currentTarget = target;
         this.isMoving = true;
         this.setState('moving');
@@ -496,14 +506,18 @@ export class MovementSystem extends ISystem {
         const targetAngle = Math.atan2(direction.y, direction.x);
         const currentAngle = this.gameObject.rotation;
         
-        // Плавный поворот
         // Получаем конфигурацию движения
         const movementConfig = this.config.get('movement', {});
-        const rotationSpeed = movementConfig.rotationSpeed || this.getConfigValue('rotationSpeed', 0.1); // Скорость поворота
+        const rotationSpeed = movementConfig.rotationSpeed || this.getConfigValue('rotationSpeed', 0.15);
+        
+        // Нормализуем rotationSpeed если он больше 1 (старые значения для мгновенного поворота)
+        // Для плавного поворота используем значение 0.15 (оптимально)
+        const normalizedRotationSpeed = rotationSpeed > 1 ? 0.15 : rotationSpeed;
+        
         const angleDiff = this.normalizeAngle(targetAngle - currentAngle);
         
         if (Math.abs(angleDiff) > 0.01) { // Если разница больше 0.01 радиана
-            const newAngle = currentAngle + angleDiff * rotationSpeed;
+            const newAngle = currentAngle + angleDiff * normalizedRotationSpeed;
             this.gameObject.setRotation(newAngle);
         } else {
             this.gameObject.setRotation(targetAngle);
@@ -566,6 +580,11 @@ export class MovementSystem extends ISystem {
      * @param {string} state - Состояние
      */
     setState(state) {
+        // Проверяем, что объект еще существует
+        if (!this.gameObject) {
+            return;
+        }
+        
         this.state = state;
         this.emit('stateChanged', { 
             state, 
@@ -580,7 +599,7 @@ export class MovementSystem extends ISystem {
      * @param {Object} data - Данные
      */
     emit(event, data) {
-        if (this.gameObject.scene && this.gameObject.scene.events) {
+        if (this.gameObject && this.gameObject.scene && this.gameObject.scene.events) {
             this.gameObject.scene.events.emit(`movement:${event}`, data);
         }
     }

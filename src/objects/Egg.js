@@ -402,7 +402,7 @@ export class Egg extends GameObject {
 
         // Создаем полосу здоровья (фиксированная позиция внизу экрана как у игрока)
         const healthBarWidth = scene.cameras.main.width * 0.55;
-        console.log(`🥚 [Egg] Создание шкалы здоровья: камера ${scene.cameras.main.width}x${scene.cameras.main.height}, ширина шкалы: ${healthBarWidth}`);
+        console.log(`🥚 [Egg] Создание шкалы здоровья яйца: ширина=${healthBarWidth}, камера=${scene.cameras.main.width}x${scene.cameras.main.height}`);
         
         egg.createHealthBar({
             showDigits: true, 

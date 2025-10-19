@@ -79,6 +79,7 @@ export class HealthBar extends BaseUIComponent {
         // Для фиксированных шкал отключаем скролл камеры
         if (this.fixed) {
             this.setScrollFactor(0, 0);
+            console.log(`💚 [HealthBar] Фиксированная шкала создана: позиция (${this.x}, ${this.y}), размер ${this.barWidth}x${this.barHeight}, depth=${depth}`);
         }
         
         // Обновляем отображение
@@ -128,11 +129,6 @@ export class HealthBar extends BaseUIComponent {
             } else {
                 this.y = this.scene.cameras.main.height - 30;
             }
-            
-            // Временный отладочный вывод
-            if (this.targetObject.constructor.name === 'Egg') {
-                console.log(`💚 [HealthBar] Фиксированная позиция яйца: (${this.x}, ${this.y}), камера: ${this.scene.cameras.main.width}x${this.scene.cameras.main.height}, depth: ${this.depth}`);
-            }
         } else {
             // Следуем за объектом
             this.x = this.targetObject.x + this.offsetX;
@@ -148,9 +144,9 @@ export class HealthBar extends BaseUIComponent {
         // Определяем, нужно ли показывать компонент
         const shouldShow = this.shouldShowBar(healthPercent);
         
-        // Временный отладочный вывод для яйца
-        if (this.fixed && this.targetObject.constructor.name === 'Egg') {
-            console.log(`💚 [HealthBar] updateHealth яйца: health=${this.targetObject.health}/${this.targetObject.maxHealth}, shouldShow=${shouldShow}, visible=${this.visible}`);
+        // Временный отладочный вывод для фиксированных шкал
+        if (this.fixed) {
+            console.log(`💚 [HealthBar] updateHealth фиксированной шкалы: shouldShow=${shouldShow}, health=${this.targetObject.health}/${this.targetObject.maxHealth}, visible=${this.visible}`);
         }
         
         this.setVisible(shouldShow);

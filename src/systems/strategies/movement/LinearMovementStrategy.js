@@ -105,8 +105,11 @@ export class LinearMovementStrategy {
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
         
+        // Нормализуем rotationSpeed (если больше 1, то это старое значение - приводим к 0.15)
+        const normalizedRotationSpeed = this.rotationSpeed > 1 ? 0.15 : this.rotationSpeed;
+        
         // Вычисляем максимальный поворот за этот кадр (delta в миллисекундах)
-        const maxRotation = this.rotationSpeed * (delta / 1000);
+        const maxRotation = normalizedRotationSpeed * (delta / 1000) * Math.PI * 2;
         
         // Ограничиваем поворот
         const actualRotation = Math.sign(angleDiff) * Math.min(Math.abs(angleDiff), maxRotation);
