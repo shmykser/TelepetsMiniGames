@@ -400,13 +400,20 @@ export class Egg extends GameObject {
         // Отладочный вывод для проверки глубины (временно отключен)
         // console.log(`🥚 [Egg] Создано с глубиной: ${egg.depth}, DEPTH_CONSTANTS.EGG: ${DEPTH_CONSTANTS.EGG}`);
 
-        // Создаем полосу здоровья
+        // Создаем полосу здоровья (фиксированная позиция внизу экрана как у игрока)
+        const healthBarWidth = scene.cameras.main.width * 0.55;
+        console.log(`🥚 [Egg] Создание шкалы здоровья: камера ${scene.cameras.main.width}x${scene.cameras.main.height}, ширина шкалы: ${healthBarWidth}`);
+        
         egg.createHealthBar({
             showDigits: true, 
             showWhenFull: true,
             showWhenEmpty: true,
-            offsetY: -(egg.displayWidth / 2 + PHYSICS_CONSTANTS.EGG_HEALTH_BAR_OFFSET),
-            offsetX: 0,
+            showBar: true,
+            fixed: true, // Фиксированная позиция на экране
+            fixedX: 0.5, // Центр экрана по горизонтали (50%)
+            fixedY: 0.96, // 96% от высоты экрана (почти внизу, но с отступом)
+            barWidth: healthBarWidth, // 55% от ширины экрана
+            barHeight: 20, // Высокая полоса для лучшей видимости
             colors: {
                 background: COLORS.BLACK,
                 health: COLORS.HEALTH_GREEN,
