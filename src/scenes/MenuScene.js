@@ -1,7 +1,6 @@
 import { BackgroundUtils } from '../utils/BackgroundUtils.js';
 import { DEPTH_CONSTANTS } from '../settings/GameSettings.js';
 import { HTMLButton } from '../components/HTMLButton.js';
-import { EggDefense } from './EggDefense.js';
 
 export class MenuScene extends Phaser.Scene {
     constructor() {
@@ -64,9 +63,6 @@ export class MenuScene extends Phaser.Scene {
         });
         gameButton.setOnClick(() => {
             this.clearButtons();
-            
-            // Добавляем EggDefense вручную
-            this.scene.add('EggDefense', EggDefense);
             this.scene.start('EggDefense');
             
             // Запускаем игру после загрузки сцены
@@ -76,8 +72,23 @@ export class MenuScene extends Phaser.Scene {
         });
         this.buttons.push(gameButton);
         
+        // Кнопка запуска Pet Thief
+        const petThiefButtonY = gameButtonY + 32.5;
+        const petThiefButton = new HTMLButton(this, width / 2, petThiefButtonY, {
+            text: 'PET THIEF 🐾',
+            width: 100,
+            height: 22.5,
+            fontSize: buttonFontSize,
+            fontWeight: 'bold'
+        });
+        petThiefButton.setOnClick(() => {
+            this.clearButtons();
+            this.scene.start('PetThiefScene');
+        });
+        this.buttons.push(petThiefButton);
+        
         // Кнопка тестирования эффектов
-        const testButtonY = gameButtonY + 32.5;
+        const testButtonY = petThiefButtonY + 32.5;
         const testButton = new HTMLButton(this, width / 2, testButtonY, {
             text: 'ТЕСТ ЭФФЕКТОВ',
             width: 100,

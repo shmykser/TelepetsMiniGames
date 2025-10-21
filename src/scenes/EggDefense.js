@@ -141,8 +141,7 @@ export class EggDefense extends Phaser.Scene {
         // Система drag & drop
         this.dragDropSystem = new DragDropSystem(this);
         
-        // Система взаимодействия с препятствиями
-        this.obstacleInteractionSystem = new ObstacleInteractionSystem(this);
+        // Система взаимодействия с препятствиями будет инициализирована в startGame()
         
         // Передаем систему способностей яйцу
         if (this.egg && this.abilitySystem) {
@@ -445,6 +444,9 @@ export class EggDefense extends Phaser.Scene {
         
         // Инициализируем камни на поле
         this.stoneManager.initializeStones();
+        
+        // Инициализируем систему взаимодействия с препятствиями
+        this.obstacleInteractionSystem = new ObstacleInteractionSystem(this);
         
         // Отправляем событие начала игры
         this.eventSystem.emit(EVENT_TYPES.GAME_START, {

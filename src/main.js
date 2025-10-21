@@ -3,6 +3,9 @@ import { PHASER_SETTINGS } from './settings/GameSettings.js';
 import { PreloadScene } from './scenes/PreloadScene.js';
 import { MenuScene } from './scenes/MenuScene.js';
 import { EggDefense } from './scenes/EggDefense.js';
+import { PetThiefScene } from './scenes/PetThiefScene.js';
+import { HouseInteriorScene } from './scenes/HouseInteriorScene.js';
+import { UniversalLockpickingScene } from './scenes/UniversalLockpickingScene.js';
 import { TestEffects } from './scenes/TestEffects.js';
 import { SpriteTestScene } from './scenes/SpriteTestScene.js';
 import { DemoComponents } from './scenes/DemoComponents.js';
@@ -32,7 +35,7 @@ const config = {
         activePointers: 3,
         smoothFactor: 0.5
     },
-    scene: [PreloadScene, MenuScene, TestEffects, SpriteTestScene, DemoComponents, TestGestures, TestBehaviors],
+    scene: [PreloadScene, MenuScene, EggDefense, PetThiefScene, HouseInteriorScene, UniversalLockpickingScene, TestEffects, SpriteTestScene, DemoComponents, TestGestures, TestBehaviors],
     render: {
         pixelArt: false,
         antialias: true
