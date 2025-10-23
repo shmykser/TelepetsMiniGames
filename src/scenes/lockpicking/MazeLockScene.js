@@ -15,6 +15,12 @@ export class MazeLockScene extends BaseLockScene {
         this.ball = null;
         this.exit = null;
         this.mazeWalls = null;
+        
+        // Координаты лабиринта (для интерактивных областей)
+        this.mazeStartX = 0;
+        this.mazeStartY = 0;
+        this.mazeWidth = 0;
+        this.mazeHeight = 0;
     }
     
     /**
@@ -60,6 +66,12 @@ export class MazeLockScene extends BaseLockScene {
         const mazeHeight = mazeSize * cellSize;
         const startX = (width - mazeWidth) / 2;
         const startY = (height - mazeHeight) / 2 + 20;
+        
+        // Сохраняем координаты лабиринта для Tap-to-Move
+        this.mazeStartX = startX;
+        this.mazeStartY = startY;
+        this.mazeWidth = mazeWidth;
+        this.mazeHeight = mazeHeight;
         
         // Генерируем "идеальный" лабиринт с помощью алгоритма Recursive Backtracker
         const mazeGrid = MazeGenerator.generate(mazeSize, mazeSize);
@@ -202,8 +214,14 @@ export class MazeLockScene extends BaseLockScene {
     setupSwipeControls() {
         const { width, height } = this.scale;
         
-        // Создаём невидимую область для свайпов (над лабиринтом)
-        const swipeArea = this.add.rectangle(width / 2, 320, width, 400, 0x000000, 0.01);
+        // Создаём невидимую область для свайпов (точно по размеру лабиринта + отступы)
+        const areaPadding = 50;
+        const areaX = this.mazeStartX + this.mazeWidth / 2;
+        const areaY = this.mazeStartY + this.mazeHeight / 2;
+        const areaWidth = this.mazeWidth + areaPadding * 2;
+        const areaHeight = this.mazeHeight + areaPadding * 2;
+        
+        const swipeArea = this.add.rectangle(areaX, areaY, areaWidth, areaHeight, 0x000000, 0.01);
         swipeArea.setInteractive();
         swipeArea.setDepth(1); // Ниже кнопок управления
         
@@ -269,10 +287,24 @@ export class MazeLockScene extends BaseLockScene {
     setupTapToMove() {
         const { width, height } = this.scale;
         
-        // Создаём невидимую область для тапов (над лабиринтом, ниже кнопок)
-        const tapArea = this.add.rectangle(width / 2, 320, width, 350, 0x000000, 0.01);
+        // Создаём невидимую область для тапов (точно по размеру лабиринта + отступы)
+        const areaPadding = 50;
+        const areaX = this.mazeStartX + this.mazeWidth / 2;
+        const areaY = this.mazeStartY + this.mazeHeight / 2;
+        const areaWidth = this.mazeWidth + areaPadding * 2;
+        const areaHeight = this.mazeHeight + areaPadding * 2;
+        
+        const tapArea = this.add.rectangle(areaX, areaY, areaWidth, areaHeight, 0x00ff00, 0.05);
         tapArea.setInteractive();
         tapArea.setDepth(2); // Выше свайп-зоны, но ниже кнопок
+        
+        console.log('🎯 [MazeLockScene] Tap область:', { 
+            areaX, areaY, areaWidth, areaHeight,
+            mazeStartX: this.mazeStartX, 
+            mazeStartY: this.mazeStartY,
+            mazeWidth: this.mazeWidth,
+            mazeHeight: this.mazeHeight
+        });
         
         tapArea.on('pointerdown', (pointer) => {
             if (!this.isGameActive || !this.ball) return;
