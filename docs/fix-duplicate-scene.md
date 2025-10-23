@@ -81,3 +81,4 @@ scene: [PreloadScene, MenuScene, EggDefense, PetThiefScene, ...]
 
 *Исправление завершено: 19.10.2025*
 
+

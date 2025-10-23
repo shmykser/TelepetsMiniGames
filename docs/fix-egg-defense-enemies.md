@@ -126,3 +126,4 @@ this.obstacleInteractionSystem = new ObstacleInteractionSystem(this);
 
 *Исправление завершено: 19.10.2025*
 
+

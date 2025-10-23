@@ -87,8 +87,23 @@ export class MenuScene extends Phaser.Scene {
         });
         this.buttons.push(petThiefButton);
         
+        // Кнопка тестирования замков
+        const testLocksButtonY = petThiefButtonY + 32.5;
+        const testLocksButton = new HTMLButton(this, width / 2, testLocksButtonY, {
+            text: '🔒 ТЕСТ ЗАМКОВ',
+            width: 100,
+            height: 22.5,
+            fontSize: buttonFontSize,
+            fontWeight: 'bold'
+        });
+        testLocksButton.setOnClick(() => {
+            this.clearButtons();
+            this.scene.start('TestLocks');
+        });
+        this.buttons.push(testLocksButton);
+        
         // Кнопка тестирования эффектов
-        const testButtonY = petThiefButtonY + 32.5;
+        const testButtonY = testLocksButtonY + 32.5;
         const testButton = new HTMLButton(this, width / 2, testButtonY, {
             text: 'ТЕСТ ЭФФЕКТОВ',
             width: 100,

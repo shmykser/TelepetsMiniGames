@@ -260,3 +260,4 @@ scene.events.on('lock:failed', (data) => {
 
 *Генерация завершена: 19.10.2025*
 
+

@@ -159,7 +159,14 @@ export class WorldGenerator {
             const hasSecurity = this.rng() > 0.3; // 70% шанс защиты
             const securityLevel = hasSecurity ? Math.floor(this.rng() * 3) + 1 : 0; // 1-3 уровень или 0
             
-            console.log(`🏠 [WorldGenerator] Дом ${i + 1}: ${hasSecurity ? `защищен (уровень ${securityLevel})` : 'не защищен'}`);
+            // Для тестирования: каждый дом получает определенный тип замка
+            let lockType = null;
+            if (hasSecurity) {
+                const lockTypes = ['simple', 'maze', 'pattern'];
+                lockType = lockTypes[i % lockTypes.length]; // Циклически распределяем типы
+            }
+            
+            console.log(`🏠 [WorldGenerator] Дом ${i + 1}: ${hasSecurity ? `защищен (${lockType} уровень ${securityLevel})` : 'не защищен'}`);
             
             houses.push({
                 id: `house_${i}`,
@@ -170,7 +177,7 @@ export class WorldGenerator {
                 type: 'house',
                 texture: '🏠',
                 security: {
-                    lockType: hasSecurity ? 'simple' : null,
+                    lockType: lockType,
                     level: securityLevel,
                     traps: []
                 },

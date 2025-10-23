@@ -145,8 +145,8 @@ export class Chest extends Phaser.GameObjects.Text {
         if (this.isLocked && this.lock) {
             console.log(`🔒 [Chest] Сундук заперт! Тип замка: ${this.lock.type}, уровень: ${this.lock.level}`);
             
-            // Получаем питомца
-            const pet = this.scene.pet;
+            // Получаем питомца из сцены
+            const pet = this.scene.pet || (this.scene.scene && this.scene.scene.pet);
             if (!pet) {
                 console.warn('🔒 [Chest] Питомец не найден');
                 this.showLockedMessage('Ошибка: питомец не найден');

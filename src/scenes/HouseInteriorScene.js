@@ -208,6 +208,12 @@ export class HouseInteriorScene extends Phaser.Scene {
                 this.onChestLocked(data);
             });
             
+            // Обработчик клика по сундуку
+            chest.on('pointerdown', () => {
+                console.log('💰 [HouseInterior] Клик по сундуку');
+                chest.tryOpen();
+            });
+            
             this.chests.push(chest);
         });
     }

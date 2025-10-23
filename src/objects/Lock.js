@@ -200,7 +200,7 @@ export class Lock {
         }
         
         // Проверяем наличие отмычек
-        const lockpicks = pet.inventory.lockpicks || 0;
+        const lockpicks = pet.inventory.get('lockpicks') || 0;
         
         if (lockpicks < this.cost) {
             this.showMessage(`❌ Нужно ${this.cost} отмычек! У вас: ${lockpicks}`);
@@ -219,11 +219,14 @@ export class Lock {
     startLockpicking(pet) {
         console.log(`🔓 [Lock] Запуск взлома ${this.type} замка`);
         
+        // Определяем сцену в зависимости от типа замка
+        const sceneKey = this.getLockSceneKey();
+        
         // Останавливаем текущую сцену
         this.scene.scene.pause(this.scene.scene.key);
         
-        // Запускаем универсальную сцену взлома
-        this.scene.scene.launch('LockpickingScene', {
+        // Запускаем соответствующую сцену взлома
+        this.scene.scene.launch(sceneKey, {
             lock: this,
             pet: pet,
             lockType: this.type,
@@ -231,6 +234,20 @@ export class Lock {
             config: this.config,
             cost: this.cost
         });
+    }
+    
+    /**
+     * Получить ключ сцены для типа замка
+     * @returns {string}
+     */
+    getLockSceneKey() {
+        const sceneMap = {
+            'simple': 'SimpleLockScene',
+            'maze': 'MazeLockScene',
+            'pattern': 'PatternLockScene'
+        };
+        
+        return sceneMap[this.type] || 'SimpleLockScene';
     }
     
     /**

@@ -352,7 +352,31 @@ export class WorldRenderer {
             padding: { x: 4, y: 2 }
         }).setOrigin(0.5);
         
-        container.add([houseIcon, ownerName]);
+        // Индикатор типа замка (если есть)
+        let lockIndicator = null;
+        if (data.security && data.security.lockType) {
+            const lockEmojis = {
+                'simple': '🔓',
+                'maze': '🧩', 
+                'pattern': '🎯'
+            };
+            const lockEmoji = lockEmojis[data.security.lockType] || '🔒';
+            const lockLevel = data.security.level || 1;
+            
+            lockIndicator = this.scene.add.text(0, 50, `${lockEmoji}${lockLevel}`, {
+                fontSize: '14px',
+                fontFamily: 'Arial',
+                color: '#ffff00',
+                backgroundColor: '#000000',
+                padding: { x: 4, y: 2 }
+            }).setOrigin(0.5);
+        }
+        
+        const elements = [houseIcon, ownerName];
+        if (lockIndicator) {
+            elements.push(lockIndicator);
+        }
+        container.add(elements);
         
         // Устанавливаем глубину
         container.setDepth(WORLD_CONSTANTS.DEPTH.HOUSES);
