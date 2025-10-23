@@ -23,12 +23,24 @@ export class SimpleLockScene extends BaseLockScene {
     create() {
         super.create();
         
+        // ВАЖНО: Полная очистка состояния от предыдущего прохождения
+        this.pins = [];
+        this.currentPin = 0;
+        this.indicator = null;
+        this.pickButton = null;
+        
         // Создаем базовый UI
         this.createBaseUI('🔓 ВЗЛОМ ПРОСТОГО ЗАМКА');
         
-        // Инструкция
+        // Инструкция (адаптивная под механики)
         const { width } = this.scale;
-        this.add.text(width / 2, 180, 'Нажми ВЗЛОМАТЬ когда индикатор в зеленой зоне!', {
+        let instructionText = 'Нажми ВЗЛОМАТЬ когда индикатор в зеленой зоне!';
+        
+        if (this.config.twoPhaseMode) {
+            instructionText = 'Попади в ЗЕЛЕНУЮ, затем в ЖЕЛТУЮ зону!';
+        }
+        
+        this.add.text(width / 2, 180, instructionText, {
             fontSize: '14px',
             fontFamily: 'Arial',
             color: '#ffffff',
@@ -36,6 +48,26 @@ export class SimpleLockScene extends BaseLockScene {
             strokeThickness: 2,
             align: 'center'
         }).setOrigin(0.5).setDepth(10);
+        
+        // Дополнительные подсказки об активных механиках
+        const hints = [];
+        if (this.config.resetOnFail) {
+            hints.push('⚠️ Промах сбрасывает на 1-й пин');
+        }
+        if (this.config.shrinkingZone) {
+            hints.push('📉 Зона уменьшается при промахе');
+        }
+        
+        if (hints.length > 0) {
+            this.add.text(width / 2, 200, hints.join(' | '), {
+                fontSize: '11px',
+                fontFamily: 'Arial',
+                color: '#ffaa00',
+                stroke: '#000000',
+                strokeThickness: 1,
+                align: 'center'
+            }).setOrigin(0.5).setDepth(10);
+        }
         
         // Создаем пины
         this.createPins();
@@ -69,9 +101,17 @@ export class SimpleLockScene extends BaseLockScene {
             // Основа пина
             const pinBase = this.add.rectangle(x, y, pinWidth, 80, 0x333333).setDepth(5);
             
-            // Зеленая зона (успех)
+            // Зеленая зона (успех) - начальный размер из конфига
             const tolerance = this.config.tolerance || 20;
             const greenZone = this.add.rectangle(x, y, pinWidth - 8, tolerance, 0x00ff00).setDepth(6);
+            
+            // Желтая зона (для двухфазного режима) - создаем но скрываем
+            let yellowZone = null;
+            if (this.config.twoPhaseMode) {
+                const yellowTolerance = this.config.yellowTolerance || 15;
+                yellowZone = this.add.rectangle(x, y, pinWidth - 8, yellowTolerance, 0xffff00).setDepth(6);
+                yellowZone.setVisible(false); // Изначально скрыта
+            }
             
             // Текст пина
             const pinText = this.add.text(x, y + 50, `Пин ${i + 1}`, {
@@ -90,12 +130,15 @@ export class SimpleLockScene extends BaseLockScene {
             this.pins.push({
                 base: pinBase,
                 greenZone: greenZone,
+                yellowZone: yellowZone,
                 text: pinText,
                 status: status,
                 unlocked: false,
+                phase: 1, // Фаза 1 (зеленая) или 2 (желтая)
                 x: x,
                 y: y,
-                tolerance: tolerance
+                tolerance: tolerance, // Текущий размер зеленой зоны
+                originalTolerance: tolerance // Исходный размер для восстановления
             });
         }
         
@@ -205,59 +248,164 @@ export class SimpleLockScene extends BaseLockScene {
         if (!this.pins || !this.pins[this.currentPin]) return;
         
         const pin = this.pins[this.currentPin];
-        
-        // Проверяем попадание в зеленую зону
         const indicatorY = this.indicator.y;
-        const greenZoneTop = pin.greenZone.y - pin.tolerance / 2;
-        const greenZoneBottom = pin.greenZone.y + pin.tolerance / 2;
         
-        const isSuccess = indicatorY >= greenZoneTop && indicatorY <= greenZoneBottom;
+        // Определяем текущую зону для проверки
+        let targetZone, targetTolerance, currentPhase;
         
-        console.log(`🔓 [SimpleLockScene] Попытка взлома пина ${this.currentPin + 1}:`, {
+        if (this.config.twoPhaseMode && pin.phase === 1) {
+            // Фаза 1: проверяем зеленую зону
+            targetZone = pin.greenZone;
+            targetTolerance = pin.tolerance;
+            currentPhase = 1;
+        } else if (this.config.twoPhaseMode && pin.phase === 2) {
+            // Фаза 2: проверяем желтую зону
+            targetZone = pin.yellowZone;
+            targetTolerance = this.config.yellowTolerance || 15;
+            currentPhase = 2;
+        } else {
+            // Обычный режим: только зеленая зона
+            targetZone = pin.greenZone;
+            targetTolerance = pin.tolerance;
+            currentPhase = 1;
+        }
+        
+        const zoneTop = targetZone.y - targetTolerance / 2;
+        const zoneBottom = targetZone.y + targetTolerance / 2;
+        const isSuccess = indicatorY >= zoneTop && indicatorY <= zoneBottom;
+        
+        console.log(`🔓 [SimpleLockScene] Попытка взлома пина ${this.currentPin + 1}, фаза ${currentPhase}:`, {
             indicatorY,
-            greenZoneTop,
-            greenZoneBottom,
-            isSuccess
+            zoneTop,
+            zoneBottom,
+            isSuccess,
+            tolerance: targetTolerance
         });
         
         if (isSuccess) {
-            // Успех!
-            pin.unlocked = true;
+            // Попадание в зону!
             
-            // Визуальный эффект успеха (проверяем что объект существует)
-            if (pin.status && pin.status.scene) {
-                pin.status.setText('✅');
-                pin.status.setColor('#00ff00');
-            }
-            
-            // Переходим к следующему пину
-            this.currentPin++;
-            
-            if (this.currentPin >= this.pins.length) {
-                // Все пины взломаны!
-                this.onSuccess();
+            if (this.config.twoPhaseMode && pin.phase === 1) {
+                // Фаза 1 успешна - переходим к фазе 2
+                pin.phase = 2;
+                pin.greenZone.setVisible(false);
+                pin.yellowZone.setVisible(true);
+                
+                if (pin.status && pin.status.scene) {
+                    pin.status.setText('🟡');
+                    pin.status.setColor('#ffff00');
+                }
+                
+                console.log(`🟢 [SimpleLockScene] Пин ${this.currentPin + 1}: Фаза 1 пройдена, переход к фазе 2`);
+                
             } else {
-                // Переключаемся на следующий пин
-                this.highlightCurrentPin();
-                this.updateIndicator();
+                // Полный успех (либо фаза 2, либо обычный режим)
+                pin.unlocked = true;
+                
+                if (pin.status && pin.status.scene) {
+                    pin.status.setText('✅');
+                    pin.status.setColor('#00ff00');
+                }
+                
+                // Переходим к следующему пину
+                this.currentPin++;
+                
+                if (this.currentPin >= this.pins.length) {
+                    // Все пины взломаны!
+                    this.onSuccess();
+                } else {
+                    // Переключаемся на следующий пин
+                    this.highlightCurrentPin();
+                    this.updateIndicator();
+                }
             }
+            
         } else {
-            // Провал!
-            this.incrementAttempts();
+            // Промах!
+            this.handleFailure(pin);
+        }
+    }
+    
+    /**
+     * Обработка неудачной попытки
+     */
+    handleFailure(pin) {
+        this.incrementAttempts();
+        
+        // Визуальный эффект провала
+        if (pin.status && pin.status.scene) {
+            pin.status.setText('❌');
+            pin.status.setColor('#ff0000');
+        }
+        
+        // МЕХАНИКА 2: Сужающаяся зона
+        if (this.config.shrinkingZone) {
+            const shrinkAmount = this.config.shrinkAmount || 3;
+            const minTolerance = this.config.minTolerance || 10;
             
-            // Визуальный эффект провала
-            if (pin.status && pin.status.scene) {
-                pin.status.setText('❌');
-                pin.status.setColor('#ff0000');
+            if (pin.tolerance > minTolerance) {
+                pin.tolerance = Math.max(minTolerance, pin.tolerance - shrinkAmount);
+                
+                // Обновляем размер зеленой зоны
+                pin.greenZone.setDisplaySize(pin.greenZone.width, pin.tolerance);
+                
+                console.log(`📉 [SimpleLockScene] Зона уменьшена до ${pin.tolerance}px`);
             }
+        }
+        
+        // МЕХАНИКА 3: Сброс на первый пин
+        if (this.config.resetOnFail && this.currentPin > 0) {
+            console.log(`🔄 [SimpleLockScene] Сброс на первый пин!`);
             
-            this.time.delayedCall(500, () => {
-                if (this.isGameActive && pin.status && pin.status.scene) {
-                    pin.status.setText('⚪');
-                    pin.status.setColor('#ffffff');
+            // Сбрасываем все пины
+            this.pins.forEach((p, index) => {
+                p.unlocked = false;
+                p.phase = 1;
+                
+                // Восстанавливаем исходный размер зоны
+                if (this.config.shrinkingZone) {
+                    p.tolerance = p.originalTolerance;
+                    p.greenZone.setDisplaySize(p.greenZone.width, p.tolerance);
+                }
+                
+                // Восстанавливаем визуальное состояние
+                if (p.greenZone) p.greenZone.setVisible(true);
+                if (p.yellowZone) p.yellowZone.setVisible(false);
+                
+                if (p.status && p.status.scene) {
+                    p.status.setText('⚪');
+                    p.status.setColor('#ffffff');
                 }
             });
+            
+            // Возвращаемся на первый пин
+            this.currentPin = 0;
+            this.highlightCurrentPin();
+            this.updateIndicator();
+            
+            return; // Выходим, чтобы не выполнять обычный таймаут
         }
+        
+        // Двухфазный режим: сброс фазы при провале фазы 2
+        if (this.config.twoPhaseMode && pin.phase === 2) {
+            pin.phase = 1;
+            pin.greenZone.setVisible(true);
+            pin.yellowZone.setVisible(false);
+            console.log(`🔄 [SimpleLockScene] Пин ${this.currentPin + 1}: Сброс на фазу 1`);
+        }
+        
+        // Восстановление визуального статуса через 500мс
+        this.time.delayedCall(500, () => {
+            if (this.isGameActive && pin.status && pin.status.scene) {
+                if (pin.phase === 1) {
+                    pin.status.setText('⚪');
+                    pin.status.setColor('#ffffff');
+                } else if (pin.phase === 2) {
+                    pin.status.setText('🟡');
+                    pin.status.setColor('#ffff00');
+                }
+            }
+        });
     }
     
     /**
@@ -300,16 +448,18 @@ export class SimpleLockScene extends BaseLockScene {
             this.tweens.killTweensOf(this.indicator);
         }
         
-        // Удаляем HTML кнопку
-        if (this.pickButton) {
-            this.pickButton.destroy();
-            this.pickButton = null;
-        }
-        
         // Очищаем обработчики клавиш
         if (this.input && this.input.keyboard) {
             this.input.keyboard.off('keydown-SPACE');
         }
+        
+        // Полная очистка состояния
+        this.pins = [];
+        this.currentPin = 0;
+        this.indicator = null;
+        this.pickButton = null;
+        
+        console.log('🔓 [SimpleLockScene] Полная очистка состояния');
     }
 }
 

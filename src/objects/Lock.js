@@ -337,55 +337,6 @@ export class Lock {
         this.visualElements = [];
     }
     
-    /**
-     * Получить конфигурацию для мини-игры
-     */
-    getGameConfig() {
-        const baseConfig = {
-            type: this.type,
-            maxAttempts: this.config.maxAttempts,
-            timeLimit: this.config.timeLimit || 0
-        };
-        
-        switch (this.type) {
-            case LOCK_TYPES.SIMPLE:
-                return {
-                    ...baseConfig,
-                    pins: this.config.pins,
-                    indicatorSpeed: this.config.indicatorSpeed,
-                    tolerance: this.config.tolerance
-                };
-            case LOCK_TYPES.MAZE:
-                return {
-                    ...baseConfig,
-                    mazeSize: this.config.mazeSize,
-                    ballSpeed: this.config.ballSpeed
-                };
-            case LOCK_TYPES.PATTERN:
-                return {
-                    ...baseConfig,
-                    points: this.config.points,
-                    showPattern: this.config.showPattern
-                };
-            default:
-                return baseConfig;
-        }
-    }
-    
-    /**
-     * Получить информацию о замке
-     */
-    getInfo() {
-        return {
-            type: this.type,
-            level: this.level,
-            isLocked: this.isLocked,
-            isOpened: this.isOpened,
-            attempts: this.attempts,
-            maxAttempts: this.maxAttempts,
-            cost: this.cost
-        };
-    }
 }
 
 // Экспорты дочерних классов убраны - они импортируются напрямую

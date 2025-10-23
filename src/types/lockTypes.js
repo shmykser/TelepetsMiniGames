@@ -21,21 +21,45 @@ export const LOCK_CONFIGS = {
                 indicatorSpeed: 1.5,
                 tolerance: 25,
                 maxAttempts: 3,
-                timeLimit: 0 // Без ограничения времени
+                timeLimit: 0, // Без ограничения времени
+                
+                // НОВЫЕ МЕХАНИКИ УСЛОЖНЕНИЯ
+                twoPhaseMode: false, // Двухфазные пины (зеленая + желтая зона)
+                yellowTolerance: 15, // Размер желтой зоны (если twoPhaseMode = true)
+                resetOnFail: false, // Сброс на первый пин при неудаче
+                shrinkingZone: false, // Зона уменьшается при неудаче
+                shrinkAmount: 3, // На сколько пикселей уменьшается зона
+                minTolerance: 10 // Минимальный размер зоны
             },
             2: {
                 pins: 2,
                 indicatorSpeed: 2.0,
                 tolerance: 20,
                 maxAttempts: 3,
-                timeLimit: 0
+                timeLimit: 0,
+                
+                // Усложнение для среднего уровня
+                twoPhaseMode: true, // Включаем двухфазный режим
+                yellowTolerance: 12,
+                resetOnFail: false, // Пока не сбрасываем
+                shrinkingZone: true, // Включаем уменьшение зоны
+                shrinkAmount: 3,
+                minTolerance: 8
             },
             3: {
                 pins: 3,
                 indicatorSpeed: 2.5,
                 tolerance: 15,
                 maxAttempts: 4,
-                timeLimit: 0
+                timeLimit: 0,
+                
+                // Максимальное усложнение
+                twoPhaseMode: true,
+                yellowTolerance: 10,
+                resetOnFail: true, // Сброс на первый пин!
+                shrinkingZone: true,
+                shrinkAmount: 2,
+                minTolerance: 6
             }
         }
     },
@@ -49,19 +73,49 @@ export const LOCK_CONFIGS = {
                 mazeSize: 5, // 5x5
                 ballSpeed: 200,
                 timeLimit: 30, // 30 секунд
-                maxAttempts: 3
+                maxAttempts: 3,
+                
+                // НОВЫЕ МЕХАНИКИ УСЛОЖНЕНИЯ
+                keys: 0, // Количество ключей для сбора (0 = не нужны)
+                enemies: 0, // Количество патрулирующих врагов
+                enemySpeed: 80, // Скорость врагов
+                portals: 0, // Количество ловушек-порталов
+                portalDuration: 3000, // Время существования портала (мс)
+                portalInterval: 5000, // Интервал появления новых порталов (мс)
+                fogOfWar: false, // Туман войны
+                fogRadius: 3 // Радиус видимости в клетках (если fogOfWar = true)
             },
             2: {
                 mazeSize: 7, // 7x7
                 ballSpeed: 180,
-                timeLimit: 45,
-                maxAttempts: 3
+                timeLimit: 60, // Увеличил время из-за ключей
+                maxAttempts: 3,
+                
+                // Усложнение для среднего уровня
+                keys: 2, // Нужно собрать 2 ключа
+                enemies: 1, // 1 враг
+                enemySpeed: 70,
+                portals: 2, // 2 портала (1 пара)
+                portalDuration: 4000,
+                portalInterval: 6000,
+                fogOfWar: false, // Пока без тумана
+                fogRadius: 3
             },
             3: {
                 mazeSize: 9, // 9x9
                 ballSpeed: 160,
-                timeLimit: 60,
-                maxAttempts: 4
+                timeLimit: 90, // Увеличил время
+                maxAttempts: 4,
+                
+                // Максимальное усложнение
+                keys: 3, // 3 ключа!
+                enemies: 2, // 2 врага
+                enemySpeed: 60,
+                portals: 2, // 2 портала (1 пары)
+                portalDuration: 10000, // Порталы живут 10 секунд
+                portalInterval: 12000, // Новые порталы каждые 12 секунд
+                fogOfWar: false, // ТУМАН ВОЙНЫ!
+                fogRadius: 2 // Маленький радиус видимости
             }
         }
     },
@@ -69,25 +123,25 @@ export const LOCK_CONFIGS = {
     [LOCK_TYPES.PATTERN]: {
         name: 'Паттерн-замок',
         emoji: '🎯',
-        description: 'Соединить точки без пересечений',
+        description: 'Соединить пары без пересечений',
         difficulty: {
             1: {
-                points: 4, // 2x2 сетка
-                timeLimit: 20,
-                maxAttempts: 3,
-                showPattern: true // Показать правильный паттерн
+                gridSize: 4, // 4x4 сетка
+                pairs: 3, // 3 пары точек
+                timeLimit: 300, // 5 минут для тестирования
+                maxAttempts: 10
             },
             2: {
-                points: 6, // 2x3 сетка
-                timeLimit: 30,
-                maxAttempts: 3,
-                showPattern: false
+                gridSize: 5, // 5x5 сетка
+                pairs: 5, // 5 пар точек
+                timeLimit: 300, // 5 минут для тестирования
+                maxAttempts: 10
             },
             3: {
-                points: 9, // 3x3 сетка
-                timeLimit: 45,
-                maxAttempts: 4,
-                showPattern: false
+                gridSize: 7, // 7x7 сетка
+                pairs: 7, // 7 пар точек
+                timeLimit: 300, // 5 минут для тестирования
+                maxAttempts: 10
             }
         }
     }
